@@ -12,7 +12,7 @@ class BudgetSetupAppBar extends StatelessWidget implements PreferredSizeWidget {
       builder: (context, provider, child) {
         return AppBar(
           elevation: 0,
-          backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           leading: provider.currentStep != BudgetSetupStep.totalAmount 
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
@@ -23,9 +23,10 @@ class BudgetSetupAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Text(
                 _getStepTitle(provider.currentStep),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -33,7 +34,7 @@ class BudgetSetupAppBar extends StatelessWidget implements PreferredSizeWidget {
                 'Paso ${provider.stepIndex + 1} de 3',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   fontWeight: FontWeight.normal,
                 ),
               ),
@@ -46,9 +47,9 @@ class BudgetSetupAppBar extends StatelessWidget implements PreferredSizeWidget {
               margin: const EdgeInsets.symmetric(horizontal: 20),
               child: LinearProgressIndicator(
                 value: provider.progress,
-                backgroundColor: Colors.grey[300],
+                backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).primaryColor,
+                  Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

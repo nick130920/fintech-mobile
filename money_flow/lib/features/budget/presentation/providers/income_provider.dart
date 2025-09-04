@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/models/income_model.dart';
@@ -54,7 +55,7 @@ class IncomeProvider with ChangeNotifier {
       _setError(null);
     } catch (e) {
       _setError('Error al cargar ingresos: $e');
-      print('Income loading error: $e');
+      debugPrint('Income loading error: $e');
     } finally {
       _setLoading(false);
     }
@@ -66,7 +67,7 @@ class IncomeProvider with ChangeNotifier {
       _incomeStats = await IncomeRepository.getIncomeStats(year: year);
       notifyListeners();
     } catch (e) {
-      print('Income stats loading error: $e');
+      debugPrint('Income stats loading error: $e');
     }
   }
 
@@ -108,7 +109,7 @@ class IncomeProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _setError('Error al crear ingreso: $e');
-      print('Income creation error: $e');
+      debugPrint('Income creation error: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -155,7 +156,7 @@ class IncomeProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _setError('Error al actualizar ingreso: $e');
-      print('Income update error: $e');
+      debugPrint('Income update error: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -180,7 +181,7 @@ class IncomeProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _setError('Error al eliminar ingreso: $e');
-      print('Income deletion error: $e');
+      debugPrint('Income deletion error: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -206,7 +207,7 @@ class IncomeProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _setError('Error al procesar ingresos recurrentes: $e');
-      print('Recurring incomes processing error: $e');
+      debugPrint('Recurring incomes processing error: $e');
       return false;
     }
   }

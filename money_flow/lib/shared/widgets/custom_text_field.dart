@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
-
 class CustomTextField extends StatefulWidget {
   final String label;
   final String placeholder;
@@ -45,7 +43,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
         Text(
           widget.label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.slate700,
                 fontWeight: FontWeight.w500,
               ),
         ),
@@ -56,7 +53,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
           obscureText: _isObscured,
           validator: widget.validator,
           style: const TextStyle(
-            color: AppColors.slate800,
             fontSize: 14,
           ),
           decoration: InputDecoration(
@@ -65,12 +61,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
               padding: const EdgeInsets.only(left: 12, right: 8),
               child: Icon(
                 widget.prefixIcon,
-                color: AppColors.slate400,
-                size: 20,
+                size: 17,
               ),
             ),
             suffixIcon: widget.showToggleVisibility
-                ? IconButton(
+                ? Padding(
+                  padding: const EdgeInsets.only(left: 1, right: 1, top: 1, bottom: 1),
+                  child: IconButton(
                     onPressed: () {
                       setState(() {
                         _isObscured = !_isObscured;
@@ -78,40 +75,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     },
                     icon: Icon(
                       _isObscured ? Icons.visibility_off : Icons.visibility,
-                      color: AppColors.slate400,
                       size: 20,
                     ),
                   )
+                )
                 : null,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 40,
               vertical: 12,
-            ),
-            filled: true,
-            fillColor: AppColors.slate100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.slate300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.slate300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.focusBorder, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.error, width: 2),
-            ),
-            hintStyle: const TextStyle(
-              color: AppColors.slate400,
-              fontSize: 14,
             ),
           ),
         ),

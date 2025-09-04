@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -131,7 +132,7 @@ class CurrencyService {
       }
     } catch (e) {
       // En caso de error, usar divisa por defecto
-      print('Error detecting currency from location: $e');
+      debugPrint('Error detecting currency from location: $e');
     }
 
     return defaultCurrency;
@@ -174,7 +175,7 @@ class CurrencyService {
         return CurrencyInfo.fromJson(currencyData);
       }
     } catch (e) {
-      print('Error loading saved currency: $e');
+      debugPrint('Error loading saved currency: $e');
     }
 
     return defaultCurrency;

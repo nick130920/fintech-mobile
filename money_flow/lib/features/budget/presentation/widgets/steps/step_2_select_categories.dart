@@ -19,10 +19,10 @@ class Step2SelectCategories extends StatelessWidget {
               // Encabezado
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.category,
                     size: 48,
-                    color: Colors.green,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -40,7 +40,7 @@ class Step2SelectCategories extends StatelessWidget {
                 'Selecciona las categorías que más usas. Puedes agregar más después.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.5,
                 ),
               ),
@@ -54,7 +54,7 @@ class Step2SelectCategories extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: provider.useDefaultCategories,
                   icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Usar categorías recomendadas'),
+                  label: Text('Usar categorías recomendadas'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -94,21 +94,21 @@ class Step2SelectCategories extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green[100]!),
+                    border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.check_circle_outline, 
-                          color: Colors.green[600], size: 20),
+                          color: Theme.of(context).colorScheme.primary, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           '${provider.selectedCategories.length} categorías seleccionadas',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.green[700],
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -132,7 +132,7 @@ class Step2SelectCategories extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Continuar',
                     style: TextStyle(
                       fontSize: 16,
@@ -161,15 +161,15 @@ class Step2SelectCategories extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? categoryColor.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? categoryColor.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? categoryColor : Colors.grey[300]!,
+            color: isSelected ? categoryColor : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -191,21 +191,21 @@ class Step2SelectCategories extends StatelessWidget {
                       color: categoryColor,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check,
                       size: 16,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 )
               else
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
               // Ícono de la categoría
               Icon(
                 category.iconData,
                 size: 32,
-                color: isSelected ? categoryColor : Colors.grey[800],
+                color: isSelected ? categoryColor : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
               ),
               const SizedBox(height: 8),
 
@@ -215,7 +215,7 @@ class Step2SelectCategories extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? categoryColor : Colors.grey[800],
+                  color: isSelected ? categoryColor : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -230,7 +230,7 @@ class Step2SelectCategories extends StatelessWidget {
                     category.description,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,

@@ -71,7 +71,7 @@ class DashboardProvider with ChangeNotifier {
       _setError(null);
     } catch (e) {
       _setError('Error al cargar datos del dashboard: $e');
-      print('Dashboard error: $e');
+      debugPrint('Dashboard error: $e');
     } finally {
       _setLoading(false);
     }
@@ -88,7 +88,7 @@ class DashboardProvider with ChangeNotifier {
       _availableBalance = await DashboardRepository.getAvailableBalance();
       notifyListeners();
     } catch (e) {
-      print('Error updating available balance: $e');
+      debugPrint('Error updating available balance: $e');
     }
   }
 

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
 
@@ -52,7 +54,7 @@ class DashboardRepository {
       
       return totalIncome - totalSpent;
     } catch (e) {
-      print('Error calculating available balance: $e');
+      debugPrint('Error calculating available balance: $e');
       return 0.0;
     }
   }

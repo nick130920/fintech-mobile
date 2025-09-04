@@ -3,20 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/auth_wrapper.dart';
-import '../../features/budget/data/repositories/budget_repository.dart';
+import '../../features/budget/presentation/providers/budget_setup_provider.dart';
 import '../../features/budget/presentation/screens/budget_setup_wrapper.dart';
-import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../shared/screens/main_screen.dart';
-import '../../shared/widgets/money_flow_logo.dart';
 import '../providers/currency_provider.dart';
-
-enum AppState {
-  loading,
-  onboarding,
-  auth,
-  budgetSetup,
-  dashboard,
-}
 
 class AppWrapper extends StatefulWidget {
   const AppWrapper({super.key});
@@ -26,95 +16,148 @@ class AppWrapper extends StatefulWidget {
 }
 
 class _AppWrapperState extends State<AppWrapper> {
-  AppState _currentState = AppState.loading;
-
   @override
   void initState() {
     super.initState();
-    _initializeApp();
-  }
-
-  void _initializeApp() async {
-    // Pequeña pausa para mostrar el loading
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Inicializar CurrencyProvider temprano para detección de ubicación
-    if (mounted) {
-      final currencyProvider = context.read<CurrencyProvider>();
-      currencyProvider.initialize(); // No esperamos, se ejecuta en background
-    }
-    
-    // Verificar estado de autenticación y configuración
-    if (mounted) {
-      final authProvider = context.read<AuthProvider>();
-      
-      // Verificar estado de autenticación real
-      await authProvider.initialize();
-      
-      if (authProvider.isAuthenticated) {
-        // Usuario autenticado - verificar si necesita configurar presupuesto
-        final needsBudgetSetup = await _checkBudgetSetup();
-        setState(() {
-          _currentState = needsBudgetSetup ? AppState.budgetSetup : AppState.dashboard;
-        });
-      } else {
-        // Usuario no autenticado - mostrar onboarding
-        setState(() {
-          _currentState = AppState.onboarding;
-        });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<CurrencyProvider>().initialize();
+        // Cargar el estado inicial de autenticación
+        context.read<AuthProvider>().initialize();
       }
-    }
-  }
-
-  Future<bool> _checkBudgetSetup() async {
-    try {
-      final repository = BudgetRepository();
-      return !(await repository.hasBudgetConfigured());
-    } catch (e) {
-      return true; // En caso de error, dirigir a configuración
-    }
-  }
-
-  void _onOnboardingComplete() {
-    setState(() {
-      _currentState = AppState.auth;
-    });
-  }
-
-  void _onAuthComplete() async {
-    // Una vez autenticado, verificar si necesita configuración presupuestal
-    final needsBudgetSetup = await _checkBudgetSetup();
-    setState(() {
-      _currentState = needsBudgetSetup ? AppState.budgetSetup : AppState.dashboard;
-    });
-  }
-
-  void _onBudgetSetupComplete() {
-    setState(() {
-      _currentState = AppState.dashboard;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (_currentState) {
-      case AppState.loading:
-        return const AppLoadingScreen();
-      
-      case AppState.onboarding:
-        return OnboardingWrapper(
-          onComplete: _onOnboardingComplete,
-        );
-      
-      case AppState.auth:
-        return AuthWrapper(onAuthComplete: _onAuthComplete);
-        
-      case AppState.budgetSetup:
-        return BudgetSetupWrapper(onSetupComplete: _onBudgetSetupComplete);
-        
-      case AppState.dashboard:
-        return const MainScreen();
-    }
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        switch (authProvider.status) {
+          case AuthStatus.authenticated:
+            return const _AuthenticatedHandler();
+          case AuthStatus.unauthenticated:
+          case AuthStatus.error:
+            return AuthWrapper(
+              onAuthSuccess: () {
+                // El estado de autenticación ya se actualiza automáticamente
+                // en el AuthProvider cuando se hace login/register exitoso
+              },
+            );
+          case AuthStatus.loading:
+          case AuthStatus.initial:
+            return const AppLoadingScreen();
+        }
+      },
+    );
+  }
+}
+
+class _AuthenticatedHandler extends StatefulWidget {
+  const _AuthenticatedHandler();
+
+  @override
+  State<_AuthenticatedHandler> createState() => _AuthenticatedHandlerState();
+}
+
+class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
+  Future<bool>? _needsBudgetSetupFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _needsBudgetSetupFuture = _checkBudgetSetup();
+  }
+
+  Future<bool> _checkBudgetSetup() async {
+    // Usar el provider para la lógica de negocio
+    return !(await context.read<BudgetSetupProvider>().checkExistingBudget());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _needsBudgetSetupFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const AppLoadingScreen();
+        }
+
+        if (snapshot.hasError || snapshot.data == null) {
+          return AppErrorScreen(
+            message: 'No pudimos verificar tu presupuesto.',
+            onRetry: () {
+              setState(() {
+                _needsBudgetSetupFuture = _checkBudgetSetup();
+              });
+            },
+          );
+        }
+
+        final needsSetup = snapshot.data!;
+        if (needsSetup) {
+          return BudgetSetupWrapper(
+            onSetupComplete: () {
+              // Re-evaluar para pasar al dashboard
+              setState(() {
+                _needsBudgetSetupFuture = _checkBudgetSetup();
+              });
+            },
+          );
+        } else {
+          return const MainScreen();
+        }
+      },
+    );
+  }
+}
+
+class AppErrorScreen extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const AppErrorScreen({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Oops! Algo salió mal',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -123,48 +166,9 @@ class AppLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // AppColors.slate50
+    return const Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo animado
-            TweenAnimationBuilder<double>(
-              duration: const Duration(seconds: 2),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: 0.8 + (0.2 * value),
-                  child: Opacity(
-                    opacity: value,
-                    child: Column(
-                      children: [
-                        // Logo personalizado de MoneyFlow
-                        const MoneyFlowLogo(
-                          size: 120,
-                          showText: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 40),
-            
-            // Loading indicator
-            const SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF137FEC)),
-              ),
-            ),
-          ],
-        ),
+        child: CircularProgressIndicator(),
       ),
     );
   }

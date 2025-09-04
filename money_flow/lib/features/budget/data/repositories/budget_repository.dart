@@ -67,7 +67,8 @@ class BudgetRepository {
       final data = ApiService.handleResponse(response)['data'];
       return BudgetModel.fromJson(data);
     } catch (e) {
-      return null;
+      // Re-lanzar el error para que sea manejado en el UI
+      rethrow;
     }
   }
 
@@ -89,5 +90,33 @@ class BudgetRepository {
   Future<bool> hasBudgetConfigured() async {
     final budget = await getCurrentBudget();
     return budget != null;
+  }
+
+  // Actualizar allocation de una categoría
+  Future<AllocationModel> updateAllocation(int allocationId, double newAmount) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      
+      if (token == null || token.isEmpty) {
+        throw Exception('Token de autenticación no encontrado. Por favor inicia sesión.');
+      }
+      
+      final body = {
+        'allocated_amount': newAmount,
+      };
+      
+      final response = await ApiService.put('/budgets/allocations/$allocationId', body, token: token);
+      
+      final responseData = ApiService.handleResponse(response);
+      final data = responseData['data'];
+      
+      if (data == null) {
+        throw Exception('El servidor no devolvió datos de la asignación');
+      }
+      
+      return AllocationModel.fromJson(data);
+    } catch (e) {
+      rethrow;
+    }
   }
 }

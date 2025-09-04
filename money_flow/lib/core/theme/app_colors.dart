@@ -18,11 +18,19 @@ class AppColors {
   
   // Semantic colors
   static const Color white = Color(0xFFFFFFFF);
-  static const Color error = Color(0xFFEF4444);
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444); // red-500
+  static const Color success = Color(0xFF10B981); // green-500
+  static const Color warning = Color(0xFFF59E0B); // amber-500
   
   // Focus colors
   static const Color focusBorder = Color(0xFF3B82F6);
   static const Color focusRing = Color(0x1A3B82F6);
+  
+  // Dark Theme Colors
+  static const Color darkBackground = Color(0xFF111827); // gray-900
+  static const Color darkSurface = Color(0xFF1F2937); // gray-800
+  static const Color darkOnSurface = Color(0xFFF9FAFB); // gray-50
+  static const Color darkOnSurfaceMedium = Color(0xFF9CA3AF); // gray-400
+  static const Color darkOnSurfaceSoft = Color(0xFF4B5563); // gray-600
+  static const Color darkBorder = Color(0xFF374151); // gray-700
 }

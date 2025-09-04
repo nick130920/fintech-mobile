@@ -26,23 +26,23 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).colorScheme.surface,
       resizeToAvoidBottomInset: true,
       appBar: const BudgetSetupAppBar(),
       body: Consumer<BudgetSetupProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
                   Text(
                     'Preparando tu configuración...',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -55,10 +55,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline,
                     size: 48,
-                    color: Colors.red,
+                    color: Theme.of(context).colorScheme.error,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -71,7 +71,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     child: Text(
                       provider.errorMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -105,8 +105,8 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             Container(
               width: 80,
               height: 80,
-              decoration: const BoxDecoration(
-                color: Colors.green,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -120,7 +120,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               '¡Presupuesto Configurado!',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -129,20 +129,20 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                builder: (context, currencyProvider, child) {
                  return Text(
                    'Tu presupuesto de ${currencyProvider.formatAmount(provider.totalAmount)} ha sido configurado exitosamente.',
-                   style: const TextStyle(
+                   style: TextStyle(
                      fontSize: 16,
-                     color: Colors.grey,
+                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                    ),
                    textAlign: TextAlign.center,
                  );
                },
              ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'MoneyFlow comenzará a rastrear tus gastos automáticamente.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -175,10 +175,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                 // Opción para ajustar el presupuesto
                 provider.reset();
               },
-              child: const Text(
+              child: Text(
                 'Ajustar presupuesto',
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   decoration: TextDecoration.underline,
                 ),
               ),

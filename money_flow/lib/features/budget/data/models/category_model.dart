@@ -8,8 +8,7 @@ class CategoryModel {
   final int id;
   final String name;
   final String description;
-  @JsonKey(fromJson: _iconFromJson, toJson: _iconToJson)
-  final IconData icon;
+  final String icon;
   @JsonKey(fromJson: _colorFromJson, toJson: _colorToJson)
   final Color color;
   @JsonKey(name: 'display_name')
@@ -45,7 +44,7 @@ class CategoryModel {
   Map<String, dynamic> toJson() => _$CategoryModelToJson(this);
   
   // Helper methods para UI
-  IconData get iconData => icon;
+  IconData get iconData => _getIconData(icon);
 
   bool get isSystemCategory => isDefault && !isUserCategory;
 
@@ -58,7 +57,7 @@ class CategoryModel {
           id: 1,
           name: 'Alimentación',
           description: 'Comida, supermercado, restaurantes',
-          icon: Icons.restaurant,
+          icon: 'restaurant',
           color: Color(0xFFFF6B35),
           displayName: '🍽️ Alimentación',
           isActive: true,
@@ -71,7 +70,7 @@ class CategoryModel {
           id: 2,
           name: 'Transporte',
           description: 'Gasolina, transporte público, Uber',
-          icon: Icons.directions_car,
+          icon: 'directions_car',
           color: Color(0xFF4ECDC4),
           displayName: '🚗 Transporte',
           isActive: true,
@@ -84,7 +83,7 @@ class CategoryModel {
           id: 3,
           name: 'Ocio',
           description: 'Entretenimiento, cine, salidas',
-          icon: Icons.sports_esports,
+          icon: 'sports_esports',
           color: Color(0xFF45B7D1),
           displayName: '🎭 Ocio',
           isActive: true,
@@ -97,7 +96,7 @@ class CategoryModel {
           id: 4,
           name: 'Servicios',
           description: 'Luz, agua, internet, teléfono',
-          icon: Icons.home,
+          icon: 'home',
           color: Color(0xFF96CEB4),
           displayName: '🏠 Servicios',
           isActive: true,
@@ -110,7 +109,7 @@ class CategoryModel {
           id: 5,
           name: 'Salud',
           description: 'Médico, medicinas, seguros',
-          icon: Icons.healing,
+          icon: 'healing',
           color: Color(0xFFFFEAA7),
           displayName: '⚕️ Salud',
           isActive: true,
@@ -123,7 +122,7 @@ class CategoryModel {
           id: 6,
           name: 'Compras',
           description: 'Ropa, electrónicos, compras varias',
-          icon: Icons.shopping_bag,
+          icon: 'shopping_bag',
           color: Color(0xFFDDA0DD),
           displayName: '🛍️ Compras',
           isActive: true,
@@ -136,7 +135,7 @@ class CategoryModel {
           id: 8,
           name: 'Otros',
           description: 'Gastos varios no clasificados',
-          icon: Icons.category,
+          icon: 'category',
           color: Color(0xFFFDCB6E),
           displayName: '💼 Otros',
           isActive: true,
@@ -159,18 +158,29 @@ class CategoryModel {
   };
 }
 
-// Funciones para serialización de IconData y Color
-IconData _iconFromJson(Map<String, dynamic> json) {
-  return IconData(
-    json['codePoint'] as int,
-    fontFamily: json['fontFamily'] as String? ?? 'MaterialIcons',
-  );
+// Función para mapear nombres de iconos a IconData
+IconData _getIconData(String iconName) {
+  switch (iconName) {
+    case 'restaurant':
+      return Icons.restaurant;
+    case 'directions_car':
+      return Icons.directions_car;
+    case 'sports_esports':
+      return Icons.sports_esports;
+    case 'home':
+      return Icons.home;
+    case 'healing':
+      return Icons.healing;
+    case 'shopping_bag':
+      return Icons.shopping_bag;
+    case 'school':
+      return Icons.school;
+    case 'category':
+      return Icons.category;
+    default:
+      return Icons.help_outline; // Icono por defecto
+  }
 }
-
-Map<String, dynamic> _iconToJson(IconData icon) => <String, dynamic>{
-      'codePoint': icon.codePoint,
-      'fontFamily': icon.fontFamily,
-    };
 
 Color _colorFromJson(String hexColor) =>
     Color(int.parse(hexColor.replaceFirst('#', '0xFF')));

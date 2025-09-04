@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final VoidCallback? onRegisterSuccess;
+
+  const RegisterScreen({super.key, this.onRegisterSuccess});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -93,23 +95,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
 
         if (success && mounted) {
-          // Mostrar mensaje de éxito y navegar
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cuenta creada exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          
-          // TODO: Navegar al dashboard o pantalla principal
-          print('Registro exitoso - Navegar al dashboard');
+          // Si hay un callback, ejecutarlo y navegar de vuelta
+          widget.onRegisterSuccess?.call();
+          Navigator.of(context).pop(); // Cerrar pantalla de register
         } else if (mounted) {
           // Mostrar error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authProvider.errorMessage ?? 'Error en el registro'),
-              backgroundColor: AppColors.error,
-            ),
+          CustomSnackBar.showError(
+            context,
+            authProvider.errorMessage ?? 'Error en el registro',
           );
         }
       } catch (e) {
@@ -118,11 +111,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error inesperado: $e'),
-              backgroundColor: AppColors.error,
-            ),
+          CustomSnackBar.showError(
+            context,
+            'Error inesperado: $e',
           );
         }
       }
@@ -142,7 +133,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.slate50,
       body: SafeArea(
         child: Column(
           children: [
@@ -176,12 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onPressed: _navigateBack,
             icon: const Icon(Icons.arrow_back),
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.slate100,
-              foregroundColor: AppColors.slate600,
               fixedSize: const Size(40, 40),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
             ),
           ),
           
@@ -191,7 +176,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Text(
               'Iniciar Sesión',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.slate600,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -253,7 +237,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Text(
           'Crea tu Cuenta',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.slate900,
                 fontWeight: FontWeight.w700,
                 fontSize: 28,
               ),
@@ -262,9 +245,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 8),
         Text(
           'Comienza a gestionar tus finanzas con MoneyFlow.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.slate500,
-              ),
+          style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
       ],
@@ -341,7 +322,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         textAlign: TextAlign.center,
         text: TextSpan(
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.slate500,
                 fontSize: 12,
               ),
           children: [
@@ -349,7 +329,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextSpan(
               text: 'Términos de Servicio',
               style: TextStyle(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
                 decoration: TextDecoration.underline,
               ),
@@ -358,7 +338,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextSpan(
               text: 'Política de Privacidad',
               style: TextStyle(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
                 decoration: TextDecoration.underline,
               ),
@@ -377,15 +357,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.slate500,
-                ),
+            style: Theme.of(context).textTheme.bodySmall,
             children: [
               const TextSpan(text: '¿Necesitas ayuda? '),
               TextSpan(
                 text: 'Contáctanos',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
                   decoration: TextDecoration.underline,
                 ),

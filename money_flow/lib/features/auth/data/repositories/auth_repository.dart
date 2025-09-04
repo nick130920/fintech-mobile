@@ -29,7 +29,7 @@ class AuthRepository {
         throw Exception(errorData['message'] ?? 'Error en el registro');
       }
     } catch (e) {
-      throw Exception('Error en el registro: $e');
+      throw Exception('$e');
     }
   }
 
@@ -57,7 +57,7 @@ class AuthRepository {
         throw Exception(errorData['message'] ?? 'Credenciales inválidas');
       }
     } catch (e) {
-      throw Exception('Error en el login: $e');
+      throw Exception('$e');
     }
   }
 

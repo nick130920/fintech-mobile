@@ -4,6 +4,7 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import '../../features/budget/presentation/screens/category_management_screen.dart';
 import '../../features/budget/presentation/screens/dashboard_screen.dart';
 import '../../features/budget/presentation/screens/expense_history_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialTab;
@@ -41,7 +42,7 @@ class _MainScreenState extends State<MainScreen> {
           DashboardScreenContent(), // Sin Scaffold
           ExpenseHistoryScreenContent(), // Sin Scaffold
           CategoryManagementScreenContent(), // Sin Scaffold
-          ProfileScreenContent(), // Placeholder
+          ProfileScreenContent(),
         ],
       ),
       floatingActionButtonLocation: ExpandableFab.location,
@@ -60,11 +61,11 @@ class _MainScreenState extends State<MainScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFF367CFE), // MoneyFlow blue
+                color: Theme.of(context).colorScheme.primary, // MoneyFlow blue
                 borderRadius: BorderRadius.circular(16), // Siempre cuadrado redondeado
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF367CFE).withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -79,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
                     child: AnimatedRotation(
                       turns: progress.value * 0.125, // Solo rota el ícono (45°)
                       duration: const Duration(milliseconds: 300),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add,
                         color: Colors.white,
                         size: 28,
@@ -98,11 +99,11 @@ class _MainScreenState extends State<MainScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFF367CFE), // MoneyFlow blue
+                color: Theme.of(context).colorScheme.primary, // MoneyFlow blue
                 borderRadius: BorderRadius.circular(16), // Siempre cuadrado redondeado
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF367CFE).withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -117,7 +118,7 @@ class _MainScreenState extends State<MainScreen> {
                     child: AnimatedRotation(
                       turns: (1.0 - progress.value) * 0.125, // Rotación inversa para cierre
                       duration: const Duration(milliseconds: 300),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
                         color: Colors.white,
                         size: 28,
@@ -137,22 +138,22 @@ class _MainScreenState extends State<MainScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Text(
+                child: Text(
                   'Registrar Ingreso',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF374151),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -176,22 +177,22 @@ class _MainScreenState extends State<MainScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Text(
+                child: Text(
                   'Registrar Gasto',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF374151),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -199,8 +200,8 @@ class _MainScreenState extends State<MainScreen> {
               FloatingActionButton.small(
                 heroTag: 'expense_fab',
                 onPressed: () => Navigator.of(context).pushNamed('/add-expense'),
-                backgroundColor: const Color(0xFFEF4444), // red-500
-                child: const Icon(
+                backgroundColor: Theme.of(context).colorScheme.error, // red-500
+                child: Icon(
                   Icons.trending_down,
                   color: Colors.white,
                 ),
@@ -212,15 +213,15 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        selectedItemColor: const Color(0xFF2563EB),
-        unselectedItemColor: const Color(0xFF64748B),
-        backgroundColor: Colors.white,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         elevation: 8,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         iconSize: 24,
         onTap: _onTabTapped,
-        items: const [
+        items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             tooltip: 'Home',
@@ -292,41 +293,13 @@ class CategoryManagementScreenContent extends StatelessWidget {
   }
 }
 
-// Placeholder para perfil
+// Contenido de la pantalla de perfil sin Scaffold
 class ProfileScreenContent extends StatelessWidget {
   const ProfileScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Perfil'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person,
-              size: 64,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Perfil próximamente',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    // Usamos el ProfileScreen real, pero sin el Scaffold para que se integre en PageView
+    return const ProfileScreen();
   }
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/app/app_wrapper.dart';
 import 'core/providers/currency_provider.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
@@ -21,38 +22,44 @@ void main() async {
   // Inicializar datos de localización para español
   await initializeDateFormatting('es', null);
   
-  runApp(const MoneyFlowApp());
+  runApp(const MyApp());
 }
 
-class MoneyFlowApp extends StatelessWidget {
-  const MoneyFlowApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         ChangeNotifierProvider(create: (_) => BudgetSetupProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
       ],
-      child: MaterialApp(
-        title: 'MoneyFlow',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: const AppWrapper(),
-        routes: {
-          '/budget-setup': (context) => const BudgetSetupScreen(),
-          '/dashboard': (context) => const MainScreen(),
-          '/add-expense': (context) => const AddExpenseScreen(),
-          '/add-income': (context) => const AddIncomeScreen(),
-          '/expense-history': (context) => const MainScreen(initialTab: 1),
-          '/category-management': (context) => const MainScreen(initialTab: 2),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'MoneyFlow',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const AppWrapper(),
+            routes: {
+              '/budget-setup': (context) => const BudgetSetupScreen(),
+              '/dashboard': (context) => const MainScreen(),
+              '/add-expense': (context) => const AddExpenseScreen(),
+              '/add-income': (context) => const AddIncomeScreen(),
+              '/expense-history': (context) => const MainScreen(initialTab: 1),
+              '/category-management': (context) => const MainScreen(initialTab: 2),
+            },
+          );
         },
       ),
     );
   }
-
 }

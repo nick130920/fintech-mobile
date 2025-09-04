@@ -12,23 +12,18 @@ class Step3AssignPercentages extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<BudgetSetupProvider>(
       builder: (context, provider, child) {
-        return SingleChildScrollView(
+        return Padding(
           padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         MediaQuery.of(context).viewInsets.bottom - 200,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               // Encabezado
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.pie_chart,
                     size: 48,
-                    color: Colors.orange,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -46,7 +41,7 @@ class Step3AssignPercentages extends StatelessWidget {
                 'Ajusta los porcentajes deslizando. Te sugerimos valores basados en recomendaciones financieras.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.5,
                 ),
               ),
@@ -58,27 +53,26 @@ class Step3AssignPercentages extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Lista de categorías con sliders
-              SizedBox(
-                height: 300, // Altura fija para la lista
-                child: ListView.separated(
-                  itemCount: provider.selectedCategories.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final category = provider.selectedCategories[index];
-                    final percentage = provider.categoryPercentages[category.id] ?? 0.0;
-                    final amount = provider.getCategoryAmount(category.id);
-                    
-                    return _buildCategorySlider(
-                      context,
-                      category,
-                      percentage,
-                      amount,
-                      provider,
-                    );
-                  },
-                ),
-              ),
+                             // Lista de categorías con sliders (con scroll)
+               Expanded(
+                 child: ListView.separated(
+                   itemCount: provider.selectedCategories.length,
+                   separatorBuilder: (context, index) => const SizedBox(height: 16),
+                   itemBuilder: (context, index) {
+                     final category = provider.selectedCategories[index];
+                     final percentage = provider.categoryPercentages[category.id] ?? 0.0;
+                     final amount = provider.getCategoryAmount(category.id);
+                     
+                     return _buildCategorySlider(
+                       context,
+                       category,
+                       percentage,
+                       amount,
+                       provider,
+                     );
+                   },
+                 ),
+               ),
 
               const SizedBox(height: 16),
 
@@ -126,37 +120,38 @@ class Step3AssignPercentages extends StatelessWidget {
               ),
               ],
             ),
-          ),
-        );
+          );
       },
     );
   }
 
   Widget _buildTotalIndicator(BudgetSetupProvider provider) {
-    final isComplete = provider.totalPercentage == 100.0;
-    final isOver = provider.totalPercentage > 100.0;
-    
-    Color indicatorColor;
-    String message;
-    
-    if (isComplete) {
-      indicatorColor = Colors.green;
-      message = '¡Perfecto! Suman exactamente 100%';
-    } else if (isOver) {
-      indicatorColor = Colors.red;
-      message = 'Te has pasado del 100%. Ajusta los valores.';
-    } else {
-      indicatorColor = Colors.orange;
-      message = 'Te faltan ${(100 - provider.totalPercentage).toStringAsFixed(1)}% por asignar';
-    }
+    return Builder(
+      builder: (context) {
+        final isComplete = provider.totalPercentage == 100.0;
+        final isOver = provider.totalPercentage > 100.0;
+        
+        Color indicatorColor;
+        String message;
+        
+        if (isComplete) {
+          indicatorColor = Colors.green;
+          message = '¡Perfecto! Suman exactamente 100%';
+        } else if (isOver) {
+          indicatorColor = Theme.of(context).colorScheme.error;
+          message = 'Te has pasado del 100%. Ajusta los valores.';
+        } else {
+          indicatorColor = Theme.of(context).colorScheme.primary;
+          message = 'Quedan ${(100 - provider.totalPercentage).toStringAsFixed(1)}% disponibles (se pueden asignar después)';
+        }
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: indicatorColor.withOpacity(0.1),
+        color: indicatorColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: indicatorColor.withOpacity(0.3)),
+        border: Border.all(color: indicatorColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -167,7 +162,7 @@ class Step3AssignPercentages extends StatelessWidget {
                 'Total asignado',
                 style: TextStyle(
                   fontSize: 14,
-                  color: indicatorColor.withOpacity(0.8),
+                  color: indicatorColor.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -184,7 +179,7 @@ class Step3AssignPercentages extends StatelessWidget {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: provider.totalPercentage / 100,
-            backgroundColor: indicatorColor.withOpacity(0.2),
+            backgroundColor: indicatorColor.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
           ),
           const SizedBox(height: 8),
@@ -198,6 +193,8 @@ class Step3AssignPercentages extends StatelessWidget {
           ),
         ],
       ),
+    );
+      },
     );
   }
 
@@ -213,12 +210,12 @@ class Step3AssignPercentages extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -250,11 +247,12 @@ class Step3AssignPercentages extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                                            Text(
                       category.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Consumer<CurrencyProvider>(
@@ -332,9 +330,12 @@ class Step3AssignPercentages extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           '¿Crear este presupuesto?',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -344,17 +345,21 @@ class Step3AssignPercentages extends StatelessWidget {
               builder: (context, currencyProvider, child) {
                 return Text(
                   'Presupuesto total: ${currencyProvider.formatAmount(provider.totalAmount)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 );
               },
             ),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Text(
               'Categorías:',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             ...provider.selectedCategories.map((category) {
@@ -369,14 +374,20 @@ class Step3AssignPercentages extends StatelessWidget {
                       children: [
                         Icon(category.iconData, size: 16, color: category.color),
                         const SizedBox(width: 8),
-                        Text(category.name),
+                        Text(
+                          category.name,
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                        ),
                       ],
                     ),
                     Consumer<CurrencyProvider>(
                       builder: (context, currencyProvider, child) {
                         return Text(
                           '${percentage.toStringAsFixed(0)}% (${currencyProvider.formatAmount(amount)})',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         );
                       },
                     ),
@@ -384,6 +395,40 @@ class Step3AssignPercentages extends StatelessWidget {
                 ),
               );
             }),
+            // Mostrar dinero no asignado si es menor al 100%
+            if (provider.totalPercentage < 100.0) ...[
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.savings, size: 16, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Sin asignar',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      ),
+                    ],
+                  ),
+                  Consumer<CurrencyProvider>(
+                    builder: (context, currencyProvider, child) {
+                      final unassignedPercentage = 100.0 - provider.totalPercentage;
+                      final unassignedAmount = provider.totalAmount * (unassignedPercentage / 100);
+                      return Text(
+                        '${unassignedPercentage.toStringAsFixed(1)}% (${currencyProvider.formatAmount(unassignedAmount)})',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
         actions: [

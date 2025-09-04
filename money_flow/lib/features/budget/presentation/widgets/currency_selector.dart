@@ -19,12 +19,12 @@ class CurrencySelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -40,15 +40,16 @@ class CurrencySelector extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   currencyProvider.selectedCurrency.code,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   Icons.keyboard_arrow_down,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   size: 20,
                 ),
               ],
@@ -66,9 +67,9 @@ class CurrencySelector extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(20),
           ),
         ),
@@ -80,7 +81,7 @@ class CurrencySelector extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -90,20 +91,21 @@ class CurrencySelector extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  const Icon(Icons.language, color: Colors.blue),
+                  Icon(Icons.language, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Seleccionar Divisa',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -115,20 +117,20 @@ class CurrencySelector extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.green[600], size: 16),
+                    Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Detectamos tu ubicación automáticamente',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.green[700],
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -153,10 +155,12 @@ class CurrencySelector extends StatelessWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue[50] : Colors.grey[50],
+                        color: isSelected 
+                            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                         border: isSelected 
-                            ? Border.all(color: Colors.blue[200]!) 
+                            ? Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)) 
                             : null,
                       ),
                       child: Center(
@@ -170,24 +174,28 @@ class CurrencySelector extends StatelessWidget {
                       currency.name,
                       style: TextStyle(
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? Colors.blue[700] : null,
+                        color: isSelected 
+                            ? Theme.of(context).colorScheme.primary 
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     subtitle: Text(
                       '${currency.code} • ${currency.country}',
                       style: TextStyle(
-                        color: isSelected ? Colors.blue[600] : Colors.grey[600],
+                        color: isSelected 
+                            ? Theme.of(context).colorScheme.primary 
+                            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     ),
                     trailing: isSelected 
-                        ? Icon(Icons.check_circle, color: Colors.blue[600])
+                        ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
                         : Text(
                             currency.symbol,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                     onTap: () {
@@ -204,40 +212,43 @@ class CurrencySelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
-                border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2))),
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Puedes cambiar tu divisa en cualquier momento desde configuración.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ),
                     ],
                   ),
                   if (currencyProvider.isDetecting)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
                       child: Row(
                         children: [
-                          SizedBox(
+                          const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Detectando tu ubicación...',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12, 
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
                       ),

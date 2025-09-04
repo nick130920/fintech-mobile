@@ -44,6 +44,11 @@ class BudgetSetupProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  // Verificar si ya existe presupuesto
+  Future<bool> checkExistingBudget() async {
+    return await _repository.hasBudgetConfigured();
+  }
+
   // Progreso del stepper
   double get progress {
     switch (_currentStep) {
@@ -181,7 +186,7 @@ class BudgetSetupProvider with ChangeNotifier {
       .fold(0.0, (sum, percentage) => sum + percentage);
 
   bool get canProceedFromStep3 => 
-      totalPercentage == 100.0 && _selectedCategories.isNotEmpty;
+      totalPercentage > 0.0 && totalPercentage <= 100.0 && _selectedCategories.isNotEmpty;
 
   // Finalizar configuración
   Future<void> completeBudgetSetup() async {
@@ -218,7 +223,11 @@ class BudgetSetupProvider with ChangeNotifier {
       _currentStep = BudgetSetupStep.completed;
       _clearError();
     } catch (e) {
-      _setError('Error al crear presupuesto: $e');
+      if (e.toString().contains('budget already exists')) {
+        _setError('Ya existe un presupuesto para este mes.');
+      } else {
+        _setError('Error al crear presupuesto: $e');
+      }
     }
     _setLoading(false);
   }

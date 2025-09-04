@@ -561,7 +561,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm == true && mounted) {
       Navigator.of(context).pop(); // Cerrar detalles
       
       final success = await provider.deleteExpense(expenseId);
@@ -630,7 +630,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   Consumer<ExpenseProvider>(
                     builder: (context, provider, child) {
                       return DropdownButtonFormField<CategoryModel>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),

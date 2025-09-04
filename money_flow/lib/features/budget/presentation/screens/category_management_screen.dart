@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../data/models/budget_model.dart';
 import '../../data/repositories/budget_repository.dart';
 
@@ -43,6 +44,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         _errorMessage = 'Error al cargar presupuesto: $e';
         _isLoading = false;
       });
+      
+      // Mostrar error con CustomSnackBar si el widget está montado
+      if (mounted) {
+        CustomSnackBar.showError(context, 'Error al cargar presupuesto: $e');
+      }
     }
   }
 
@@ -67,15 +73,20 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     if (widget.useScaffold == false) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: body,
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Gestión de Categorías'),
+        title: Text(
+          'Gestión de Categorías',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -95,19 +106,19 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               backgroundColor: Colors.transparent,
               shape: const CircleBorder(),
             ),
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back,
-              color: Color(0xFF374151), // text-gray-700
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
               'Límites de Gastos',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF111827), // text-gray-900
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -129,7 +140,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             _showAddCategoryDialog();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF137FEC), // var(--primary-color)
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -137,14 +147,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           ),
           icon: const Icon(
             Icons.add,
-            color: Colors.white,
           ),
           label: const Text(
             'Agregar Nueva Categoría',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
             ),
           ),
         ),
@@ -164,16 +172,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: Colors.red,
+              color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -186,14 +194,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
 
     if (_currentBudget == null) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.account_balance_wallet,
               size: 64,
-              color: Colors.grey,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
             SizedBox(height: 16),
             Text(
@@ -201,7 +209,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             SizedBox(height: 8),
@@ -209,7 +217,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               'Configura tu presupuesto primero',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -240,11 +248,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
               ),
@@ -279,17 +290,17 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       children: [
                         Text(
                           category.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827), // text-gray-900
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           '${currencyProvider.formatAmount(allocation.spentAmount)} / ${currencyProvider.formatAmount(allocation.allocatedAmount)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280), // text-gray-500
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -304,9 +315,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       shape: const CircleBorder(),
                       padding: const EdgeInsets.all(8),
                     ),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.edit,
-                      color: Color(0xFF6B7280), // text-gray-500
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       size: 20,
                     ),
                   ),
@@ -320,7 +331,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 height: 10,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB), // bg-gray-200
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: FractionallySizedBox(
@@ -351,7 +362,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         content: const Text('Funcionalidad de agregar categoría próximamente.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop();
+              CustomSnackBar.showInfo(context, 'Funcionalidad próximamente disponible');
+            },
             child: const Text('Cerrar'),
           ),
         ],
@@ -360,30 +374,120 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   void _showEditCategoryDialog(AllocationModel allocation) {
-    final TextEditingController amountController = TextEditingController(
-      text: allocation.allocatedAmount.toStringAsFixed(0),
-    );
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar ${allocation.category.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: allocation.category.color.withValues(alpha: 0.1),
+      builder: (context) => _EditCategoryDialog(
+        allocation: allocation,
+        budgetRepository: _budgetRepository,
+        onUpdate: _loadCurrentBudget,
+      ),
+    );
+  }
+}
+
+class _EditCategoryDialog extends StatefulWidget {
+  final AllocationModel allocation;
+  final BudgetRepository budgetRepository;
+  final VoidCallback onUpdate;
+
+  const _EditCategoryDialog({
+    required this.allocation,
+    required this.budgetRepository,
+    required this.onUpdate,
+  });
+
+  @override
+  State<_EditCategoryDialog> createState() => _EditCategoryDialogState();
+}
+
+class _EditCategoryDialogState extends State<_EditCategoryDialog> {
+  late TextEditingController amountController;
+  bool isUpdating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    amountController = TextEditingController(
+      text: widget.allocation.allocatedAmount.toStringAsFixed(0),
+    );
+  }
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updateAllocation() async {
+    try {
+      // Validar entrada - remover espacios, comas y otros caracteres
+      final cleanText = amountController.text
+          .replaceAll(',', '')
+          .replaceAll(' ', '')
+          .replaceAll('.', '')
+          .trim();
+      
+      if (cleanText.isEmpty) {
+        if (mounted) {
+          CustomSnackBar.showError(context, 'Por favor ingresa un monto');
+        }
+        return;
+      }
+
+      final newAmount = double.tryParse(cleanText);
+      if (newAmount == null || newAmount <= 0) {
+        if (mounted) {
+          CustomSnackBar.showError(context, 'Por favor ingresa un monto válido mayor a 0');
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          isUpdating = true;
+        });
+      }
+
+      // Actualizar en el backend
+      await widget.budgetRepository.updateAllocation(widget.allocation.id, newAmount);
+
+      // Cerrar diálogo
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onUpdate();
+        CustomSnackBar.showSuccess(context, 'Límite actualizado exitosamente');
+      }
+
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+        CustomSnackBar.showError(context, 'Error al actualizar: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Editar ${widget.allocation.category.name}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: widget.allocation.category.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Center(
                     child: Icon(
-                      allocation.category.iconData,
-                      color: allocation.category.color,
+                      widget.allocation.category.iconData,
+                      color: widget.allocation.category.color,
                       size: 20,
                     ),
                   ),
@@ -394,7 +498,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        allocation.category.name,
+                        widget.allocation.category.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -403,10 +507,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       Consumer<CurrencyProvider>(
                         builder: (context, currencyProvider, child) {
                           return Text(
-                            'Gastado: ${currencyProvider.formatAmount(allocation.spentAmount)}',
-                            style: const TextStyle(
+                            'Gastado: ${currencyProvider.formatAmount(widget.allocation.spentAmount)}',
+                            style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           );
                         },
@@ -436,24 +540,23 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: isUpdating ? null : () => Navigator.of(context).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Implementar actualización
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Límite actualizado exitosamente'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Guardar'),
+            onPressed: isUpdating ? null : _updateAllocation,
+            child: isUpdating
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('Guardar'),
           ),
         ],
-      ),
-    );
+      );
   }
 }

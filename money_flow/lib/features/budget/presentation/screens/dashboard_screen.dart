@@ -59,14 +59,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (widget.useScaffold == false) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: _buildCustomAppBar(),
         body: body,
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: _buildCustomAppBar(),
       body: body,
     );
@@ -77,12 +77,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      title: const Text(
+      title: Text(
         'MoneyFlow',
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B), // text-slate-800
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       centerTitle: true,
@@ -91,9 +91,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onPressed: () {
             // Navegación a configuración
           },
-          icon: const Icon(
+          icon: Icon(
             Icons.settings,
-            color: Color(0xFF64748B), // text-slate-600
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           style: IconButton.styleFrom(
             backgroundColor: Colors.transparent,
@@ -138,19 +138,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)), // border-slate-200
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B), // text-slate-600
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 8),
@@ -162,10 +162,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     amount,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A), // text-slate-900
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                   ),
@@ -177,14 +177,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icon(
                       isUp ? Icons.arrow_upward : Icons.arrow_downward,
                       size: 16,
-                      color: isUp ? const Color(0xFF059669) : const Color(0xFFEF4444), // green-600 : red-500
+                      color: isUp ? Colors.green : Theme.of(context).colorScheme.error,
                     ),
                                             Text(
                           '${trendPercentage.toStringAsFixed(1)}%',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: isUp ? const Color(0xFF059669) : const Color(0xFFEF4444),
+                        color: isUp ? Colors.green : Theme.of(context).colorScheme.error,
                       ),
                     ),
                   ],
@@ -202,29 +202,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
           ),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Presupuesto Mensual',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   Text(
                     '${currencyProvider.formatAmount(dashboardProvider.budgetSpent)} / ${currencyProvider.formatAmount(dashboardProvider.budgetTotal)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -232,13 +232,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: dashboardProvider.budgetProgressValue.clamp(0.0, 1.0),
-                backgroundColor: const Color(0xFFE2E8F0),
+                backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   dashboardProvider.isOverBudget 
-                    ? Colors.red 
+                    ? Theme.of(context).colorScheme.error 
                     : dashboardProvider.isNearingLimit 
                       ? Colors.orange 
-                      : const Color(0xFF3B82F6)
+                      : Theme.of(context).colorScheme.primary
                 ),
                 minHeight: 10,
               ),
@@ -277,22 +277,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Transacciones Recientes',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pushNamed('/expense-history'),
-                  child: const Text(
+                  child:  Text(
                     'Ver Todas',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB), // text-blue-600
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -321,32 +321,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
           Icon(
             Icons.receipt_long,
             size: 48,
-            color: Colors.grey[400],
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No hay transacciones aún',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Comienza a rastrear tus gastos',
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF94A3B8),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -363,9 +363,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -383,7 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           
           Expanded(
             child: Column(
@@ -391,19 +391,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   expense.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF1E293B), // text-slate-800
+                    color: Theme.of(context).colorScheme.onSurface, // text-slate-800
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   expense.category.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF64748B), // text-slate-500
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), // text-slate-500
                   ),
                 ),
               ],
@@ -414,10 +414,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             builder: (context, currencyProvider, child) {
               return Text(
                 '-${currencyProvider.formatAmount(expense.amount)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF1E293B),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               );
             },
