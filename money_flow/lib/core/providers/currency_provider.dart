@@ -75,9 +75,9 @@ class CurrencyProvider with ChangeNotifier {
   // Formatear cantidad compacta (para espacios pequeños)
   String formatAmountCompact(double amount) {
     if (amount >= 1000000) {
-      return '${_selectedCurrency.symbol}${(amount / 1000000).toStringAsFixed(1)}M';
+      return '${_selectedCurrency.symbol} ${(amount / 1000000).toStringAsFixed(1)}M';
     } else if (amount >= 1000) {
-      return '${_selectedCurrency.symbol}${(amount / 1000).toStringAsFixed(1)}K';
+      return '${_selectedCurrency.symbol} ${(amount / 1000).toStringAsFixed(1)}K';
     }
     return CurrencyService.formatAmount(amount, _selectedCurrency);
   }

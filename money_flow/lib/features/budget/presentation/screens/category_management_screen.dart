@@ -27,7 +27,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     _loadCurrentBudget();
   }
 
+  @override
+  void dispose() {
+    // Cancelar cualquier operación async pendiente
+    super.dispose();
+  }
+
   Future<void> _loadCurrentBudget() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -35,11 +43,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     try {
       final budget = await _budgetRepository.getCurrentBudget();
+      
+      if (!mounted) return;
+      
       setState(() {
         _currentBudget = budget;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _errorMessage = 'Error al cargar presupuesto: $e';
         _isLoading = false;
@@ -203,7 +216,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               size: 64,
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No hay presupuesto configurado',
               style: TextStyle(
@@ -212,7 +225,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Configura tu presupuesto primero',
               style: TextStyle(

@@ -74,26 +74,26 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       );
 
     if (widget.useScaffold == false) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const Text('Historial de Gastos'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: _showFilters,
-            ),
-          ],
-        ),
-        body: body,
-      );
+          return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Historial de Gastos'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilters,
+          ),
+        ],
+      ),
+      body: body,
+    );
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Historial de Gastos'),
         backgroundColor: Colors.transparent,
@@ -118,7 +118,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           Icon(
             Icons.receipt_long,
             size: 80,
-            color: Colors.grey[400],
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 16),
           Text(
@@ -126,7 +126,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 8),
@@ -134,7 +134,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
             'Comienza registrando tu primer gasto',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[500],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
@@ -153,11 +153,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -214,7 +214,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -297,13 +297,13 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                               ),
                             ),
                             if (expense.location.isNotEmpty) ...[
-                              const Text(' • ', style: TextStyle(color: Colors.grey)),
+                              Text(' • ', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                               Expanded(
                                 child: Text(
                                   expense.location,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -315,9 +315,9 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                         const SizedBox(height: 4),
                         Text(
                           expense.timeAgo,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -369,9 +369,9 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
@@ -380,7 +380,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -423,9 +423,9 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                               ),
                               Text(
                                 expense.category.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -513,7 +513,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -591,9 +591,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
@@ -602,7 +602,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -625,7 +625,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Filtro por categoría
-                  const Text('Categoría', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Categoría', style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   Consumer<ExpenseProvider>(
                     builder: (context, provider, child) {
@@ -661,7 +661,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   const SizedBox(height: 24),
                   
                   // Rango de fechas
-                  const Text('Período', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Período', style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -736,7 +736,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -744,9 +744,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 4),
@@ -757,7 +757,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: date != null ? Colors.black : Colors.grey,
+                color: date != null 
+                    ? Theme.of(context).colorScheme.onSurface 
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],

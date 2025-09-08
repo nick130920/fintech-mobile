@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/widgets/money_flow_logo.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -28,9 +29,8 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               const Spacer(flex: 2),
               
-              // Logo
-              const Text('💸', style: TextStyle(fontSize: 96)),
-              
+              // Logo (solo símbolo, sin texto)
+              const MoneyFlowLogo.iconOnly(size: 96),
               const SizedBox(height: 32),
               
               // Title

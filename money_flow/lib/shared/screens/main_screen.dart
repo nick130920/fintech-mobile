@@ -1,14 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-
-import '../../features/budget/presentation/screens/category_management_screen.dart';
-import '../../features/budget/presentation/screens/dashboard_screen.dart';
-import '../../features/budget/presentation/screens/expense_history_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
+import 'package:money_flow/features/budget/presentation/screens/category_management_screen.dart';
+import 'package:money_flow/features/budget/presentation/screens/dashboard_screen.dart';
+import 'package:money_flow/features/budget/presentation/screens/reports_screen.dart';
+import 'package:money_flow/features/profile/presentation/screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialTab;
-  
   const MainScreen({super.key, this.initialTab = 0});
 
   @override
@@ -16,13 +16,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  late int _currentIndex;
+  late int _selectedIndex;
   late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialTab;
+    _selectedIndex = widget.initialTab;
     _pageController = PageController(initialPage: widget.initialTab);
   }
 
@@ -35,226 +35,174 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(), // Desactivar swipe
-        children: const [
-          DashboardScreenContent(), // Sin Scaffold
-          ExpenseHistoryScreenContent(), // Sin Scaffold
-          CategoryManagementScreenContent(), // Sin Scaffold
-          ProfileScreenContent(),
+      body: Stack(
+        children: [
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(), // Desactivar swipe
+            children: const [
+              DashboardScreenContent(), // Sin Scaffold
+              ReportsScreenContent(), // Sin Scaffold
+              CategoryManagementScreenContent(), // Sin Scaffold
+              ProfileScreenContent(),
+            ],
+          ),
+          _buildLiquidGlassBottomBar(),
         ],
       ),
       floatingActionButtonLocation: ExpandableFab.location,
       floatingActionButton: ExpandableFab(
-        type: ExpandableFabType.up,
-        distance: 70,
-        duration: const Duration(milliseconds: 400),
+        type: ExpandableFabType.fan,
+        pos: ExpandableFabPos.center,
+        fanAngle: 60,
+        distance: 80,
+        openButtonBuilder: RotateFloatingActionButtonBuilder(
+          child: const Icon(Icons.add),
+          fabSize: ExpandableFabSize.regular,
+          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shape: const CircleBorder(),
+        ),
+        closeButtonBuilder: DefaultFloatingActionButtonBuilder(
+          child: const Icon(Icons.close),
+          fabSize: ExpandableFabSize.regular,
+          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shape: const CircleBorder(),
+        ),
         overlayStyle: ExpandableFabOverlayStyle(
-          color: Colors.black.withValues(alpha: 0.1),
-          blur: 2,
-        ),
-        openButtonBuilder: FloatingActionButtonBuilder(
-          size: 56,
-          builder: (BuildContext context, void Function()? onPressed, Animation<double> progress) {
-            return Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary, // MoneyFlow blue
-                borderRadius: BorderRadius.circular(16), // Siempre cuadrado redondeado
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onPressed,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Center(
-                    child: AnimatedRotation(
-                      turns: progress.value * 0.125, // Solo rota el ícono (45°)
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        closeButtonBuilder: FloatingActionButtonBuilder(
-          size: 56,
-          builder: (BuildContext context, void Function()? onPressed, Animation<double> progress) {
-            return Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary, // MoneyFlow blue
-                borderRadius: BorderRadius.circular(16), // Siempre cuadrado redondeado
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onPressed,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Center(
-                    child: AnimatedRotation(
-                      turns: (1.0 - progress.value) * 0.125, // Rotación inversa para cierre
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+          color: Colors.black.withValues(alpha: 0.3),
+          blur: 5,
         ),
         children: [
-          // Opción Ingreso (verde)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Registrar Ingreso',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              FloatingActionButton.small(
-                heroTag: 'income_fab',
-                onPressed: () => Navigator.of(context).pushNamed('/add-income'),
-                backgroundColor: const Color(0xFF10B981), // green-500
-                child: const Icon(
-                  Icons.trending_up,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          FloatingActionButton.small(
+            heroTag: "income",
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.trending_up),
+            onPressed: () {
+              print('DEBUG: Income button pressed - navigating to /add-income');
+              Navigator.pushNamed(context, '/add-income');
+            },
           ),
-          
-          // Opción Gasto (rojo)
-          Row( 
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Registrar Gasto',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              FloatingActionButton.small(
-                heroTag: 'expense_fab',
-                onPressed: () => Navigator.of(context).pushNamed('/add-expense'),
-                backgroundColor: Theme.of(context).colorScheme.error, // red-500
-                child: Icon(
-                  Icons.trending_down,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-        elevation: 8,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        iconSize: 24,
-        onTap: _onTabTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            tooltip: 'Home',
-            label: ''
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            tooltip: 'Reports',
-            label: ''
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            tooltip: 'Budget',
-            label: ''
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            tooltip: 'Profile',
-            label: ''
+          FloatingActionButton.small(
+            heroTag: "expense", 
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.trending_down),
+            onPressed: () {
+              print('DEBUG: Expense button pressed - navigating to /add-expense');
+              Navigator.pushNamed(context, '/add-expense');
+            },
           ),
         ],
       ),
     );
   }
 
-  void _onTabTapped(int index) {
-    if (index == _currentIndex) return;
 
+
+  Widget _buildLiquidGlassBottomBar() {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Positioned(
+      left: 60,
+      right: 60,
+      bottom: bottomPadding ,
+      child: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: isDark 
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.15),
+              blurRadius: 25,
+              offset: const Offset(0, 8),
+              spreadRadius: -5,
+            ),
+            BoxShadow(
+              color: isDark 
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.08),
+              blurRadius: 50,
+              offset: const Offset(0, 20),
+              spreadRadius: -10,
+            ),
+          ],
+        ),
+        child: ClipPath(
+          clipper: _BottomBarClipper(),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark ? [
+                    const Color(0xFF1E3A8A).withValues(alpha: 0.3), // Blue-900 with transparency
+                    const Color(0xFF1E40AF).withValues(alpha: 0.2), // Blue-800 with transparency
+                  ] : [
+                    const Color(0xFF3B82F6).withValues(alpha: 0.15), // Blue-500 with transparency
+                    const Color(0xFF2563EB).withValues(alpha: 0.1), // Blue-600 with transparency
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  _buildNavItem(0, Icons.home_rounded, 'Inicio'),
+                  _buildNavItem(1, Icons.bar_chart_rounded, 'Reportes'),
+                  const SizedBox(width: 55), // Espacio para el FAB
+                  _buildNavItem(2, Icons.category_rounded, 'Categorías'),
+                  _buildNavItem(3, Icons.person_rounded, 'Perfil'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index),
+        child: Container(
+          height: 65, // Altura fija igual al navbar
+          alignment: Alignment.center, // Centrado perfecto
+          child: AnimatedScale(
+            scale: isSelected ? 1.2 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: isSelected ? BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ) : null,
+              child: Icon(
+                icon,
+                size: 24,
+                color: isSelected 
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
     setState(() {
-      _currentIndex = index;
+      _selectedIndex = index;
     });
-
-    // Animar a la nueva página
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -269,37 +217,95 @@ class DashboardScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(useScaffold: false);
+    return const DashboardScreen();
   }
 }
 
-// Contenido del historial sin Scaffold
-class ExpenseHistoryScreenContent extends StatelessWidget {
-  const ExpenseHistoryScreenContent({super.key});
+// Contenido de Reports sin Scaffold
+class ReportsScreenContent extends StatelessWidget {
+  const ReportsScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const ExpenseHistoryScreen(useScaffold: false);
+    return const ReportsScreen(useScaffold: false);
   }
 }
 
-// Contenido de category management sin Scaffold
+
+// Contenido de Category Management sin Scaffold
 class CategoryManagementScreenContent extends StatelessWidget {
   const CategoryManagementScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const CategoryManagementScreen(useScaffold: false);
+    return const CategoryManagementScreen();
   }
 }
 
-// Contenido de la pantalla de perfil sin Scaffold
+// Contenido del Profile sin Scaffold
 class ProfileScreenContent extends StatelessWidget {
   const ProfileScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Usamos el ProfileScreen real, pero sin el Scaffold para que se integre en PageView
     return const ProfileScreen();
   }
+}
+
+// Custom clipper para crear la forma del BottomNavigationBar con indentación
+class _BottomBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    
+    // Comenzar desde la esquina superior izquierda
+    path.moveTo(0, 30); // Empezar con border radius
+    
+    // Borde superior izquierdo redondeado
+    path.quadraticBezierTo(0, 0, 30, 0);
+    
+    // Implementación basada en el artículo de Medium usando curvas Bézier cúbicas
+    // Línea hasta P1 (inicio de la curva)
+    path.lineTo(size.width * 0.35, 0);
+    
+    // Primera curva Bézier cúbica (P1 a P3) - lado izquierdo del hundimiento
+    path.cubicTo(
+      size.width * 0.40, 0,      // C1: Control point 1 (horizontal desde P1)
+      size.width * 0.42, 25,     // C2: Control point 2 optimizado (más cerca del centro)
+      size.width * 0.5, 25,      // P3: Punto central del hundimiento
+    );
+    
+    // Segunda curva Bézier cúbica (P3 a P5) - lado derecho del hundimiento
+    path.cubicTo(
+      size.width * 0.58, 25,     // C3: Control point 3 (simétrico a C2)
+      size.width * 0.60, 0,      // C4: Control point 4 optimizado (más cerca del centro)
+      size.width * 0.65, 0,      // P5: Final de la curva
+    );
+    
+    // Línea hasta el borde superior derecho
+    path.lineTo(size.width - 30, 0);
+    
+    // Borde superior derecho redondeado
+    path.quadraticBezierTo(size.width, 0, size.width, 30);
+    
+    // Línea hacia abajo (lado derecho)
+    path.lineTo(size.width, size.height - 30);
+    
+    // Borde inferior derecho redondeado
+    path.quadraticBezierTo(size.width, size.height, size.width - 30, size.height);
+    
+    // Línea inferior
+    path.lineTo(30, size.height);
+    
+    // Borde inferior izquierdo redondeado
+    path.quadraticBezierTo(0, size.height, 0, size.height - 30);
+    
+    // Cerrar el path
+    path.close();
+    
+    return path;
+  }
+  
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

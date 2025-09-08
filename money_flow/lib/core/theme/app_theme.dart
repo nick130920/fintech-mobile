@@ -12,12 +12,19 @@ class AppTheme {
         brightness: Brightness.light,
         primary: AppColors.primary,
         onPrimary: AppColors.white,
-        surface: AppColors.slate50,
-        onSurface: AppColors.slate900,
+        surface: AppColors.lightBackground,
+        onSurface: AppColors.lightOnSurface,
         surfaceContainerHighest: AppColors.slate100,
         error: AppColors.error,
+        // Custom colors for glassmorphism
+        secondary: AppColors.lightOnSurfaceMedium, // For secondary text
+        tertiary: AppColors.lightOnSurfaceSoft, // For tertiary text
+      ).copyWith(
+        // Extension colors
+        outline: AppColors.slate300,
+        outlineVariant: AppColors.slate200,
       ),
-      scaffoldBackgroundColor: AppColors.slate50,
+      scaffoldBackgroundColor: AppColors.lightBackground,
       
       // AppBar theme
       appBarTheme: const AppBarTheme(
@@ -168,10 +175,17 @@ class AppTheme {
         brightness: Brightness.dark,
         primary: AppColors.primary,
         onPrimary: AppColors.white,
-        surface: AppColors.darkSurface,
+        surface: AppColors.darkBackground,
         onSurface: AppColors.darkOnSurface,
-        surfaceContainerHighest: AppColors.darkBackground,
+        surfaceContainerHighest: AppColors.darkSurface,
         error: AppColors.error,
+        // Custom colors for glassmorphism
+        secondary: AppColors.darkOnSurfaceMedium, // For secondary text
+        tertiary: AppColors.darkOnSurfaceSoft, // For tertiary text
+      ).copyWith(
+        // Extension colors
+        outline: AppColors.darkBorder,
+        outlineVariant: AppColors.slate700,
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
       

@@ -2,21 +2,113 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
+/// Widget personalizable para el logo de MoneyFlow
+/// 
+/// Permite mostrar el logo en diferentes configuraciones:
+/// - Solo el símbolo/dibujo
+/// - Logo completo con texto
+/// - Diferentes tamaños y colores
+/// 
+/// **Ejemplos de uso:**
+/// 
+/// ```dart
+/// // Logo solo (sin texto) - perfecto para headers, splash screens
+/// MoneyFlowLogo.iconOnly(size: 64)
+/// 
+/// // Logo completo - para pantallas de bienvenida, about
+/// MoneyFlowLogo.full(size: 120)
+/// 
+/// // Logo pequeño para headers
+/// MoneyFlowLogo.small(    )
+/// 
+/// // Logo mediano para modals
+/// MoneyFlowLogo.medium()
+/// 
+/// // Logo grande para splash/welcome
+/// MoneyFlowLogo.large()
+/// 
+/// // Customización completa
+/// MoneyFlowLogo(
+///   size: 100,
+///   showText: false,
+///   textColor: Colors.white,
+///   logoColor: Colors.blue,
+/// )
+/// ```
 class MoneyFlowLogo extends StatelessWidget {
+  /// Tamaño del logo (width). Si no se especifica, usa 96.0
   final double? size;
+  
+  /// Si debe mostrar el texto "MoneyFlow" debajo del símbolo
   final bool showText;
+  
+  /// Color del texto. Si no se especifica, usa el color del tema
   final Color? textColor;
+  
+  /// Color del logo/símbolo. Si no se especifica, usa el gradiente por defecto
+  final Color? logoColor;
+  
+  /// Espaciado entre el logo y el texto
+  final double spacing;
 
   const MoneyFlowLogo({
     super.key,
     this.size,
     this.showText = true,
     this.textColor,
+    this.logoColor,
+    this.spacing = 16,
   });
+
+  /// Constructor para logo solo (sin texto) - perfecto para headers
+  const MoneyFlowLogo.iconOnly({
+    super.key,
+    this.size,
+    this.logoColor,
+  }) : showText = false,
+       textColor = null,
+       spacing = 0;
+
+  /// Constructor para logo completo - perfecto para pantallas principales
+  const MoneyFlowLogo.full({
+    super.key,
+    this.size,
+    this.textColor,
+    this.logoColor,
+    this.spacing = 16,
+  }) : showText = true;
+
+  /// Constructor para logo pequeño (32px) - headers compactos
+  const MoneyFlowLogo.small({
+    super.key,
+    this.showText = false,
+    this.textColor,
+    this.logoColor,
+    this.spacing = 8,
+  }) : size = 32;
+
+  /// Constructor para logo mediano (64px) - modals, cards
+  const MoneyFlowLogo.medium({
+    super.key,
+    this.showText = true,
+    this.textColor,
+    this.logoColor,
+    this.spacing = 12,
+  }) : size = 64;
+
+  /// Constructor para logo grande (120px) - splash, welcome
+  const MoneyFlowLogo.large({
+    super.key,
+    this.showText = true,
+    this.textColor,
+    this.logoColor,
+    this.spacing = 20,
+  }) : size = 120;
 
   @override
   Widget build(BuildContext context) {
     final logoSize = size ?? 96;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -26,19 +118,21 @@ class MoneyFlowLogo extends StatelessWidget {
           width: logoSize,
           height: logoSize * 0.4, // Proporción más horizontal como el original
           child: CustomPaint(
-            painter: MoneyFlowLogoPainter(),
+            painter: MoneyFlowLogoPainter(
+              customColor: logoColor,
+            ),
             size: Size(logoSize, logoSize * 0.4),
           ),
         ),
         
         if (showText) ...[
-          const SizedBox(height: 16),
+          SizedBox(height: spacing),
           Text(
             'MoneyFlow',
             style: TextStyle(
               fontSize: logoSize * 0.25,
               fontWeight: FontWeight.w900,
-              color: textColor ?? AppColors.slate900,
+              color: textColor ?? (isDark ? AppColors.darkOnSurface : AppColors.slate900),
               letterSpacing: -0.5,
             ),
           ),
@@ -49,23 +143,38 @@ class MoneyFlowLogo extends StatelessWidget {
 }
 
 class MoneyFlowLogoPainter extends CustomPainter {
+  /// Color personalizado para el logo. Si es null, usa el gradiente por defecto
+  final Color? customColor;
+
+  const MoneyFlowLogoPainter({this.customColor});
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Crear el gradiente exacto del SVG original
-    final gradient = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [
-        const Color(0xFF00D4FF), // #00D4FF - Cian
-        const Color(0xFF007BFF), // #007BFF - Azul medio  
-        const Color(0xFF001D6C), // #001D6C - Azul oscuro
-      ],
-      stops: const [0.0, 0.5, 1.0],
-    );
+    late final Paint paint;
+    
+    if (customColor != null) {
+      // Usar color sólido personalizado
+      paint = Paint()
+        ..color = customColor!
+        ..style = PaintingStyle.fill;
+    } else {
+      // Usar el gradiente exacto del SVG original
+      final gradient = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          const Color(0xFF00D4FF), // #00D4FF - Cian
+          const Color(0xFF007BFF), // #007BFF - Azul medio  
+          const Color(0xFF001D6C), // #001D6C - Azul oscuro
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      );
 
-    final paint = Paint()
-      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
+      paint = Paint()
+        ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+        ..style = PaintingStyle.fill;
+    }
+
 
     // Escalar las coordenadas del SVG al tamaño del widget
     double scaleX = size.width / 727;
@@ -281,4 +390,63 @@ class MoneyFlowLogoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// **Guía de Uso del MoneyFlowLogo**
+/// 
+/// Esta clase proporciona múltiples formas de usar el logo de MoneyFlow
+/// según el contexto y las necesidades de diseño.
+/// 
+/// **Casos de Uso Comunes:**
+/// 
+/// ```dart
+/// // 1. Header de aplicación (solo símbolo)
+/// AppBar(
+///   title: MoneyFlowLogo.small(),
+///   centerTitle: true,
+/// )
+/// 
+/// // 2. Pantalla de autenticación (logo completo)
+/// MoneyFlowLogo.medium()
+/// 
+/// // 3. Splash screen (logo grande)
+/// MoneyFlowLogo.large()
+/// 
+/// // 4. Footer o about (logo pequeño con texto)
+/// MoneyFlowLogo(
+///   size: 48,
+///   showText: true,
+///   spacing: 8,
+/// )
+/// 
+/// // 5. Logo en tema oscuro (texto blanco)
+/// MoneyFlowLogo.full(
+///   textColor: Colors.white,
+/// )
+/// 
+/// // 6. Logo monocromático
+/// MoneyFlowLogo.iconOnly(
+///   size: 40,
+///   logoColor: Colors.white,
+/// )
+/// ```
+/// 
+/// **Parámetros de Customización:**
+/// 
+/// - `size`: Ancho del logo (altura se calcula automáticamente)
+/// - `showText`: true para mostrar "MoneyFlow", false para solo símbolo
+/// - `textColor`: Color del texto (auto-detecta tema si es null)
+/// - `logoColor`: Color sólido del logo (usa gradiente si es null)
+/// - `spacing`: Espacio entre logo y texto
+/// 
+/// **Constructores Predefinidos:**
+/// 
+/// - `.iconOnly()`: Solo símbolo, sin texto
+/// - `.full()`: Logo completo con texto
+/// - `.small()`: 32px, sin texto
+/// - `.medium()`: 64px, con texto
+/// - `.large()`: 120px, con texto
+class MoneyFlowLogoExamples {
+  // Esta clase existe solo para documentación
+  // No instanciar - usar MoneyFlowLogo directamente
 }

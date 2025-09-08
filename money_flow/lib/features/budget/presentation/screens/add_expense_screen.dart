@@ -46,7 +46,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Registrar Gasto'),
         backgroundColor: Colors.transparent,
@@ -107,17 +107,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.red[50],
+                          color: Theme.of(context).colorScheme.errorContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           Icons.receipt,
-                          color: Colors.red[600],
+                          color: Theme.of(context).colorScheme.onErrorContainer,
                           size: 24,
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -126,13 +126,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             Text(
                               'Registra tu gasto y mantén control de tu presupuesto',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
@@ -212,29 +213,30 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Monto',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: Theme.of(context).colorScheme.outline),
               ),
               child: Row(
                 children: [
                   Text(
                     currencyProvider.currencySymbol,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -245,17 +247,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                       ],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '0.00',
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
                       validator: (value) {
@@ -283,11 +286,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Categoría',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -298,9 +302,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Row(
               children: [
@@ -314,26 +318,27 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   Expanded(
                     child: Text(
                       _selectedCategory!.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
                 ] else ...[
-                  const Icon(Icons.category, color: Colors.grey),
+                  Icon(Icons.category, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Selecciona una categoría',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
                 ],
-                const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                Icon(Icons.keyboard_arrow_down, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               ],
             ),
           ),
@@ -346,11 +351,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Descripción',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -364,13 +370,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             filled: true,
           ),
           validator: (value) {
@@ -388,11 +394,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Fecha',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -403,20 +410,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.grey),
+                Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child:                   Text(
                     DateFormat('dd/MM/yyyy').format(_selectedDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -424,14 +432,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue[50],
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Hoy',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.blue[600],
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -446,11 +454,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   Widget _buildOptionalFields() {
     return ExpansionTile(
-      title: const Text(
+      title: Text(
         'Información adicional (opcional)',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       children: [
@@ -466,7 +475,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             filled: true,
           ),
         ),
@@ -483,7 +492,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             filled: true,
           ),
         ),
@@ -501,7 +510,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             filled: true,
           ),
         ),
@@ -518,9 +527,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
@@ -529,18 +538,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             
-            const Padding(
-              padding: EdgeInsets.all(20),
+            Padding(
+              padding: const EdgeInsets.all(20),
               child: Text(
                 'Seleccionar Categoría',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -558,7 +568,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue[50] : Colors.grey[100],
+                        color: isSelected 
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -577,7 +589,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                     subtitle: Text(category.description),
                     trailing: isSelected 
-                        ? Icon(Icons.check_circle, color: Colors.blue[600])
+                        ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
                         : null,
                     onTap: () {
                       setState(() {

@@ -184,64 +184,31 @@ class CurrencyService {
   // Formatear cantidad según divisa
   static String formatAmount(double amount, CurrencyInfo currency) {
     try {
-      // Crear el formatter basado en la divisa
-      final NumberFormat formatter;
-      
+      // Obtener el número de decimales según la divisa
+      final int decimalDigits;
       switch (currency.code) {
         case 'JPY':
         case 'KRW':
-          // Monedas sin decimales
-          formatter = NumberFormat.currency(
-            locale: 'en_US',
-            symbol: currency.symbol,
-            decimalDigits: 0,
-          );
-          break;
         case 'COP':
-          // Peso colombiano - formato local
-          formatter = NumberFormat.currency(
-            locale: 'es_CO',
-            symbol: currency.symbol,
-            decimalDigits: 0,
-          );
-          break;
-        case 'EUR':
-          // Euro - formato europeo
-          formatter = NumberFormat.currency(
-            locale: 'de_DE',
-            symbol: currency.symbol,
-            decimalDigits: 2,
-          );
-          break;
-        case 'BRL':
-          // Real brasileño
-          formatter = NumberFormat.currency(
-            locale: 'pt_BR',
-            symbol: currency.symbol,
-            decimalDigits: 2,
-          );
-          break;
-        case 'ARS':
-          // Peso argentino
-          formatter = NumberFormat.currency(
-            locale: 'es_AR',
-            symbol: currency.symbol,
-            decimalDigits: 2,
-          );
+          decimalDigits = 0;
           break;
         default:
-          // Formato estándar para USD, MXN, etc.
-          formatter = NumberFormat.currency(
-            locale: 'en_US',
-            symbol: currency.symbol,
-            decimalDigits: 2,
-          );
+          decimalDigits = 2;
       }
 
-      return formatter.format(amount);
+      // Formatear el número sin símbolo de moneda
+      final NumberFormat numberFormatter = NumberFormat.decimalPattern();
+      numberFormatter.minimumFractionDigits = decimalDigits;
+      numberFormatter.maximumFractionDigits = decimalDigits;
+      
+      final formattedNumber = numberFormatter.format(amount);
+      
+      // Retornar con símbolo al lado izquierdo con espacio
+      return '${currency.symbol} $formattedNumber';
     } catch (e) {
       // Fallback a formato simple
-      return '${currency.symbol}${amount.toStringAsFixed(2)}';
+      final decimals = (currency.code == 'JPY' || currency.code == 'KRW' || currency.code == 'COP') ? 0 : 2;
+      return '${currency.symbol} ${amount.toStringAsFixed(decimals)}';
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../data/models/budget_model.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/expense_model.dart';
 import '../../data/repositories/budget_repository.dart';
@@ -21,6 +22,10 @@ class ExpenseProvider with ChangeNotifier {
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
 
+  // Presupuesto actual
+  BudgetModel? _currentBudget;
+  BudgetModel? get currentBudget => _currentBudget;
+
   // Estado de carga
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -39,10 +44,12 @@ class ExpenseProvider with ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     try {
-      // Cargar categorías y gastos recientes en paralelo
+      // Cargar categorías, presupuesto y gastos del mes actual en paralelo
       await Future.wait([
         _loadCategories(),
+        _loadCurrentBudget(),
         _loadRecentExpenses(),
+        _loadMonthlyExpenses(),
       ]);
       _clearError();
     } catch (e) {
@@ -198,8 +205,32 @@ class ExpenseProvider with ChangeNotifier {
     _categories = await _budgetRepository.getCategories();
   }
 
+  Future<void> _loadCurrentBudget() async {
+    try {
+      _currentBudget = await _budgetRepository.getCurrentBudget();
+    } catch (e) {
+      // Si no hay presupuesto configurado, _currentBudget será null
+      _currentBudget = null;
+    }
+  }
+
   Future<void> _loadRecentExpenses() async {
     _recentExpenses = await _expenseRepository.getRecentExpenses(limit: 10);
+  }
+
+  Future<void> _loadMonthlyExpenses() async {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 1).subtract(const Duration(days: 1));
+    
+    final monthlyFilters = ExpenseFilters(
+      startDate: startOfMonth,
+      endDate: endOfMonth,
+      limit: 200, // Límite más alto para capturar todos los gastos del mes
+    );
+    
+    _expenses = await _expenseRepository.getExpenses(filters: monthlyFilters);
+    _currentFilters = monthlyFilters;
   }
 
   void _setLoading(bool loading) {
@@ -253,11 +284,92 @@ class ExpenseProvider with ChangeNotifier {
     }).toList();
   }
 
+  // Obtener gastos del mes actual
+  List<ExpenseModel> get monthlyExpenses {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 1);
+    
+    return _expenses.where((expense) {
+      final expenseDate = expense.dateTime;
+      return expenseDate.isAfter(startOfMonth) && expenseDate.isBefore(endOfMonth);
+    }).toList();
+  }
+
+  // Obtener total de gastos del mes
+  double get monthlyTotal {
+    return monthlyExpenses
+        .where((expense) => expense.isConfirmed)
+        .map((expense) => expense.amount)
+        .fold(0.0, (sum, amount) => sum + amount);
+  }
+
+  // Obtener categorías principales por gasto
+  List<Map<String, dynamic>> get topCategories {
+    final Map<String, double> categoryTotals = {};
+    final Map<String, CategoryModel> categoryMap = {};
+    
+    for (final expense in monthlyExpenses.where((e) => e.isConfirmed)) {
+      final categoryName = expense.category.name;
+      categoryTotals[categoryName] = (categoryTotals[categoryName] ?? 0) + expense.amount;
+      categoryMap[categoryName] = expense.category;
+    }
+    
+    final sortedCategories = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    return sortedCategories.map((entry) => {
+      'name': entry.key,
+      'amount': entry.value,
+      'category': categoryMap[entry.key]!,
+    }).toList();
+  }
+
+  // Obtener gastos por categoría con presupuesto (para barras de progreso)
+  List<Map<String, dynamic>> getCategoryBudgetProgress() {
+    // Si no hay presupuesto configurado, retornar lista vacía
+    if (_currentBudget == null || _currentBudget!.allocations.isEmpty) {
+      return [];
+    }
+    
+    // Calcular gastos por categoría del mes actual
+    final Map<String, double> categoryTotals = {};
+    final Map<String, CategoryModel> categoryMap = {};
+    
+    for (final expense in monthlyExpenses.where((e) => e.isConfirmed)) {
+      final categoryName = expense.category.name;
+      categoryTotals[categoryName] = (categoryTotals[categoryName] ?? 0) + expense.amount;
+      categoryMap[categoryName] = expense.category;
+    }
+    
+    // Crear lista de progreso basada en las asignaciones reales del presupuesto
+    final List<Map<String, dynamic>> progressList = [];
+    
+    for (final allocation in _currentBudget!.allocations) {
+      final categoryName = allocation.category.name;
+      final spent = categoryTotals[categoryName] ?? 0.0;
+      final budget = allocation.allocatedAmount;
+      
+      progressList.add({
+        'name': categoryName,
+        'spent': spent,
+        'budget': budget,
+        'category': allocation.category,
+        'allocation': allocation, // Incluir la asignación completa para más datos
+      });
+    }
+    
+    // Ordenar por cantidad gastada (descendente) y tomar los primeros 3
+    progressList.sort((a, b) => (b['spent'] as double).compareTo(a['spent'] as double));
+    return progressList.take(3).toList();
+  }
+
   // Refrescar datos
   Future<void> refresh() async {
     await Future.wait([
+      _loadCurrentBudget(),
       _loadRecentExpenses(),
-      loadExpenses(filters: _currentFilters),
+      _loadMonthlyExpenses(),
     ]);
   }
 }
