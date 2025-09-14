@@ -95,6 +95,16 @@ class _MainScreenState extends State<MainScreen> {
               Navigator.pushNamed(context, '/add-expense');
             },
           ),
+          FloatingActionButton.small(
+            heroTag: "bank_account",
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.account_balance),
+            onPressed: () {
+              print('DEBUG: Bank Account button pressed - navigating to /add-bank-account');
+              Navigator.pushNamed(context, '/add-bank-account');
+            },
+          ),
         ],
       ),
     );

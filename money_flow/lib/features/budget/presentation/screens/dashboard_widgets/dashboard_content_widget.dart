@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'bank_accounts_overview_widget.dart';
 import 'budget_progress_widget.dart';
 import 'daily_overview_widget.dart';
 import 'dashboard_header_widget.dart';
@@ -29,6 +30,11 @@ class DashboardContentWidget extends StatelessWidget {
                   
                   // Budget Progress
                   const BudgetProgressWidget(),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Bank Accounts Overview
+                  const BankAccountsOverviewWidget(),
                   
                   const SizedBox(height: 24),
                   
