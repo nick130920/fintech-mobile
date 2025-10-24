@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:money_flow/features/bank_accounts/presentation/widgets/automatic_transactions_stats_widget.dart';
 
 import 'bank_accounts_overview_widget.dart';
 import 'budget_progress_widget.dart';
@@ -35,6 +36,11 @@ class DashboardContentWidget extends StatelessWidget {
                   
                   // Bank Accounts Overview
                   const BankAccountsOverviewWidget(),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Automatic Transactions Stats
+                  const AutomaticTransactionsStatsWidget(),
                   
                   const SizedBox(height: 24),
                   

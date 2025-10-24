@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android signing files
+android/key.jks
+android/key.properties
+android/app/upload-keystore.jks
+android/app/key.properties
+
+# CodeMagic
+codemagic.yaml.bak

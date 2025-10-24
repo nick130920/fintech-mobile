@@ -1,0 +1,42 @@
+---
+alwaysApply: true
+description: Flutter architecture and UI guidelines for Money Flow fintech app
+---
+
+# Flutter Architecture Rules
+
+## Project Structure
+- Features in [lib/features](mdc:lib/features) with data/presentation separation
+- Shared components in [lib/shared](mdc:lib/shared)
+- Core services in [lib/core](mdc:lib/core)
+- Follow feature-first architecture
+
+## State Management
+- Use Provider for state management
+- Providers in `presentation/providers/` directory
+- Consumer pattern: `Consumer<ProviderName>` instead of `context.watch()`
+- Prevent multiple simultaneous API calls with loading flags
+
+## API Integration
+- Use [ApiService](mdc:lib/core/services/api_service.dart) for HTTP requests
+- Static methods: `ApiService.get()`, `ApiService.post()`
+- Include authentication tokens automatically
+- Handle errors with try-catch and user feedback
+
+## Data Models
+- Use `json_annotation` for serialization
+- Generate with `dart run build_runner build`
+- Place models in `data/models/` directory
+- Follow naming: `*_model.dart` with `*Model` class
+
+## Repository Pattern
+- Repositories in `data/repositories/` directory
+- Handle API calls and data transformation
+- Return domain objects, not DTOs
+- Include proper error handling
+
+## UI Guidelines
+- Never use hardcoded colors - use `Theme.of(context).colorScheme.*`
+- Follow spacing standards: 8, 16, 24, 32 pixels
+- Use border radius: 8, 12, 16, 20 pixels
+- Implement glassmorphism components from [shared/widgets](mdc:lib/shared/widgets)

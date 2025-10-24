@@ -1,0 +1,60 @@
+---
+globs: lib/features/*/presentation/screens/*.dart,lib/features/*/presentation/widgets/*.dart,lib/shared/widgets/*.dart
+description: UI component patterns and design system for Money Flow app
+---
+
+# UI Component Rules
+
+## Screen Structure
+```dart
+Scaffold(
+  backgroundColor: Theme.of(context).colorScheme.surface,
+  appBar: AppBar(
+    title: const Text('Title'),
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+  ),
+  body: SingleChildScrollView(
+    padding: const EdgeInsets.all(24),
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 32),
+          // Content...
+        ],
+      ),
+    ),
+  ),
+)
+```
+
+## Form Fields
+- Use consistent field structure with label and input
+- Border radius: `BorderRadius.circular(12)`
+- Fill color: `Theme.of(context).colorScheme.surfaceContainerHighest`
+- Focus border: `Theme.of(context).colorScheme.primary`
+
+## Color System
+- Primary: `Theme.of(context).colorScheme.primary`
+- Surface: `Theme.of(context).colorScheme.surface`
+- Text: `Theme.of(context).colorScheme.onSurface`
+- Secondary text: `Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)`
+
+## Glassmorphism Components
+- Use components from [glassmorphism_widgets.dart](mdc:lib/shared/widgets/glassmorphism_widgets.dart)
+- `GlassmorphismCard` for main containers
+- `GlassmorphismButton` for primary actions
+- `GlassmorphismListItem` for list elements
+
+## Loading States
+- Show loading indicators during API calls
+- Prevent multiple simultaneous requests
+- Use `_hasLoaded` flags in `initState()` to prevent rebuild calls
+
+## Navigation
+- Use named routes defined in [main.dart](mdc:lib/main.dart)
+- Provider integration for state management
+- Handle back navigation properly

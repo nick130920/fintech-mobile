@@ -7,12 +7,16 @@ import 'core/providers/currency_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/bank_accounts/data/models/transaction_model.dart';
+import 'features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_account_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_notification_pattern_provider.dart';
 import 'features/bank_accounts/presentation/screens/add_bank_account_screen.dart';
 import 'features/bank_accounts/presentation/screens/add_notification_pattern_screen.dart';
 import 'features/bank_accounts/presentation/screens/bank_accounts_screen.dart';
+import 'features/bank_accounts/presentation/screens/edit_pending_transaction_screen.dart';
 import 'features/bank_accounts/presentation/screens/notification_patterns_screen.dart';
+import 'features/bank_accounts/presentation/screens/pending_transactions_screen.dart';
 import 'features/bank_accounts/presentation/screens/process_notification_screen.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
 import 'features/budget/presentation/providers/dashboard_provider.dart';
@@ -48,6 +52,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
         ChangeNotifierProvider(create: (_) => BankAccountProvider()),
         ChangeNotifierProvider(create: (_) => BankNotificationPatternProvider()),
+        ChangeNotifierProvider(create: (_) => AutomaticTransactionsProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -70,6 +75,11 @@ class MyApp extends StatelessWidget {
               '/notification-patterns': (context) => const NotificationPatternsScreen(),
               '/add-notification-pattern': (context) => const AddNotificationPatternScreen(),
               '/process-notification': (context) => const ProcessNotificationScreen(),
+              '/pending-transactions': (context) => const PendingTransactionsScreen(),
+              '/edit-pending-transaction': (context) {
+                final transaction = ModalRoute.of(context)!.settings.arguments as TransactionModel;
+                return EditPendingTransactionScreen(transaction: transaction);
+              },
             },
           );
         },

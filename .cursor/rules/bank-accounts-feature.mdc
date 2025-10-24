@@ -1,0 +1,39 @@
+---
+globs: lib/features/bank_accounts/**/*.dart
+description: Bank accounts feature implementation patterns and best practices
+---
+
+# Bank Accounts Feature Rules
+
+## Data Models
+- [BankAccountModel](mdc:lib/features/bank_accounts/data/models/bank_account_model.dart) with JSON serialization
+- [BankNotificationPatternModel](mdc:lib/features/bank_accounts/data/models/bank_notification_pattern_model.dart) for notification patterns
+- Extended [TransactionModel](mdc:lib/features/bank_accounts/data/models/transaction_model.dart) with bank account association
+
+## Repository Implementation
+- [BankAccountRepository](mdc:lib/features/bank_accounts/data/repositories/bank_account_repository.dart) handles API calls
+- Use `ApiService.get()` and `ApiService.post()` static methods
+- Handle 307 redirects by removing trailing slashes
+- Include proper error handling and token management
+
+## Provider Pattern
+- [BankAccountProvider](mdc:lib/features/bank_accounts/presentation/providers/bank_account_provider.dart) manages state
+- Implement loading flags to prevent multiple API calls
+- Use `Consumer<BankAccountProvider>` in widgets
+- Handle error states with user feedback
+
+## Screen Components
+- [BankAccountsScreen](mdc:lib/features/bank_accounts/presentation/screens/bank_accounts_screen.dart) for listing
+- [AddBankAccountScreen](mdc:lib/features/bank_accounts/presentation/screens/add_bank_account_screen.dart) for creation
+- [BankAccountCard](mdc:lib/features/bank_accounts/presentation/widgets/bank_account_card.dart) for display
+
+## Form Handling
+- Validate all required fields before submission
+- Handle color selection with hex values
+- Set proper default values (e.g., `minAmountToNotify: 0.0`)
+- Show loading states during form submission
+
+## Integration Points
+- Dashboard widget: [BankAccountsOverviewWidget](mdc:lib/features/budget/presentation/screens/dashboard_widgets/bank_accounts_overview_widget.dart)
+- Profile screen navigation to bank management features
+- Main app routing configuration in [main.dart](mdc:lib/main.dart)

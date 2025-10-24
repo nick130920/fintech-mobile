@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
+import 'package:money_flow/features/bank_accounts/presentation/widgets/pending_transactions_fab.dart';
 import 'package:money_flow/features/budget/presentation/screens/category_management_screen.dart';
 import 'package:money_flow/features/budget/presentation/screens/dashboard_screen.dart';
 import 'package:money_flow/features/budget/presentation/screens/reports_screen.dart';
@@ -48,6 +49,7 @@ class _MainScreenState extends State<MainScreen> {
             ],
           ),
           _buildLiquidGlassBottomBar(),
+          const PendingTransactionsFab(),
         ],
       ),
       floatingActionButtonLocation: ExpandableFab.location,
