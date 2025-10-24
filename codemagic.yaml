@@ -11,6 +11,8 @@ workflows:
       vars:
         PACKAGE_NAME: "com.money.flow" # <-- Put your package name here
         GOOGLE_PLAY_TRACK: internal # <-- Any of the following: internal, alpha, beta, production
+        CM_KEYSTORE_ALIAS: "upload"
+        CM_KEYSTORE_PASSWORD: "nicolas1309"
       flutter: stable
       xcode: latest
       cocoapods: default

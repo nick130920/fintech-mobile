@@ -32,10 +32,10 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = "upload"
-            keyPassword = "nicolas1309"
-            storeFile = file("../upload-keystore.jks")
-            storePassword = "nicolas1309"
+            keyAlias = System.getenv("CM_KEYSTORE_ALIAS") ?: "upload"
+            keyPassword = System.getenv("CM_KEYSTORE_PASSWORD") ?: "nicolas1309"
+            storeFile = System.getenv("CM_KEYSTORE_PATH")?.let { file(it) } ?: file("../upload-keystore.jks")
+            storePassword = System.getenv("CM_KEYSTORE_PASSWORD") ?: "nicolas1309"
         }
     }
 
