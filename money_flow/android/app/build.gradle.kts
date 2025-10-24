@@ -42,8 +42,8 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")  // Activar firma
-            isMinifyEnabled = true   // Activar minificación para optimizar
-            isShrinkResources = true  // Activar resource shrinking para reducir tamaño
+            isMinifyEnabled = false  // Desactivar minificación temporalmente para CI
+            isShrinkResources = false // Desactivar resource shrinking temporalmente para CI
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
