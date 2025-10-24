@@ -17,33 +17,36 @@ workflows:
     scripts:
       - name: Set up local.properties
         script: |
-          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/money_flow/android/local.properties"
       - name: Get Flutter packages
         script: |
+          cd money_flow
           flutter packages pub get
       - name: Flutter analyze
         script: |
+          cd money_flow
           flutter analyze
       - name: Flutter unit tests
         script: |
+          cd money_flow
           flutter test
         ignore_failure: true
       - name: Build AAB with Flutter
         script: |
+          cd money_flow
           BUILD_NUMBER=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks="$GOOGLE_PLAY_TRACK") + 1))
           flutter build appbundle --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$BUILD_NUMBER
     artifacts:
-      - build/**/outputs/**/*.aab
-      - build/**/outputs/**/mapping.txt
-      - flutter_drive.log
+      - money_flow/build/**/outputs/**/*.aab
+      - money_flow/build/**/outputs/**/mapping.txt
+      - money_flow/flutter_drive.log
     publishing:
       # See the following link for details about email publishing - https://docs.codemagic.io/publishing-yaml/distribution/#email
       email:
         recipients:
-          - user_1@example.com
-          - user_2@example.com
+          - namc1309@gmail.com
         notify:
           success: true # To not receive a notification when a build succeeds
           failure: false # To not receive a notification when a build fails
@@ -61,7 +64,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.example.money_flow
+        bundle_identifier: com.money.flow
       vars:
         APP_ID: 1555555551 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
       flutter: stable
@@ -73,32 +76,36 @@ workflows:
           xcode-project use-profiles
       - name: Get Flutter packages
         script: |
+          cd money_flow
           flutter packages pub get
       - name: Install pods
         script: |
+          cd money_flow
           find . -name "Podfile" -execdir pod install \;
       - name: Flutter analyze
         script: |
+          cd money_flow
           flutter analyze
       - name: Flutter unit tests
         script: |
+          cd money_flow
           flutter test
         ignore_failure: true
       - name: Flutter build ipa and automatic versioning
         script: |
+          cd money_flow
           flutter build ipa --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$(($(app-store-connect get-latest-app-store-build-number "$APP_ID") + 1))
     artifacts:
-      - build/ios/ipa/*.ipa
+      - money_flow/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
+      - money_flow/flutter_drive.log
     publishing:
       # See the following link for details about email publishing - https://docs.codemagic.io/publishing-yaml/distribution/#email
       email:
         recipients:
-          - user_1@example.com
-          - user_2@example.com
+          - namc1309@gmail.com
         notify:
           success: true
           failure: false
