@@ -468,7 +468,10 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard(
+          child: _buildStatCard( 
+
+
+            
             'Confianza',
             '${((result.confidence ?? 0.0) * 100).toStringAsFixed(1)}%',
             Icons.psychology,
