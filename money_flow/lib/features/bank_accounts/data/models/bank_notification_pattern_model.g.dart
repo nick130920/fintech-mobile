@@ -96,7 +96,7 @@ ProcessedNotificationModel _$ProcessedNotificationModelFromJson(
   processed: json['processed'] as bool,
   patternId: (json['pattern_id'] as num?)?.toInt(),
   patternName: json['pattern_name'] as String?,
-  confidence: (json['confidence'] as num).toDouble(),
+  confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
   requiresValidation: json['requires_validation'] as bool,
   extractedData: json['extracted_data'] as Map<String, dynamic>,
 );

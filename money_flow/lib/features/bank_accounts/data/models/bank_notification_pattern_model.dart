@@ -223,7 +223,7 @@ class ProcessedNotificationModel {
   final int? patternId;
   @JsonKey(name: 'pattern_name')
   final String? patternName;
-  final double confidence;
+  final double? confidence;
   @JsonKey(name: 'requires_validation')
   final bool requiresValidation;
   @JsonKey(name: 'extracted_data')
@@ -236,7 +236,7 @@ class ProcessedNotificationModel {
     required this.processed,
     this.patternId,
     this.patternName,
-    required this.confidence,
+    this.confidence = 0.0,
     required this.requiresValidation,
     required this.extractedData,
   });
@@ -258,8 +258,8 @@ class ProcessedNotificationModel {
   int get hashCode => Object.hash(bankAccountId, message);
 
   // Métodos de utilidad
-  bool get hasHighConfidence => confidence >= 0.8;
-  bool get needsManualReview => requiresValidation || confidence < 0.7;
+  bool get hasHighConfidence => (confidence ?? 0.0) >= 0.8;
+  bool get needsManualReview => requiresValidation || (confidence ?? 0.0) < 0.7;
   
   String? get extractedAmount => extractedData['amount'] as String?;
   String? get extractedDate => extractedData['date'] as String?;
