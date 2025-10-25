@@ -333,7 +333,7 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
               controller: _messageController,
               maxLines: 6,
               decoration: InputDecoration(
-                hintText: 'Pega aquí el mensaje de notificación bancaria que quieres procesar...\n\nEjemplo:\nBBVA: Compra por \$150.00 en OXXO el 15/01/2024 a las 14:30. Saldo: \$2,350.00',
+                hintText: 'Pega aquí el mensaje de notificación bancaria que quieres procesar...\n\nEjemplo:\nBBVA: Compra por \$1500.00 en OXXO el 15/01/2024 a las 14:30. Saldo: \$2350.00',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -470,7 +470,7 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
         Expanded(
           child: _buildStatCard(
             'Confianza',
-            '${(result.confidence * 100).toStringAsFixed(1)}%',
+            '${((result.confidence ?? 0.0) * 100).toStringAsFixed(1)}%',
             Icons.psychology,
             result.hasHighConfidence
                 ? Theme.of(context).colorScheme.primary
