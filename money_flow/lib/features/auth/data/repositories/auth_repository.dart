@@ -135,13 +135,9 @@ class AuthRepository {
     }
   }
 
-  // Check if user is logged in
+  // Check if user is logged in (local check only)
   static Future<bool> isLoggedIn() async {
-    final hasTokens = await StorageService.isLoggedIn();
-    if (!hasTokens) return false;
-    
-    // Validate token with server
-    return await validateToken();
+    return await StorageService.isLoggedIn();
   }
 
   // Refresh access token

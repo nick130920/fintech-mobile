@@ -25,7 +25,6 @@ class ProfileScreen extends StatelessWidget {
           _buildSectionTitle(context, 'Apariencia'),
           const SizedBox(height: 8),
           _buildThemeSelector(context, themeProvider),
-          const Divider(height: 40),
           // Aquí se podrían añadir más opciones de configuración
         ],
       ),

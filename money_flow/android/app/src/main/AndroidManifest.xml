@@ -7,9 +7,12 @@
     
     <!-- Permisos para internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     
     <application
-        android:label="MoneyFlow"
+        android:label="money_flow"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         

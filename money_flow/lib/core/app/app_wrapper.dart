@@ -5,6 +5,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/auth_wrapper.dart';
 import '../../features/budget/presentation/providers/budget_setup_provider.dart';
 import '../../features/budget/presentation/screens/budget_setup_wrapper.dart';
+import '../../main.dart';
 import '../../shared/screens/main_screen.dart';
 import '../providers/currency_provider.dart';
 
@@ -66,6 +67,12 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
   void initState() {
     super.initState();
     _needsBudgetSetupFuture = _checkBudgetSetup();
+    _syncSmsInbox();
+  }
+
+  Future<void> _syncSmsInbox() async {
+    // No necesitamos el contexto aquí porque el handler lo obtiene del navigatorKey
+    await smsService.syncInbox(smsSyncHandler);
   }
 
   Future<bool> _checkBudgetSetup() async {

@@ -26,6 +26,17 @@ class PreferencesService {
     await prefs.setBool(_firstLaunchKey, firstLaunch);
   }
 
+  // Generic methods for int
+  static Future<int?> getInt(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(key);
+  }
+
+  static Future<void> setInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
+  }
+
   // Clear all preferences (useful for testing)
   static Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();

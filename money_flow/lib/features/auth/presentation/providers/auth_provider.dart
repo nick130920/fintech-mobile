@@ -1,5 +1,8 @@
+import 'dart:convert'; // Added import for jsonEncode
+
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 
@@ -25,24 +28,31 @@ class AuthProvider extends ChangeNotifier {
 
   // Initialize - check if user is already logged in
   Future<void> initialize() async {
-    try {
-      _setStatus(AuthStatus.loading);
+    _setStatus(AuthStatus.loading);
+    
+    // 1. Cargar el usuario desde el caché local primero para una carga rápida
+    final cachedUser = await AuthRepository.getCurrentUser();
+    if (cachedUser != null) {
+      _user = cachedUser;
+      _setStatus(AuthStatus.authenticated);
+      print("Usuario cargado desde caché.");
       
-      final isLoggedIn = await AuthRepository.isLoggedIn();
-      
-      if (isLoggedIn) {
-        final user = await AuthRepository.getCurrentUser();
-        if (user != null) {
-          _user = user;
-          _setStatus(AuthStatus.authenticated);
-        } else {
-          _setStatus(AuthStatus.unauthenticated);
+      // 2. Luego, refrescar el perfil desde el servidor en segundo plano
+      await refreshProfile();
+      print("Perfil de usuario actualizado desde el servidor.");
+    } else {
+      // Si no hay usuario en caché, verificar si hay tokens para intentar un refresh
+      final hasTokens = await AuthRepository.isLoggedIn();
+      if (hasTokens) {
+        print("Tokens encontrados, intentando refrescar perfil...");
+        await refreshProfile();
+        if (_user == null) {
+           _setStatus(AuthStatus.unauthenticated);
         }
       } else {
         _setStatus(AuthStatus.unauthenticated);
+        print("No hay sesión activa.");
       }
-    } catch (e) {
-      _setError('Error al inicializar: $e');
     }
   }
 
@@ -123,10 +133,16 @@ class AuthProvider extends ChangeNotifier {
       if (_status != AuthStatus.authenticated) return;
       
       final user = await AuthRepository.getProfile();
-      _user = user;
-      notifyListeners();
+      if (user != null) {
+        _user = user;
+        // Guardar el usuario actualizado en el caché
+        await StorageService.saveUserData(jsonEncode(user.toJson()));
+        notifyListeners();
+      }
     } catch (e) {
       _setError('Error al actualizar perfil: $e');
+      // Si el refresh falla (ej. token inválido), cerrar sesión
+      await logout();
     }
   }
 

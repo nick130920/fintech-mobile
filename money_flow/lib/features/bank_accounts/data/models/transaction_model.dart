@@ -107,8 +107,20 @@ class TransactionModel {
     this.patternId,
   });
 
-  factory TransactionModel.fromJson(Map<String, dynamic> json) =>
-      _$TransactionModelFromJson(json);
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    // Manejar el caso en que 'tags' es una String en lugar de una List
+    final modifiedJson = Map<String, dynamic>.from(json);
+    if (modifiedJson['tags'] is String) {
+      final tagsString = modifiedJson['tags'] as String;
+      if (tagsString.isEmpty || tagsString == "{}") {
+        modifiedJson['tags'] = [];
+      } else {
+        // Asumir un formato como "tag1,tag2" y convertirlo a lista
+        modifiedJson['tags'] = tagsString.split(',').map((e) => e.trim()).toList();
+      }
+    }
+    return _$TransactionModelFromJson(modifiedJson);
+  }
 
   Map<String, dynamic> toJson() => _$TransactionModelToJson(this);
 

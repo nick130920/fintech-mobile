@@ -121,10 +121,10 @@ class ApiService {
   }
 
   // Helper para manejar respuestas de error
-  static Map<String, dynamic> handleResponse(http.Response response) {
+  static dynamic handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
-        throw Exception('Respuesta vacía del servidor');
+        return null; // O un valor por defecto apropiado
       }
       
       try {

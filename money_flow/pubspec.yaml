@@ -59,6 +59,9 @@ dependencies:
   # Permission handling
   permission_handler: ^11.3.1
   
+  # SMS reading for automatic transactions
+  flutter_sms_inbox: ^1.0.4
+  
   # Geocoding for reverse location lookup
   geocoding: ^3.0.0
   
