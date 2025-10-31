@@ -133,6 +133,7 @@ class AuthProvider extends ChangeNotifier {
       if (_status != AuthStatus.authenticated) return;
       
       final user = await AuthRepository.getProfile();
+      // ignore: unnecessary_null_comparison
       if (user != null) {
         _user = user;
         // Guardar el usuario actualizado en el caché
@@ -141,8 +142,8 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       _setError('Error al actualizar perfil: $e');
-      // Si el refresh falla (ej. token inválido), cerrar sesión
-      await logout();
+      // Si el refresh falla (ej. token inválido), la sesión será cerrada por el ApiService
+      // await logout();
     }
   }
 

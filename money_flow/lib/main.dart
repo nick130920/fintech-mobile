@@ -28,6 +28,7 @@ import 'features/budget/presentation/screens/add_expense_screen.dart';
 import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'shared/screens/main_screen.dart';
+import 'core/services/api_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final SmsService smsService = SmsService();
@@ -72,6 +73,8 @@ void smsSyncHandler(String? message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  ApiService.initialize(navigatorKey);
   
   // Inicializar datos de localización para español
   await initializeDateFormatting('es', null);

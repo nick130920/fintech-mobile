@@ -15,7 +15,17 @@ class BankNotificationPatternProvider with ChangeNotifier {
   ProcessedNotificationModel? _lastProcessedNotification;
   BankNotificationPatternModel? _selectedPattern;
   bool _isLoading = false;
+  bool _isProcessing = false;
+  bool get isProcessing => _isProcessing;
+
+  bool _isGeneratingPattern = false;
+  bool get isGeneratingPattern => _isGeneratingPattern;
+
+  GeneratePatternResponse? _lastGeneratedPattern;
+  GeneratePatternResponse? get lastGeneratedPattern => _lastGeneratedPattern;
+
   String? _error;
+  String? get error => _error;
 
   // Getters
   List<BankNotificationPatternModel> get patterns => _patterns;
@@ -23,7 +33,6 @@ class BankNotificationPatternProvider with ChangeNotifier {
   ProcessedNotificationModel? get lastProcessedNotification => _lastProcessedNotification;
   BankNotificationPatternModel? get selectedPattern => _selectedPattern;
   bool get isLoading => _isLoading;
-  String? get error => _error;
 
   // Patrones activos
   List<BankNotificationPatternModel> get activePatterns =>
@@ -212,18 +221,58 @@ class BankNotificationPatternProvider with ChangeNotifier {
 
   // Procesar notificación
   Future<bool> processNotification(ProcessNotificationRequest request) async {
-    _setLoading(true);
+    _isProcessing = true;
     _clearError();
 
     try {
-      _lastProcessedNotification = await _repository.processNotification(request);
-      notifyListeners();
+      final result = await _repository.processNotification(request);
+      _lastProcessedNotification = result;
       return true;
     } catch (e) {
-      _setError(e.toString());
+      _error = e.toString();
       return false;
     } finally {
-      _setLoading(false);
+      _isProcessing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> generatePatternFromMessage(GeneratePatternRequest request) async {
+    _isGeneratingPattern = true;
+    _clearError();
+    _lastGeneratedPattern = null;
+    notifyListeners();
+
+    try {
+      final result = await _repository.generatePatternFromMessage(request);
+      _lastGeneratedPattern = result;
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isGeneratingPattern = false;
+      notifyListeners();
+    }
+  }
+
+  // Llama a la IA para crear un patrón directamente
+  Future<bool> createPatternFromMessage(
+      CreatePatternFromMessageRequest request) async {
+    _isGeneratingPattern = true;
+    _clearError();
+    notifyListeners();
+
+    try {
+      final newPattern = await _repository.createPatternFromMessage(request);
+      _patterns.add(newPattern);
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isGeneratingPattern = false;
+      notifyListeners();
     }
   }
 
@@ -263,6 +312,10 @@ class BankNotificationPatternProvider with ChangeNotifier {
   void clearLastProcessedNotification() {
     _lastProcessedNotification = null;
     notifyListeners();
+  }
+
+  void clearLastGeneratedPattern() {
+    _lastGeneratedPattern = null;
   }
 
   // Refrescar datos

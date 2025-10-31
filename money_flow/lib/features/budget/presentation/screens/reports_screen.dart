@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/dashboard_provider.dart';
 import '../providers/expense_provider.dart';
+import '../providers/income_provider.dart';
 import 'reports_widgets/reports_widgets.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ExpenseProvider>().initialize();
       context.read<DashboardProvider>().initialize();
+      context.read<IncomeProvider>().initialize();
     });
   }
 
@@ -135,13 +137,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   }
 
   Widget _buildIncomeTab() {
-    return const Center(
-      child: Text(
-        'Ingresos Tab\n(Coming Soon)',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 16),
-      ),
-    );
+    return const IncomeTabWidget();
   }
 
   Widget _buildExpensesTab() {

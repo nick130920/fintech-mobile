@@ -2,10 +2,21 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../app/app_wrapper.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
   static const String _apiVersion = '/api/v1';
+  
+  static GlobalKey<NavigatorState>? _navigatorKey;
+  
+  static void initialize(GlobalKey<NavigatorState> navigatorKey) {
+    _navigatorKey = navigatorKey;
+  }
   
   static const Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
@@ -14,7 +25,6 @@ class ApiService {
 
   // GET request
   static Future<http.Response> get(String endpoint, {String? token}) async {
-    // Asegurar que no haya doble barra
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     
@@ -23,16 +33,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    try {
-      final response = await http.get(url, headers: headers);
-      return response;
-    } on SocketException {
-      throw Exception('No hay conexión a internet');
-    } on HttpException {
-      throw Exception('Error en la conexión');
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    return await _handleRequest(() => http.get(url, headers: headers));
   }
 
   // POST request
@@ -49,23 +50,11 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    try {
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 10));
-      
-      return response;
-    } on SocketException {
-      throw Exception('No hay conexión a internet. Verifica tu conexión.');
-    } on HttpException {
-      throw Exception('Error en la conexión con el servidor.');
-    } on FormatException catch (e) {
-      throw Exception('Error en el formato de datos: $e');
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    return await _handleRequest(() => http.post(
+      url,
+      headers: headers,
+      body: jsonEncode(body),
+    ).timeout(const Duration(seconds: 30)));
   }
 
   // PUT request
@@ -82,20 +71,11 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    try {
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return response;
-    } on SocketException {
-      throw Exception('No hay conexión a internet');
-    } on HttpException {
-      throw Exception('Error en la conexión');
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    return await _handleRequest(() => http.put(
+      url,
+      headers: headers,
+      body: jsonEncode(body),
+    ));
   }
 
   // DELETE request
@@ -108,15 +88,46 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
+    return await _handleRequest(() => http.delete(url, headers: headers));
+  }
+  
+  // Wrapper para manejar todas las peticiones y sus errores
+  static Future<http.Response> _handleRequest(Future<http.Response> Function() request) async {
     try {
-      final response = await http.delete(url, headers: headers);
+      final response = await request();
+      if (response.statusCode == 401) {
+        // Token expirado o inválido
+        await _handleUnauthorized();
+        // Lanzar una excepción para que la lógica de negocio no continúe
+        throw Exception('Sesión expirada');
+      }
       return response;
     } on SocketException {
       throw Exception('No hay conexión a internet');
     } on HttpException {
       throw Exception('Error en la conexión');
     } catch (e) {
+      // Re-lanzar la excepción si ya es del tipo correcto
+      if (e.toString().contains('Sesión expirada')) {
+        throw Exception('Sesión expirada');
+      }
       throw Exception('Error inesperado: $e');
+    }
+  }
+
+  static Future<void> _handleUnauthorized() async {
+    final context = _navigatorKey?.currentContext;
+    if (context != null && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.logout();
+      
+      // Asegurarse de que el widget está montado antes de navegar
+      if (_navigatorKey?.currentState != null) {
+         _navigatorKey?.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const AppWrapper()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -156,29 +167,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    try {
-      final response = await http.get(uri, headers: headers);
-      
-      // Convert to expected format
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return response;
-      } else {
-        String errorMessage = 'Error en el servidor (${response.statusCode})';
-        
-        try {
-          if (response.body.isNotEmpty) {
-            final errorBody = jsonDecode(response.body);
-            errorMessage = errorBody['message'] ?? errorMessage;
-          }
-        } catch (e) {
-          errorMessage = 'Error de comunicación con el servidor';
-        }
-        
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      throw Exception('Network error: $e');
-    }
+    return await _handleRequest(() => http.get(uri, headers: headers));
   }
 
   // Base URL getter for external use

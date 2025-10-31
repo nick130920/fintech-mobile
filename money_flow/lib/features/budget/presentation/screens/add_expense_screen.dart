@@ -8,7 +8,18 @@ import '../../data/models/category_model.dart';
 import '../providers/expense_provider.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final double? initialAmount;
+  final String? initialDescription;
+  final String? initialMerchant;
+  final DateTime? initialDate;
+
+  const AddExpenseScreen({
+    super.key,
+    this.initialAmount,
+    this.initialDescription,
+    this.initialMerchant,
+    this.initialDate,
+  });
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -28,6 +39,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialAmount != null) {
+      _amountController.text = widget.initialAmount!.toStringAsFixed(2);
+    }
+    if (widget.initialDescription != null) {
+      _descriptionController.text = widget.initialDescription!;
+    }
+    if (widget.initialMerchant != null) {
+      _merchantController.text = widget.initialMerchant!;
+    }
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ExpenseProvider>().initialize();
     });

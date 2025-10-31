@@ -214,35 +214,38 @@ class BankNotificationPatternModel {
 
 @JsonSerializable()
 class ProcessedNotificationModel {
-  @JsonKey(name: 'bank_account_id')
-  final int bankAccountId;
-  final NotificationChannel channel;
-  final String message;
-  final bool processed;
-  @JsonKey(name: 'pattern_id')
-  final int? patternId;
-  @JsonKey(name: 'pattern_name')
-  final String? patternName;
+  final bool success;
+  @JsonKey(name: 'transaction_created')
+  final bool transactionCreated;
+  @JsonKey(name: 'pattern_used')
+  final String? patternUsed;
+  final String? reason;
   final double? confidence;
   @JsonKey(name: 'requires_validation')
   final bool requiresValidation;
   @JsonKey(name: 'extracted_data')
-  final Map<String, dynamic> extractedData;
+  final ExtractedData? extractedData;
 
   const ProcessedNotificationModel({
-    required this.bankAccountId,
-    required this.channel,
-    required this.message,
-    required this.processed,
-    this.patternId,
-    this.patternName,
-    this.confidence = 0.0,
+    required this.success,
+    required this.transactionCreated,
+    this.patternUsed,
+    this.reason,
+    this.confidence,
     required this.requiresValidation,
-    required this.extractedData,
+    this.extractedData,
   });
 
-  factory ProcessedNotificationModel.fromJson(Map<String, dynamic> json) =>
-      _$ProcessedNotificationModelFromJson(json);
+  factory ProcessedNotificationModel.fromJson(Map<String, dynamic> json) {
+    try {
+      return _$ProcessedNotificationModelFromJson(json);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+
+
 
   Map<String, dynamic> toJson() => _$ProcessedNotificationModelToJson(this);
 
@@ -251,20 +254,23 @@ class ProcessedNotificationModel {
       identical(this, other) ||
       other is ProcessedNotificationModel &&
           runtimeType == other.runtimeType &&
-          bankAccountId == other.bankAccountId &&
-          message == other.message;
+          success == other.success &&
+          transactionCreated == other.transactionCreated &&
+          patternUsed == other.patternUsed &&
+          reason == other.reason;
 
   @override
-  int get hashCode => Object.hash(bankAccountId, message);
+  int get hashCode =>
+      Object.hash(success, transactionCreated, patternUsed, reason);
 
   // Métodos de utilidad
   bool get hasHighConfidence => (confidence ?? 0.0) >= 0.8;
   bool get needsManualReview => requiresValidation || (confidence ?? 0.0) < 0.7;
-  
-  String? get extractedAmount => extractedData['amount'] as String?;
-  String? get extractedDate => extractedData['date'] as String?;
-  String? get extractedDescription => extractedData['description'] as String?;
-  String? get extractedMerchant => extractedData['merchant'] as String?;
+
+  double? get extractedAmount => extractedData?.amount;
+  String? get extractedDate => extractedData?.date;
+  String? get extractedDescription => extractedData?.description;
+  String? get extractedMerchant => extractedData?.merchant;
 }
 
 @JsonSerializable()
@@ -446,4 +452,86 @@ class ProcessNotificationRequest {
       _$ProcessNotificationRequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$ProcessNotificationRequestToJson(this);
+}
+
+@JsonSerializable()
+class GeneratePatternRequest {
+  final String message;
+  @JsonKey(name: 'bank_account_id')
+  final int bankAccountId;
+
+  const GeneratePatternRequest({
+    required this.message,
+    required this.bankAccountId,
+  });
+
+  factory GeneratePatternRequest.fromJson(Map<String, dynamic> json) =>
+      _$GeneratePatternRequestFromJson(json);
+
+  Map<String, dynamic> toJson() => _$GeneratePatternRequestToJson(this);
+}
+
+@JsonSerializable()
+class GeneratePatternResponse {
+  @JsonKey(name: 'amount_regex')
+  final String amountRegex;
+  @JsonKey(name: 'date_regex')
+  final String dateRegex;
+  @JsonKey(name: 'description_regex')
+  final String descriptionRegex;
+  @JsonKey(name: 'merchant_regex')
+  final String merchantRegex;
+  @JsonKey(name: 'keywords_trigger')
+  final List<String> keywordsTrigger;
+
+  const GeneratePatternResponse({
+    required this.amountRegex,
+    required this.dateRegex,
+    required this.descriptionRegex,
+    required this.merchantRegex,
+    required this.keywordsTrigger,
+  });
+
+  factory GeneratePatternResponse.fromJson(Map<String, dynamic> json) =>
+      _$GeneratePatternResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$GeneratePatternResponseToJson(this);
+}
+
+@JsonSerializable()
+class CreatePatternFromMessageRequest {
+  final String message;
+  @JsonKey(name: 'bank_account_id')
+  final int bankAccountId;
+
+  const CreatePatternFromMessageRequest({
+    required this.message,
+    required this.bankAccountId,
+  });
+
+  factory CreatePatternFromMessageRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreatePatternFromMessageRequestFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CreatePatternFromMessageRequestToJson(this);
+}
+
+@JsonSerializable()
+class ExtractedData {
+  final double? amount;
+  final String? description;
+  final String? merchant;
+  final String? date;
+  @JsonKey(name: 'transaction_type')
+  final String? transactionType;
+
+  const ExtractedData({
+    this.amount,
+    this.description,
+    this.merchant,
+    this.date,
+    this.transactionType,
+  });
+
+  factory ExtractedData.fromJson(Map<String, dynamic> json) =>
+      _$ExtractedDataFromJson(json);
 }

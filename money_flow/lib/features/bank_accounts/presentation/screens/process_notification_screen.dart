@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
+import '../../../budget/presentation/screens/add_expense_screen.dart';
 import '../../data/models/bank_account_model.dart';
 import '../../data/models/bank_notification_pattern_model.dart';
 import '../providers/bank_account_provider.dart';
@@ -170,10 +172,12 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 25),
                 DropdownButtonFormField<BankAccountModel>(
-                  value: _selectedBankAccount,
+                  isExpanded: true,
+                  initialValue: _selectedBankAccount,
                   decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
                     hintText: 'Selecciona una cuenta bancaria',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -182,10 +186,9 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
                     fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     filled: true,
                   ),
-                  items: accounts.map((account) {
-                    return DropdownMenuItem(
-                      value: account,
-                      child: Row(
+                  selectedItemBuilder: (context) {
+                    return accounts.map((account) {
+                      return Row(
                         children: [
                           Container(
                             width: 32,
@@ -202,27 +205,62 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  account.accountAlias,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  '${account.shortBankName} ${account.accountNumberMask}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              account.accountAlias,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
+                      );
+                    }).toList();
+                  },
+                  items: accounts.map((account) {
+                    return DropdownMenuItem<BankAccountModel>(
+                      value: account,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Color(int.parse(account.color.replaceFirst('#', '0xFF'))),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.account_balance,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    account.accountAlias,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${account.shortBankName} ${account.accountNumberMask}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
@@ -411,14 +449,14 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: result.processed
+                    color: result.success
                         ? Theme.of(context).colorScheme.primaryContainer
                         : Theme.of(context).colorScheme.errorContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    result.processed ? Icons.check_circle : Icons.error,
-                    color: result.processed
+                    result.success ? Icons.check_circle : Icons.error,
+                    color: result.success
                         ? Theme.of(context).colorScheme.onPrimaryContainer
                         : Theme.of(context).colorScheme.onErrorContainer,
                     size: 24,
@@ -430,16 +468,16 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        result.processed ? 'Procesado Exitosamente' : 'No se Pudo Procesar',
+                        result.success ? 'Procesado Exitosamente' : 'No se Pudo Procesar',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      if (result.patternName != null)
+                      if (result.patternUsed != null)
                         Text(
-                          'Patrón: ${result.patternName}',
+                          'Patrón: ${result.patternUsed}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
@@ -452,9 +490,9 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
             ),
             const SizedBox(height: 24),
             _buildResultStats(result),
-            if (result.extractedData.isNotEmpty) ...[
+            if (result.extractedData != null) ...[
               const SizedBox(height: 24),
-              _buildExtractedData(result.extractedData),
+              _buildExtractedData(result.extractedData!),
             ],
             const SizedBox(height: 16),
             _buildResultActions(result),
@@ -526,7 +564,17 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
     );
   }
 
-  Widget _buildExtractedData(Map<String, dynamic> data) {
+  Widget _buildExtractedData(ExtractedData data) {
+    final mapData = {
+      if (data.amount != null) 'amount': data.amount,
+      if (data.description != null) 'description': data.description,
+      if (data.merchant != null) 'merchant': data.merchant,
+      if (data.date != null) 'date': data.date,
+    };
+
+    if (mapData.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -539,7 +587,7 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ...data.entries.map((entry) {
+        ...mapData.entries.map((entry) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
@@ -579,21 +627,12 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
   Widget _buildResultActions(ProcessedNotificationModel result) {
     return Row(
       children: [
-        Expanded(
-          child: GlassmorphismButton(
-            style: GlassButtonStyles.outline,
-            onPressed: _clearResult,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.clear, size: 16),
-                SizedBox(width: 8),
-                Text('Limpiar'),
-              ],
-            ),
-          ),
+        GlassmorphismButton(
+          style: GlassButtonStyles.outline,
+          onPressed: _clearResult,
+          child: const Icon(Icons.clear, size: 22),
         ),
-        if (result.processed) ...[
+        if (result.success) ...[
           const SizedBox(width: 12),
           Expanded(
             child: GlassmorphismButton(
@@ -602,9 +641,9 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add, size: 16),
+                  Icon(Icons.add, size: 18),
                   SizedBox(width: 8),
-                  Text('Crear Transacción'),
+                  Text('Crear Transacción', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -640,9 +679,11 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
     final provider = context.read<BankNotificationPatternProvider>();
     final success = await provider.processNotification(request);
 
+    if (!mounted) return;
+
     setState(() => _isProcessing = false);
 
-    if (!success && provider.error != null && mounted) {
+    if (!success && provider.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.error!),
@@ -657,13 +698,48 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
   }
 
   void _createTransaction(ProcessedNotificationModel result) {
-    // TODO: Implementar navegación a pantalla de crear transacción con datos pre-llenados
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Funcionalidad de crear transacción próximamente'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+    DateTime? transactionDate;
+    if (result.extractedDate != null) {
+      transactionDate = _tryParseDate(result.extractedDate!);
+    }
+
+    // --- DEBUG PRINTS ---
+    print('--- Navigating to AddExpenseScreen with initial data ---');
+    print('Initial Amount: ${result.extractedAmount}');
+    print('Initial Description: ${result.extractedDescription}');
+    print('Initial Merchant: ${result.extractedMerchant}');
+    print('Initial Date: $transactionDate');
+    print('--- End of initial data ---');
+    // --- END DEBUG PRINTS ---
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddExpenseScreen(
+          initialAmount: result.extractedAmount,
+          initialDescription: result.extractedDescription,
+          initialMerchant: result.extractedMerchant,
+          initialDate: transactionDate,
+        ),
       ),
     );
+  }
+
+  DateTime? _tryParseDate(String dateString) {
+    final formats = [
+      'dd/MM/yyyy',
+      'yyyy-MM-dd',
+      'MM/dd/yyyy',
+      'dd-MM-yyyy',
+    ];
+
+    for (var format in formats) {
+      try {
+        return DateFormat(format).parse(dateString);
+      } catch (e) {
+        // Continue to next format
+      }
+    }
+    return null;
   }
 
   IconData _getChannelIcon(NotificationChannel channel) {

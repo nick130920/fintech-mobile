@@ -220,4 +220,51 @@ class BankNotificationPatternRepository {
       throw Exception('Error fetching pattern statistics: $e');
     }
   }
+
+  Future<GeneratePatternResponse> generatePatternFromMessage(
+      GeneratePatternRequest request) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post('/notification-patterns/generate-from-message', request.toJson(), token: token);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return GeneratePatternResponse.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Bank account not found');
+      } else {
+        throw Exception('Failed to generate pattern from message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error generating pattern from message: $e');
+    }
+  }
+
+  Future<BankNotificationPatternModel> createPatternFromMessage(
+      CreatePatternFromMessageRequest request) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post(
+          '/notification-patterns/create-from-message', request.toJson(),
+          token: token);
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return BankNotificationPatternModel.fromJson(data);
+      } else {
+        throw Exception(
+            'Failed to create pattern from message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error creating pattern from message: $e');
+    }
+  }
 }

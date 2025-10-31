@@ -393,53 +393,42 @@ class NotificationPatternCard extends StatelessWidget {
           child: GlassmorphismButton(
             style: GlassButtonStyles.outline,
             onPressed: onToggleStatus,
-            child: Row(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   pattern.isActive ? Icons.pause : Icons.play_arrow,
-                  size: 16,
+                  size: 25,
                 ),
-                const SizedBox(width: 8),
-                Text(pattern.isActive ? 'Pausar' : 'Activar'),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
           child: GlassmorphismButton(
             style: GlassButtonStyles.outline,
             onPressed: onEdit,
-            child: const Row(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.edit, size: 16),
-                SizedBox(width: 8),
-                Text('Editar'),
+                Icon(Icons.edit, size: 25),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
           child: GlassmorphismButton(
             style: GlassButtonStyles.outline,
             onPressed: onDelete,
-            child: Row(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.delete_outline,
-                  size: 16,
+                  size: 25,
                   color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Eliminar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
                 ),
               ],
             ),

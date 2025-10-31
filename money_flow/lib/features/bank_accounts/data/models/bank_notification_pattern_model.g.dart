@@ -90,28 +90,26 @@ const _$NotificationPatternStatusEnumMap = {
 ProcessedNotificationModel _$ProcessedNotificationModelFromJson(
   Map<String, dynamic> json,
 ) => ProcessedNotificationModel(
-  bankAccountId: (json['bank_account_id'] as num).toInt(),
-  channel: $enumDecode(_$NotificationChannelEnumMap, json['channel']),
-  message: json['message'] as String,
-  processed: json['processed'] as bool,
-  patternId: (json['pattern_id'] as num?)?.toInt(),
-  patternName: json['pattern_name'] as String?,
-  confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
+  success: json['success'] as bool,
+  transactionCreated: json['transaction_created'] as bool,
+  patternUsed: json['pattern_used'] as String?,
+  confidence: (json['confidence'] as num?)?.toDouble(),
   requiresValidation: json['requires_validation'] as bool,
-  extractedData: json['extracted_data'] as Map<String, dynamic>,
+  reason: json['reason'] as String?,
+  extractedData: json['extracted_data'] == null
+      ? null
+      : ExtractedData.fromJson(json['extracted_data'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$ProcessedNotificationModelToJson(
   ProcessedNotificationModel instance,
 ) => <String, dynamic>{
-  'bank_account_id': instance.bankAccountId,
-  'channel': _$NotificationChannelEnumMap[instance.channel]!,
-  'message': instance.message,
-  'processed': instance.processed,
-  'pattern_id': instance.patternId,
-  'pattern_name': instance.patternName,
+  'success': instance.success,
+  'transaction_created': instance.transactionCreated,
+  'pattern_used': instance.patternUsed,
   'confidence': instance.confidence,
   'requires_validation': instance.requiresValidation,
+  'reason': instance.reason,
   'extracted_data': instance.extractedData,
 };
 
@@ -259,3 +257,71 @@ Map<String, dynamic> _$ProcessNotificationRequestToJson(
   'channel': _$NotificationChannelEnumMap[instance.channel]!,
   'message': instance.message,
 };
+
+GeneratePatternRequest _$GeneratePatternRequestFromJson(
+  Map<String, dynamic> json,
+) => GeneratePatternRequest(
+  message: json['message'] as String,
+  bankAccountId: (json['bank_account_id'] as num).toInt(),
+);
+
+Map<String, dynamic> _$GeneratePatternRequestToJson(
+  GeneratePatternRequest instance,
+) => <String, dynamic>{
+  'message': instance.message,
+  'bank_account_id': instance.bankAccountId,
+};
+
+GeneratePatternResponse _$GeneratePatternResponseFromJson(
+  Map<String, dynamic> json,
+) => GeneratePatternResponse(
+  amountRegex: json['amount_regex'] as String,
+  dateRegex: json['date_regex'] as String,
+  descriptionRegex: json['description_regex'] as String,
+  merchantRegex: json['merchant_regex'] as String,
+  keywordsTrigger: (json['keywords_trigger'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+);
+
+Map<String, dynamic> _$GeneratePatternResponseToJson(
+  GeneratePatternResponse instance,
+) => <String, dynamic>{
+  'amount_regex': instance.amountRegex,
+  'date_regex': instance.dateRegex,
+  'description_regex': instance.descriptionRegex,
+  'merchant_regex': instance.merchantRegex,
+  'keywords_trigger': instance.keywordsTrigger,
+};
+
+CreatePatternFromMessageRequest _$CreatePatternFromMessageRequestFromJson(
+  Map<String, dynamic> json,
+) => CreatePatternFromMessageRequest(
+  message: json['message'] as String,
+  bankAccountId: (json['bank_account_id'] as num).toInt(),
+);
+
+Map<String, dynamic> _$CreatePatternFromMessageRequestToJson(
+  CreatePatternFromMessageRequest instance,
+) => <String, dynamic>{
+  'message': instance.message,
+  'bank_account_id': instance.bankAccountId,
+};
+
+ExtractedData _$ExtractedDataFromJson(Map<String, dynamic> json) =>
+    ExtractedData(
+      amount: (json['amount'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+      merchant: json['merchant'] as String?,
+      date: json['date'] as String?,
+      transactionType: json['transaction_type'] as String?,
+    );
+
+Map<String, dynamic> _$ExtractedDataToJson(ExtractedData instance) =>
+    <String, dynamic>{
+      'amount': instance.amount,
+      'description': instance.description,
+      'merchant': instance.merchant,
+      'date': instance.date,
+      'transaction_type': instance.transactionType,
+    };
