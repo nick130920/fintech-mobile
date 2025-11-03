@@ -41,9 +41,7 @@ class IncomeTabWidget extends StatelessWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
-                          // TODO: Navigate to full income history screen
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/income-history'),
                         child: const Text('Ver Todos'),
                       ),
                     ],

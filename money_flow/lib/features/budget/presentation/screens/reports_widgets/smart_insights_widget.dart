@@ -63,7 +63,7 @@ class SmartInsightsWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                )).toList(),
+                )),
               ],
             ),
           ),

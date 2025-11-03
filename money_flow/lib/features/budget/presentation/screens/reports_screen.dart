@@ -8,8 +8,13 @@ import 'reports_widgets/reports_widgets.dart';
 
 class ReportsScreen extends StatefulWidget {
   final bool useScaffold;
+  final int initialTabIndex;
   
-  const ReportsScreen({super.key, this.useScaffold = true});
+  const ReportsScreen({
+    super.key,
+    this.useScaffold = true,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -21,7 +26,11 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ExpenseProvider>().initialize();
       context.read<DashboardProvider>().initialize();

@@ -619,7 +619,7 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

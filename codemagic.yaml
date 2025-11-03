@@ -16,6 +16,7 @@ workflows:
         GOOGLE_PLAY_TRACK: internal # <-- Any of the following: internal, alpha, beta, production
         CM_KEYSTORE_ALIAS: "upload"
         CM_KEYSTORE_PASSWORD: "nicolas1309"
+        FREECURRENCY_API_KEY: "fca_live_e5ILZOXiYU8BqiF5A6doBO3J1l7Y1uZem8M0hAz2" # FreeCurrency API Key
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -43,7 +44,8 @@ workflows:
           BUILD_NUMBER=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks="$GOOGLE_PLAY_TRACK") + 1))
           flutter build appbundle --release \
             --build-name=1.0.$BUILD_NUMBER \
-            --build-number=$BUILD_NUMBER
+            --build-number=$BUILD_NUMBER \
+            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY
     artifacts:
       - money_flow/build/**/outputs/**/*.aab
       - money_flow/build/**/outputs/**/mapping.txt
@@ -73,6 +75,7 @@ workflows:
         bundle_identifier: com.money.flow
       vars:
         APP_ID: 1555555551 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
+        FREECURRENCY_API_KEY: "fca_live_e5ILZOXiYU8BqiF5A6doBO3J1l7Y1uZem8M0hAz2" # FreeCurrency API Key
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -103,7 +106,8 @@ workflows:
           cd money_flow
           flutter build ipa --release \
             --build-name=1.0.$BUILD_NUMBER \
-            --build-number=$(($(app-store-connect get-latest-app-store-build-number "$APP_ID") + 1))
+            --build-number=$(($(app-store-connect get-latest-app-store-build-number "$APP_ID") + 1)) \
+            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY
     artifacts:
       - money_flow/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log

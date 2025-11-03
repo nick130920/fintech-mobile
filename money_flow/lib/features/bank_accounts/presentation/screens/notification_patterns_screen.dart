@@ -1029,35 +1029,34 @@ class _NotificationPatternsScreenState extends State<NotificationPatternsScreen>
   void _deletePattern(BankNotificationPatternModel pattern) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar Patrón'),
         content: Text('¿Estás seguro de que quieres eliminar "${pattern.name}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               final provider = context.read<BankNotificationPatternProvider>();
               final success = await provider.deletePattern(pattern.id);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success ? 'Patrón eliminado' : 'Error al eliminar patrón',
-                    ),
-                    backgroundColor: success
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.error,
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success ? 'Patrón eliminado' : 'Error al eliminar patrón',
                   ),
-                );
-              }
+                  backgroundColor: success
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.error,
+                ),
+              );
             },
             child: Text(
               'Eliminar',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: Theme.of(dialogContext).colorScheme.error),
             ),
           ),
         ],
@@ -1072,19 +1071,18 @@ class _NotificationPatternsScreenState extends State<NotificationPatternsScreen>
         : NotificationPatternStatus.active;
     
     final success = await provider.setPatternStatus(pattern.id, newStatus);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Patrón ${newStatus == NotificationPatternStatus.active ? 'activado' : 'desactivado'}'
-                : 'Error al cambiar estado del patrón',
-          ),
-          backgroundColor: success
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.error,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Patrón ${newStatus == NotificationPatternStatus.active ? 'activado' : 'desactivado'}'
+              : 'Error al cambiar estado del patrón',
         ),
-      );
-    }
+        backgroundColor: success
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 }

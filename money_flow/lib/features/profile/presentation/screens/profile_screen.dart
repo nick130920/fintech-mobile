@@ -22,6 +22,10 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _buildBankingOptions(context),
           const Divider(height: 40),
+          _buildSectionTitle(context, 'Configuración'),
+          const SizedBox(height: 8),
+          _buildSettingsOptions(context),
+          const Divider(height: 40),
           _buildSectionTitle(context, 'Apariencia'),
           const SizedBox(height: 8),
           _buildThemeSelector(context, themeProvider),
@@ -109,6 +113,35 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, '/process-notification'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsOptions(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.attach_money,
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
+            size: 20,
+          ),
+        ),
+        title: const Text('Divisa de la Aplicación'),
+        subtitle: const Text('Configura tu divisa preferida'),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () => Navigator.pushNamed(context, '/currency-settings'),
       ),
     );
   }

@@ -29,6 +29,8 @@ import 'features/budget/presentation/providers/income_provider.dart';
 import 'features/budget/presentation/screens/add_expense_screen.dart';
 import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
+import 'features/budget/presentation/screens/reports_screen.dart';
+import 'features/settings/presentation/screens/currency_settings_screen.dart';
 import 'shared/screens/main_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -127,7 +129,9 @@ class MyApp extends StatelessWidget {
               },
               '/add-income': (context) => const AddIncomeScreen(),
               '/expense-history': (context) => const MainScreen(initialTab: 1),
+              '/income-history': (context) => const ReportsScreen(useScaffold: true, initialTabIndex: 1),
               '/category-management': (context) => const MainScreen(initialTab: 2),
+              '/currency-settings': (context) => const CurrencySettingsScreen(),
               '/bank-accounts': (context) => const BankAccountsScreen(),
               '/add-bank-account': (context) => const AddBankAccountScreen(),
               '/notification-patterns': (context) => const NotificationPatternsScreen(),

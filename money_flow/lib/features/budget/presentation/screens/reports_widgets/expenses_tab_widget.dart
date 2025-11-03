@@ -64,7 +64,7 @@ class ExpensesTabWidget extends StatelessWidget {
                         index: index,
                       ),
                     );
-                  }).toList(),
+                  }),
                 ] else
                   _buildExpensesEmptyState(context),
               ],
@@ -308,7 +308,7 @@ class ExpensesTabWidget extends StatelessWidget {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
                 // Centro del gráfico
                 Column(
                   mainAxisSize: MainAxisSize.min,

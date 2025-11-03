@@ -92,6 +92,18 @@ class CurrencyService {
     _currencyByCountry['JP']!,    // Yen Japonés
   ];
 
+  // Obtener todas las divisas disponibles (sin duplicados por código)
+  static List<CurrencyInfo> get allCurrencies {
+    final uniqueCurrencies = <String, CurrencyInfo>{};
+    
+    for (final currency in _currencyByCountry.values) {
+      uniqueCurrencies[currency.code] = currency;
+    }
+    
+    return uniqueCurrencies.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+  }
+
   // Divisa por defecto (USD)
   static const CurrencyInfo defaultCurrency = CurrencyInfo(
     code: 'USD',

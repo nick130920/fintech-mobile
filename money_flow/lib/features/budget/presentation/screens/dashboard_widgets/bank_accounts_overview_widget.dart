@@ -212,7 +212,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
         ...accounts.map((account) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _buildAccountCard(account),
-        )).toList(),
+        )),
         if (provider.bankAccountSummary.length > 3)
           GlassmorphismCard(
             style: GlassStyles.light,

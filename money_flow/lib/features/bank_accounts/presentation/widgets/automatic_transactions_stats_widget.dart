@@ -67,7 +67,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   Widget _buildLoadingState() {
     return GlassmorphismCard(
       style: GlassStyles.medium,
-      child: Container(
+      child: SizedBox(
         height: 160,
         child: const Center(
           child: CircularProgressIndicator(),
