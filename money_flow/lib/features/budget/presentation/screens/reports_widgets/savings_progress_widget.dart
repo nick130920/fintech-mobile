@@ -4,19 +4,28 @@ import 'package:provider/provider.dart';
 import '../../../../../core/providers/currency_provider.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../providers/expense_provider.dart';
+import '../../providers/income_provider.dart';
 
 class SavingsProgressWidget extends StatelessWidget {
   const SavingsProgressWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CurrencyProvider, DashboardProvider>(
-      builder: (context, currencyProvider, dashboardProvider, child) {
-        // Datos simulados para ahorros
-        final savingsGoal = 500000.0; // Meta de ahorro mensual
-        final currentSavings = 720000.0; // Ahorro actual del mes
-        final progress = currentSavings / savingsGoal;
-        final isOnTrack = progress >= 1.0;
+    return Consumer4<CurrencyProvider, DashboardProvider, IncomeProvider, ExpenseProvider>(
+      builder: (context, currencyProvider, dashboardProvider, incomeProvider, expenseProvider, child) {
+        // Datos reales: Ahorro = Ingresos - Gastos del mes
+        final monthlyIncome = incomeProvider.currentMonthIncome;
+        final monthlyExpenses = expenseProvider.monthlyTotal;
+        final currentSavings = monthlyIncome - monthlyExpenses;
+        
+        // Meta de ahorro: Usar el presupuesto como referencia
+        // Si hay presupuesto, la meta es mantener el saldo positivo
+        final budgetTotal = dashboardProvider.budgetTotal;
+        final savingsGoal = budgetTotal > 0 ? monthlyIncome - budgetTotal : monthlyIncome * 0.2;
+        
+        final progress = savingsGoal > 0 ? (currentSavings / savingsGoal) : 0.0;
+        final isOnTrack = currentSavings >= savingsGoal;
         
         return GlassmorphismCard(
           style: GlassStyles.medium,

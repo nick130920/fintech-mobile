@@ -11,7 +11,16 @@ class SmsService {
   final SmsQuery _query = SmsQuery();
   static const String _lastSmsSyncKey = 'last_sms_sync_timestamp';
 
-  Future<void> syncInbox(OnSmsCallback onSmsReceived) async {
+  /// Sincronizar inbox de SMS
+  /// 
+  /// [onSmsReceived] - Callback que se ejecuta por cada mensaje
+  /// [minDate] - Fecha mínima desde la cual procesar mensajes (opcional)
+  /// [autoMode] - Si es true, solo procesa mensajes nuevos. Si es false, procesa todos desde minDate
+  Future<void> syncInbox(
+    OnSmsCallback onSmsReceived, {
+    DateTime? minDate,
+    bool autoMode = true,
+  }) async {
     // SMS no está soportado en web
     if (kIsWeb) {
       debugPrint("SMS no está soportado en la plataforma web.");
@@ -24,30 +33,64 @@ class SmsService {
       return;
     }
 
-    final lastSyncTimestamp = await PreferencesService.getInt(_lastSmsSyncKey);
     final allSms = await _query.querySms(
       kinds: [SmsQueryKind.inbox],
       sort: true,
     );
 
-    final newMessages = allSms.where((sms) {
-      // Filtrar mensajes que son más recientes que el último timestamp
-      return sms.date != null && (lastSyncTimestamp == null || sms.date!.millisecondsSinceEpoch > lastSyncTimestamp);
-    }).toList();
+    List<SmsMessage> messagesToProcess = [];
 
-    if (newMessages.isNotEmpty) {
-      debugPrint("${newMessages.length} nuevos SMS encontrados para procesar.");
-      for (final message in newMessages) {
+    if (autoMode) {
+      // Modo automático: solo mensajes nuevos
+      final lastSyncTimestamp = await PreferencesService.getInt(_lastSmsSyncKey);
+      messagesToProcess = allSms.where((sms) {
+        if (sms.date == null) return false;
+        
+        // Debe ser más reciente que el último sync
+        final isNewer = lastSyncTimestamp == null || 
+                        sms.date!.millisecondsSinceEpoch > lastSyncTimestamp;
+        
+        // Y debe cumplir con la fecha mínima si está configurada
+        final meetsMinDate = minDate == null || 
+                             sms.date!.isAfter(minDate) || 
+                             sms.date!.isAtSameMomentAs(minDate);
+        
+        return isNewer && meetsMinDate;
+      }).toList();
+    } else {
+      // Modo manual: todos los mensajes desde minDate
+      messagesToProcess = allSms.where((sms) {
+        if (sms.date == null) return false;
+        
+        if (minDate == null) return true;
+        
+        return sms.date!.isAfter(minDate) || sms.date!.isAtSameMomentAs(minDate);
+      }).toList();
+    }
+
+    if (messagesToProcess.isNotEmpty) {
+      debugPrint("${messagesToProcess.length} SMS encontrados para procesar.");
+      debugPrint("Rango: ${minDate != null ? 'Desde ${minDate.toString().split(' ')[0]}' : 'Sin límite'}");
+      
+      for (final message in messagesToProcess) {
         onSmsReceived(message.body);
       }
 
       // Guardar el timestamp del mensaje más reciente procesado
-      final latestTimestamp = newMessages.first.date!.millisecondsSinceEpoch;
-      await PreferencesService.setInt(_lastSmsSyncKey, latestTimestamp);
-      debugPrint("Último timestamp de SMS guardado: $latestTimestamp");
+      if (autoMode && messagesToProcess.isNotEmpty) {
+        final latestTimestamp = messagesToProcess.first.date!.millisecondsSinceEpoch;
+        await PreferencesService.setInt(_lastSmsSyncKey, latestTimestamp);
+        debugPrint("Último timestamp de SMS guardado: $latestTimestamp");
+      }
     } else {
-      debugPrint("No hay nuevos SMS para procesar.");
+      debugPrint("No hay SMS para procesar con los filtros actuales.");
     }
+  }
+  
+  /// Resetear el timestamp de sincronización
+  Future<void> resetSyncTimestamp() async {
+    await PreferencesService.remove(_lastSmsSyncKey);
+    debugPrint("Timestamp de sincronización reseteado");
   }
 
   Future<bool> requestPermissions() async {

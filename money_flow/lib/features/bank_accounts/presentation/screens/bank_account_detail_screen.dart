@@ -6,6 +6,7 @@ import '../../../../core/providers/currency_provider.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 import '../providers/bank_account_provider.dart';
+import 'edit_bank_account_screen.dart';
 
 class BankAccountDetailScreen extends StatelessWidget {
   final BankAccountModel account;
@@ -375,11 +376,12 @@ class BankAccountDetailScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // TODO: Navegar a historial completo de transacciones
+                // Funcionalidad de historial completo estará disponible cuando se integre el módulo de transacciones
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Historial completo próximamente'),
-                    duration: Duration(seconds: 2),
+                  SnackBar(
+                    content: const Text('Historial completo estará disponible próximamente'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                 );
               },
@@ -511,14 +513,24 @@ class BankAccountDetailScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Editar Cuenta'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Edición de cuenta próximamente'),
-                    duration: Duration(seconds: 2),
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => EditBankAccountScreen(account: account),
                   ),
                 );
+                
+                // Si se actualizó la cuenta, actualizar la vista
+                if (result == true && context.mounted) {
+                  // Recargar la cuenta actualizada
+                  await context.read<BankAccountProvider>().loadBankAccount(account.id);
+                  
+                  // Volver atrás para refrescar la lista
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                }
               },
             ),
             ListTile(
@@ -537,14 +549,21 @@ class BankAccountDetailScreen extends StatelessWidget {
                 color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('Configurar Notificaciones'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Configuración de notificaciones próximamente'),
-                    duration: Duration(seconds: 2),
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => EditBankAccountScreen(account: account),
                   ),
                 );
+                
+                // Si se actualizó la cuenta, actualizar la vista
+                if (result == true && context.mounted) {
+                  await context.read<BankAccountProvider>().loadBankAccount(account.id);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                }
               },
             ),
             const Divider(),

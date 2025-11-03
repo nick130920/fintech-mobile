@@ -309,6 +309,7 @@ class UpdateBankAccountRequest {
   final String? accountAlias;
   final String? color;
   final String? icon;
+  final String? currency;
   @JsonKey(name: 'is_notification_enabled')
   final bool? isNotificationEnabled;
   @JsonKey(name: 'notification_phone')
@@ -324,6 +325,7 @@ class UpdateBankAccountRequest {
     this.accountAlias,
     this.color,
     this.icon,
+    this.currency,
     this.isNotificationEnabled,
     this.notificationPhone,
     this.notificationEmail,

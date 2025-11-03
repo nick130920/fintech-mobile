@@ -5,16 +5,17 @@ import '../../../../../core/providers/currency_provider.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/expense_provider.dart';
+import '../../providers/income_provider.dart';
 
 class BalanceOverviewWidget extends StatelessWidget {
   const BalanceOverviewWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<ExpenseProvider, CurrencyProvider, DashboardProvider>(
-      builder: (context, expenseProvider, currencyProvider, dashboardProvider, child) {
-        // Datos simulados para ingresos (en una implementación real vendrían del backend)
-        final monthlyIncome = 3000000.0; // Datos de ejemplo
+    return Consumer4<ExpenseProvider, CurrencyProvider, DashboardProvider, IncomeProvider>(
+      builder: (context, expenseProvider, currencyProvider, dashboardProvider, incomeProvider, child) {
+        // Datos reales del mes actual
+        final monthlyIncome = incomeProvider.currentMonthIncome;
         final monthlyExpenses = expenseProvider.monthlyTotal;
         final netBalance = monthlyIncome - monthlyExpenses;
         final isPositive = netBalance > 0;

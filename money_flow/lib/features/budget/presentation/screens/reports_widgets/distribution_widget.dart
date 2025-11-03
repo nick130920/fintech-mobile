@@ -4,21 +4,22 @@ import 'package:provider/provider.dart';
 import '../../../../../core/providers/currency_provider.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/expense_provider.dart';
+import '../../providers/income_provider.dart';
 
 class DistributionWidget extends StatelessWidget {
   const DistributionWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ExpenseProvider, CurrencyProvider>(
-      builder: (context, expenseProvider, currencyProvider, child) {
+    return Consumer3<ExpenseProvider, CurrencyProvider, IncomeProvider>(
+      builder: (context, expenseProvider, currencyProvider, incomeProvider, child) {
         return Column(
           children: [
             // Distribución de Ingresos
             _buildDistributionCard(
               context,
               'Distribución de Ingresos',
-              _getMockIncomeDistribution(),
+              _getIncomeDistribution(incomeProvider),
               currencyProvider,
               Colors.green[600]!,
             ),
@@ -38,13 +39,39 @@ class DistributionWidget extends StatelessWidget {
     );
   }
 
-  List<Map<String, dynamic>> _getMockIncomeDistribution() {
-    // Datos simulados para distribución de ingresos
-    return [
-      {'name': 'Salario', 'amount': 2500000.0, 'percentage': 83.3},
-      {'name': 'Freelance', 'amount': 400000.0, 'percentage': 13.3},
-      {'name': 'Inversiones', 'amount': 100000.0, 'percentage': 3.3},
-    ];
+  List<Map<String, dynamic>> _getIncomeDistribution(IncomeProvider incomeProvider) {
+    // Calcular distribución real de ingresos del mes actual
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 0);
+    
+    final monthIncomes = incomeProvider.getIncomesForDateRange(startOfMonth, endOfMonth);
+    
+    if (monthIncomes.isEmpty) {
+      return [];
+    }
+    
+    // Agrupar por fuente
+    final Map<String, double> sourceAmounts = {};
+    for (var income in monthIncomes) {
+      final source = income.source;
+      sourceAmounts[source] = (sourceAmounts[source] ?? 0.0) + income.amount;
+    }
+    
+    // Calcular total para porcentajes
+    final totalIncome = sourceAmounts.values.fold(0.0, (sum, amount) => sum + amount);
+    
+    // Convertir a lista de mapas y ordenar por monto descendente
+    final distribution = sourceAmounts.entries.map((entry) {
+      return {
+        'name': entry.key,
+        'amount': entry.value,
+        'percentage': totalIncome > 0 ? (entry.value / totalIncome) * 100 : 0.0,
+      };
+    }).toList()..sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+    
+    // Tomar solo los top 3
+    return distribution.take(3).toList();
   }
 
   Widget _buildDistributionCard(BuildContext context, String title, List<dynamic> data, CurrencyProvider currencyProvider, Color accentColor) {

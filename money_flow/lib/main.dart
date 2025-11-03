@@ -3,7 +3,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/app/app_wrapper.dart';
+import 'core/models/sms_settings.dart';
 import 'core/providers/currency_provider.dart';
+import 'core/providers/sms_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/api_service.dart';
 import 'core/services/sms_service.dart';
@@ -31,6 +33,7 @@ import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
 import 'features/settings/presentation/screens/currency_settings_screen.dart';
+import 'features/settings/presentation/screens/sms_settings_screen.dart';
 import 'shared/screens/main_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -53,15 +56,21 @@ void smsSyncHandler(String? message) async {
     return;
   }
 
+  // Verificar configuración de SMS
+  final smsSettingsProvider = Provider.of<SmsSettingsProvider>(context, listen: false);
+  
   final bankAccountProvider = Provider.of<BankAccountProvider>(context, listen: false);
-  final patternProvider = Provider.of<BankNotificationPatternProvider>(context, listen: false);
-
-  // Asegurarse de que las cuentas estén cargadas
   await bankAccountProvider.loadBankAccounts(activeOnly: true);
   
   final smsEnabledAccounts = bankAccountProvider.activeBankAccounts
       .where((acc) => acc.isNotificationEnabled && acc.notificationPhone.isNotEmpty)
       .toList();
+
+  // Verificar si se puede procesar automáticamente
+  if (!smsSettingsProvider.canAutoProcess(smsEnabledAccounts.isNotEmpty)) {
+    debugPrint("Procesamiento automático deshabilitado o no cumple condiciones");
+    return;
+  }
 
   if (smsEnabledAccounts.isEmpty) {
     debugPrint("No hay cuentas con notificaciones SMS activas.");
@@ -69,6 +78,9 @@ void smsSyncHandler(String? message) async {
   }
   
   debugPrint("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
+  debugPrint("Configuración SMS: ${smsSettingsProvider.settings.processMode.displayName}");
+
+  final patternProvider = Provider.of<BankNotificationPatternProvider>(context, listen: false);
 
   for (var account in smsEnabledAccounts) {
     debugPrint("Procesando SMS para la cuenta: ${account.accountAlias}");
@@ -109,6 +121,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BankAccountProvider()),
         ChangeNotifierProvider(create: (_) => BankNotificationPatternProvider()),
         ChangeNotifierProvider(create: (_) => AutomaticTransactionsProvider()),
+        ChangeNotifierProvider(create: (_) => SmsSettingsProvider()..initialize()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -132,6 +145,7 @@ class MyApp extends StatelessWidget {
               '/income-history': (context) => const ReportsScreen(useScaffold: true, initialTabIndex: 1),
               '/category-management': (context) => const MainScreen(initialTab: 2),
               '/currency-settings': (context) => const CurrencySettingsScreen(),
+              '/sms-settings': (context) => const SmsSettingsScreen(),
               '/bank-accounts': (context) => const BankAccountsScreen(),
               '/add-bank-account': (context) => const AddBankAccountScreen(),
               '/notification-patterns': (context) => const NotificationPatternsScreen(),
