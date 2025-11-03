@@ -93,9 +93,9 @@ ProcessedNotificationModel _$ProcessedNotificationModelFromJson(
   success: json['success'] as bool,
   transactionCreated: json['transaction_created'] as bool,
   patternUsed: json['pattern_used'] as String?,
+  reason: json['reason'] as String?,
   confidence: (json['confidence'] as num?)?.toDouble(),
   requiresValidation: json['requires_validation'] as bool,
-  reason: json['reason'] as String?,
   extractedData: json['extracted_data'] == null
       ? null
       : ExtractedData.fromJson(json['extracted_data'] as Map<String, dynamic>),
@@ -107,9 +107,9 @@ Map<String, dynamic> _$ProcessedNotificationModelToJson(
   'success': instance.success,
   'transaction_created': instance.transactionCreated,
   'pattern_used': instance.patternUsed,
+  'reason': instance.reason,
   'confidence': instance.confidence,
   'requires_validation': instance.requiresValidation,
-  'reason': instance.reason,
   'extracted_data': instance.extractedData,
 };
 
