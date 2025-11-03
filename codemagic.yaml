@@ -5,6 +5,7 @@ workflows:
     triggering:
           events:
               - push
+          cancel_previous_builds: true
     instance_type: mac_mini_m1
     environment:
       android_signing:
@@ -61,7 +62,6 @@ workflows:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: $GOOGLE_PLAY_TRACK
-        submit_as_draft: false
 
   ios-workflow:
     name: iOS Workflow
