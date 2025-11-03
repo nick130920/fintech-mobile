@@ -240,7 +240,10 @@ class ExpenseListItemWidget extends StatelessWidget {
                               child: OutlinedButton.icon(
                                 onPressed: () {
                                   Navigator.of(context).pop();
-                                  // Implementar edición
+                                  Navigator.of(context).pushNamed(
+                                    '/add-expense',
+                                    arguments: expense,
+                                  );
                                 },
                                 icon: const Icon(Icons.edit),
                                 label: const Text('Editar'),

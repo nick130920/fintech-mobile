@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -11,9 +12,15 @@ class SmsService {
   static const String _lastSmsSyncKey = 'last_sms_sync_timestamp';
 
   Future<void> syncInbox(OnSmsCallback onSmsReceived) async {
+    // SMS no está soportado en web
+    if (kIsWeb) {
+      debugPrint("SMS no está soportado en la plataforma web.");
+      return;
+    }
+
     final hasPermission = await requestPermissions();
     if (!hasPermission) {
-      print("No se tienen permisos de SMS para sincronizar.");
+      debugPrint("No se tienen permisos de SMS para sincronizar.");
       return;
     }
 
@@ -29,7 +36,7 @@ class SmsService {
     }).toList();
 
     if (newMessages.isNotEmpty) {
-      print("${newMessages.length} nuevos SMS encontrados para procesar.");
+      debugPrint("${newMessages.length} nuevos SMS encontrados para procesar.");
       for (final message in newMessages) {
         onSmsReceived(message.body);
       }
@@ -37,18 +44,23 @@ class SmsService {
       // Guardar el timestamp del mensaje más reciente procesado
       final latestTimestamp = newMessages.first.date!.millisecondsSinceEpoch;
       await PreferencesService.setInt(_lastSmsSyncKey, latestTimestamp);
-      print("Último timestamp de SMS guardado: $latestTimestamp");
+      debugPrint("Último timestamp de SMS guardado: $latestTimestamp");
     } else {
-      print("No hay nuevos SMS para procesar.");
+      debugPrint("No hay nuevos SMS para procesar.");
     }
   }
 
   Future<bool> requestPermissions() async {
+    // En web, los permisos SMS no están soportados
+    if (kIsWeb) {
+      return false;
+    }
+    
     final status = await Permission.sms.request();
     if (status.isGranted) {
       return true;
     }
-    print("Permiso de SMS: $status");
+    debugPrint("Permiso de SMS: $status");
     return false;
   }
 }

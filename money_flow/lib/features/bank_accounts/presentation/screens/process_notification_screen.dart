@@ -704,12 +704,12 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
     }
 
     // --- DEBUG PRINTS ---
-    print('--- Navigating to AddExpenseScreen with initial data ---');
-    print('Initial Amount: ${result.extractedAmount}');
-    print('Initial Description: ${result.extractedDescription}');
-    print('Initial Merchant: ${result.extractedMerchant}');
-    print('Initial Date: $transactionDate');
-    print('--- End of initial data ---');
+    debugPrint('--- Navigating to AddExpenseScreen with initial data ---');
+    debugPrint('Initial Amount: ${result.extractedAmount}');
+    debugPrint('Initial Description: ${result.extractedDescription}');
+    debugPrint('Initial Merchant: ${result.extractedMerchant}');
+    debugPrint('Initial Date: $transactionDate');
+    debugPrint('--- End of initial data ---');
     // --- END DEBUG PRINTS ---
 
     Navigator.of(context).push(

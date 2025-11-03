@@ -525,7 +525,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
     );
 
     // Debug: Imprimir request
-    print('🚀 Enviando request: ${request.toJson()}');
+    debugPrint('🚀 Enviando request: ${request.toJson()}');
 
     final provider = context.read<BankAccountProvider>();
     final success = await provider.createBankAccount(request);

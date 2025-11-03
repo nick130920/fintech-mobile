@@ -35,23 +35,23 @@ class AuthProvider extends ChangeNotifier {
     if (cachedUser != null) {
       _user = cachedUser;
       _setStatus(AuthStatus.authenticated);
-      print("Usuario cargado desde caché.");
+      debugPrint("Usuario cargado desde caché.");
       
       // 2. Luego, refrescar el perfil desde el servidor en segundo plano
       await refreshProfile();
-      print("Perfil de usuario actualizado desde el servidor.");
+      debugPrint("Perfil de usuario actualizado desde el servidor.");
     } else {
       // Si no hay usuario en caché, verificar si hay tokens para intentar un refresh
       final hasTokens = await AuthRepository.isLoggedIn();
       if (hasTokens) {
-        print("Tokens encontrados, intentando refrescar perfil...");
+        debugPrint("Tokens encontrados, intentando refrescar perfil...");
         await refreshProfile();
         if (_user == null) {
            _setStatus(AuthStatus.unauthenticated);
         }
       } else {
         _setStatus(AuthStatus.unauthenticated);
-        print("No hay sesión activa.");
+        debugPrint("No hay sesión activa.");
       }
     }
   }

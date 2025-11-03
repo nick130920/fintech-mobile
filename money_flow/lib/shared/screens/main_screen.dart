@@ -83,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
             foregroundColor: Colors.white,
             child: const Icon(Icons.trending_up),
             onPressed: () {
-              print('DEBUG: Income button pressed - navigating to /add-income');
+              debugPrint('DEBUG: Income button pressed - navigating to /add-income');
               Navigator.pushNamed(context, '/add-income');
             },
           ),
@@ -93,7 +93,7 @@ class _MainScreenState extends State<MainScreen> {
             foregroundColor: Colors.white,
             child: const Icon(Icons.trending_down),
             onPressed: () {
-              print('DEBUG: Expense button pressed - navigating to /add-expense');
+              debugPrint('DEBUG: Expense button pressed - navigating to /add-expense');
               Navigator.pushNamed(context, '/add-expense');
             },
           ),
@@ -103,7 +103,7 @@ class _MainScreenState extends State<MainScreen> {
             foregroundColor: Colors.white,
             child: const Icon(Icons.account_balance),
             onPressed: () {
-              print('DEBUG: Bank Account button pressed - navigating to /add-bank-account');
+              debugPrint('DEBUG: Bank Account button pressed - navigating to /add-bank-account');
               Navigator.pushNamed(context, '/add-bank-account');
             },
           ),

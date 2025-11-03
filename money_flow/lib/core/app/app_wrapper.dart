@@ -23,8 +23,8 @@ class _AppWrapperState extends State<AppWrapper> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CurrencyProvider>().initialize();
-        // Cargar el estado inicial de autenticación
-        context.read<AuthProvider>().initialize();
+        // El AuthProvider ya se inicializa en main.dart con ..initialize()
+        // No es necesario llamarlo de nuevo aquí
       }
     });
   }

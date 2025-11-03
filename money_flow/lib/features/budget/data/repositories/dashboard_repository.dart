@@ -11,7 +11,7 @@ class DashboardRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    final response = await ApiService.get('/budgets/dashboard/', token: token);
+    final response = await ApiService.get('/budgets/dashboard', token: token);
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -26,7 +26,7 @@ class DashboardRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    final response = await ApiService.get('/incomes/stats/', token: token);
+    final response = await ApiService.get('/incomes/stats', token: token);
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -64,7 +64,7 @@ class DashboardRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    final response = await ApiService.get('/budgets/current/', token: token);
+    final response = await ApiService.get('/budgets/current', token: token);
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

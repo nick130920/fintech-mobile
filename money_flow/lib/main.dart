@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/app/app_wrapper.dart';
 import 'core/providers/currency_provider.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/services/api_service.dart';
 import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -20,6 +21,7 @@ import 'features/bank_accounts/presentation/screens/edit_pending_transaction_scr
 import 'features/bank_accounts/presentation/screens/notification_patterns_screen.dart';
 import 'features/bank_accounts/presentation/screens/pending_transactions_screen.dart';
 import 'features/bank_accounts/presentation/screens/process_notification_screen.dart';
+import 'features/budget/data/models/expense_model.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
 import 'features/budget/presentation/providers/dashboard_provider.dart';
 import 'features/budget/presentation/providers/expense_provider.dart';
@@ -28,7 +30,6 @@ import 'features/budget/presentation/screens/add_expense_screen.dart';
 import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'shared/screens/main_screen.dart';
-import 'core/services/api_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final SmsService smsService = SmsService();
@@ -36,10 +37,17 @@ final SmsService smsService = SmsService();
 void smsSyncHandler(String? message) async {
   if (message == null) return;
 
-  print("smsSyncHandler procesando mensaje...");
+  debugPrint("smsSyncHandler procesando mensaje...");
   final context = navigatorKey.currentContext;
   if (context == null) {
-    print("Error: No se pudo obtener el contexto del navegador");
+    debugPrint("Error: No se pudo obtener el contexto del navegador");
+    return;
+  }
+
+  // Verificar si hay una sesión activa antes de procesar
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  if (authProvider.status != AuthStatus.authenticated) {
+    debugPrint("No hay sesión activa, omitiendo procesamiento de SMS");
     return;
   }
 
@@ -54,14 +62,14 @@ void smsSyncHandler(String? message) async {
       .toList();
 
   if (smsEnabledAccounts.isEmpty) {
-    print("No hay cuentas con notificaciones SMS activas.");
+    debugPrint("No hay cuentas con notificaciones SMS activas.");
     return;
   }
   
-  print("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
+  debugPrint("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
 
   for (var account in smsEnabledAccounts) {
-    print("Procesando SMS para la cuenta: ${account.accountAlias}");
+    debugPrint("Procesando SMS para la cuenta: ${account.accountAlias}");
     final request = ProcessNotificationRequest(
       bankAccountId: account.id,
       channel: NotificationChannel.sms,
@@ -113,7 +121,10 @@ class MyApp extends StatelessWidget {
             routes: {
               '/budget-setup': (context) => const BudgetSetupScreen(),
               '/dashboard': (context) => const MainScreen(),
-              '/add-expense': (context) => const AddExpenseScreen(),
+              '/add-expense': (context) {
+                final expense = ModalRoute.of(context)?.settings.arguments as ExpenseModel?;
+                return AddExpenseScreen(expense: expense);
+              },
               '/add-income': (context) => const AddIncomeScreen(),
               '/expense-history': (context) => const MainScreen(initialTab: 1),
               '/category-management': (context) => const MainScreen(initialTab: 2),

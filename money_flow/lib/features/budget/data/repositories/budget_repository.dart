@@ -10,7 +10,7 @@ class BudgetRepository {
     try {
       final token = await StorageService.getAccessToken();
       
-      final response = await ApiService.get('/categories/', token: token);
+      final response = await ApiService.get('/categories', token: token);
       final data = ApiService.handleResponse(response)['data'] as Map<String, dynamic>;
       
       // Combinar categorías por defecto y del usuario

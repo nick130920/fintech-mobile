@@ -82,7 +82,7 @@ class IncomeRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    final response = await ApiService.get('/incomes/$id/', token: token);
+    final response = await ApiService.get('/incomes/$id', token: token);
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -113,7 +113,7 @@ class IncomeRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    String endpoint = '/incomes/stats/';
+    String endpoint = '/incomes/stats';
     if (year != null) {
       endpoint += '?year=$year';
     }
@@ -171,7 +171,7 @@ class IncomeRepository {
     final token = await StorageService.getAccessToken();
     if (token == null) throw Exception('No token found');
 
-    final response = await ApiService.delete('/incomes/$id/', token: token);
+    final response = await ApiService.delete('/incomes/$id', token: token);
     
     if (response.statusCode != 200) {
       final errorData = json.decode(response.body);

@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
 import '../../data/models/category_model.dart';
+import '../../data/models/expense_model.dart';
 import '../providers/expense_provider.dart';
 
 class AddExpenseScreen extends StatefulWidget {
+  final ExpenseModel? expense; // Para edición
   final double? initialAmount;
   final String? initialDescription;
   final String? initialMerchant;
@@ -15,6 +17,7 @@ class AddExpenseScreen extends StatefulWidget {
 
   const AddExpenseScreen({
     super.key,
+    this.expense,
     this.initialAmount,
     this.initialDescription,
     this.initialMerchant,
@@ -39,18 +42,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialAmount != null) {
-      _amountController.text = widget.initialAmount!.toStringAsFixed(2);
+    
+    // Si estamos editando, pre-llenar con los datos existentes
+    if (widget.expense != null) {
+      _amountController.text = widget.expense!.amount.toStringAsFixed(2);
+      _descriptionController.text = widget.expense!.description;
+      _locationController.text = widget.expense!.location;
+      _merchantController.text = widget.expense!.merchant;
+      _notesController.text = widget.expense!.notes;
+      _selectedCategory = widget.expense!.category;
+      _selectedDate = widget.expense!.dateTime;
+    } else {
+      // Si no, usar los valores iniciales si existen
+      if (widget.initialAmount != null) {
+        _amountController.text = widget.initialAmount!.toStringAsFixed(2);
+      }
+      if (widget.initialDescription != null) {
+        _descriptionController.text = widget.initialDescription!;
+      }
+      if (widget.initialMerchant != null) {
+        _merchantController.text = widget.initialMerchant!;
+      }
+      if (widget.initialDate != null) {
+        _selectedDate = widget.initialDate!;
+      }
     }
-    if (widget.initialDescription != null) {
-      _descriptionController.text = widget.initialDescription!;
-    }
-    if (widget.initialMerchant != null) {
-      _merchantController.text = widget.initialMerchant!;
-    }
-    if (widget.initialDate != null) {
-      _selectedDate = widget.initialDate!;
-    }
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ExpenseProvider>().initialize();
     });
@@ -71,7 +88,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Registrar Gasto'),
+        title: Text(widget.expense != null ? 'Editar Gasto' : 'Registrar Gasto'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -145,7 +162,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '¿En qué gastaste?',
+                              widget.expense != null ? 'Editar información' : '¿En qué gastaste?',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -153,7 +170,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               ),
                             ),
                             Text(
-                              'Registra tu gasto y mantén control de tu presupuesto',
+                              widget.expense != null 
+                                ? 'Actualiza los detalles de tu gasto'
+                                : 'Registra tu gasto y mantén control de tu presupuesto',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -212,9 +231,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Registrar Gasto',
-                              style: TextStyle(
+                          : Text(
+                              widget.expense != null ? 'Actualizar Gasto' : 'Registrar Gasto',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -666,25 +685,52 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
 
     final provider = context.read<ExpenseProvider>();
-    
-    final success = await provider.createExpense(
-      categoryId: _selectedCategory!.id,
-      amount: amount,
-      description: _descriptionController.text.trim(),
-      date: _selectedDate,
-      location: _locationController.text.trim(),
-      merchant: _merchantController.text.trim(),
-      notes: _notesController.text.trim(),
-    );
+    bool success;
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Gasto registrado exitosamente!'),
-          backgroundColor: Colors.green,
-        ),
+    if (widget.expense != null) {
+      // Actualizar gasto existente
+      final updates = {
+        'category_id': _selectedCategory!.id,
+        'amount': amount,
+        'description': _descriptionController.text.trim(),
+        'date': _selectedDate.toIso8601String(),
+        'location': _locationController.text.trim(),
+        'merchant': _merchantController.text.trim(),
+        'notes': _notesController.text.trim(),
+      };
+      
+      success = await provider.updateExpense(widget.expense!.id, updates);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Gasto actualizado exitosamente!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } else {
+      // Crear nuevo gasto
+      success = await provider.createExpense(
+        categoryId: _selectedCategory!.id,
+        amount: amount,
+        description: _descriptionController.text.trim(),
+        date: _selectedDate,
+        location: _locationController.text.trim(),
+        merchant: _merchantController.text.trim(),
+        notes: _notesController.text.trim(),
       );
-      Navigator.of(context).pop();
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Gasto registrado exitosamente!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 }
