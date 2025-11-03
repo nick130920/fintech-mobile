@@ -6,6 +6,7 @@ import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 import '../providers/bank_account_provider.dart';
 import 'add_bank_account_screen.dart';
+import 'bank_account_detail_screen.dart';
 
 class BankAccountsScreen extends StatefulWidget {
   const BankAccountsScreen({super.key});
@@ -436,11 +437,9 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   }
 
   void _showAccountDetails(BankAccountModel account) {
-    // TODO: Implementar pantalla de detalles de cuenta
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Detalles de ${account.accountAlias}'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BankAccountDetailScreen(account: account),
       ),
     );
   }

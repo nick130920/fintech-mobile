@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:money_flow/core/providers/currency_provider.dart';
 import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
 import 'package:money_flow/features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
+import 'package:money_flow/features/budget/data/models/category_model.dart';
+import 'package:money_flow/features/budget/presentation/providers/expense_provider.dart';
 import 'package:money_flow/shared/widgets/glassmorphism_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -23,7 +25,7 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
   late final TextEditingController _descriptionController;
   late final TextEditingController _notesController;
   
-  int? _selectedCategoryId;
+  CategoryModel? _selectedCategory;
   bool _isLoading = false;
 
   @override
@@ -32,6 +34,11 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
     _amountController = TextEditingController(text: widget.transaction.amount.toString());
     _descriptionController = TextEditingController(text: widget.transaction.description);
     _notesController = TextEditingController(text: widget.transaction.notes ?? '');
+    
+    // Inicializar el ExpenseProvider para cargar categorías
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ExpenseProvider>().initialize();
+    });
   }
 
   @override
@@ -334,22 +341,39 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.category,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.transaction.categoryName ?? 'Seleccionar categoría',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: widget.transaction.categoryName != null
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                if (_selectedCategory != null) ...[
+                  Icon(
+                    _selectedCategory!.iconData,
+                    size: 24,
+                    color: _selectedCategory!.color,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _selectedCategory!.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                ),
+                ] else ...[
+                  Icon(
+                    Icons.category,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.transaction.categoryName ?? 'Seleccionar categoría',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                ],
                 Icon(
                   Icons.keyboard_arrow_down,
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -445,10 +469,114 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
   }
 
   void _showCategorySelector() {
-    // TODO: Implementar selector de categorías
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Selector de categorías - Por implementar'),
+    final provider = context.read<ExpenseProvider>();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Seleccionar Categoría',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: provider.categories.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.category_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay categorías disponibles',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: provider.categories.length,
+                    itemBuilder: (context, index) {
+                      final category = provider.categories[index];
+                      final isSelected = _selectedCategory?.id == category.id;
+                      
+                      return ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : Theme.of(context).colorScheme.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              category.iconData,
+                              size: 20,
+                              color: category.color,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          category.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                        subtitle: Text(category.description),
+                        trailing: isSelected 
+                            ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedCategory = category;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -473,7 +601,7 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
         widget.transaction.id,
         amount: amount,
         description: description,
-        categoryId: _selectedCategoryId,
+        categoryId: _selectedCategory?.id,
         notes: notes,
       );
 
