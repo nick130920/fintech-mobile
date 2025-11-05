@@ -17,6 +17,10 @@ class AutomaticTransactionsProvider with ChangeNotifier {
   List<TransactionModel> _automaticTransactions = [];
   bool _hasAutomaticLoaded = false;
 
+  // Transacciones aprobadas y rechazadas
+  List<TransactionModel> _approvedTransactions = [];
+  List<TransactionModel> _rejectedTransactions = [];
+
   // Estadísticas
   AutomaticTransactionStats? _stats;
 
@@ -37,6 +41,9 @@ class AutomaticTransactionsProvider with ChangeNotifier {
   
   List<TransactionModel> get automaticTransactions => _automaticTransactions;
   bool get hasAutomaticTransactions => _automaticTransactions.isNotEmpty;
+  
+  List<TransactionModel> get approvedTransactions => _approvedTransactions;
+  List<TransactionModel> get rejectedTransactions => _rejectedTransactions;
   
   AutomaticTransactionStats? get stats => _stats;
   
@@ -294,6 +301,56 @@ class AutomaticTransactionsProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading stats: $e');
+    }
+  }
+
+  /// Carga transacciones aprobadas
+  Future<void> loadApprovedTransactions({int limit = 50}) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final transactions = await AutomaticTransactionsRepository.getAutomaticTransactions(
+        limit: limit,
+        offset: 0,
+      );
+
+      _approvedTransactions = transactions
+          .where((t) => t.status == TransactionStatus.completed)
+          .toList();
+
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error loading approved transactions: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Carga transacciones rechazadas
+  Future<void> loadRejectedTransactions({int limit = 50}) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final transactions = await AutomaticTransactionsRepository.getAutomaticTransactions(
+        limit: limit,
+        offset: 0,
+      );
+
+      _rejectedTransactions = transactions
+          .where((t) => t.status == TransactionStatus.cancelled)
+          .toList();
+
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error loading rejected transactions: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

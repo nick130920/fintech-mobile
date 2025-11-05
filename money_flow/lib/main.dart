@@ -23,6 +23,7 @@ import 'features/bank_accounts/presentation/screens/edit_pending_transaction_scr
 import 'features/bank_accounts/presentation/screens/notification_patterns_screen.dart';
 import 'features/bank_accounts/presentation/screens/pending_transactions_screen.dart';
 import 'features/bank_accounts/presentation/screens/process_notification_screen.dart';
+import 'features/bank_accounts/presentation/screens/transactions_flow_screen.dart';
 import 'features/budget/data/models/expense_model.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
 import 'features/budget/presentation/providers/dashboard_provider.dart';
@@ -152,6 +153,7 @@ class MyApp extends StatelessWidget {
               '/add-notification-pattern': (context) => const AddNotificationPatternScreen(),
               '/process-notification': (context) => const ProcessNotificationScreen(),
               '/pending-transactions': (context) => const PendingTransactionsScreen(),
+              '/transactions-flow': (context) => const TransactionsFlowScreen(),
               '/edit-pending-transaction': (context) {
                 final transaction = ModalRoute.of(context)!.settings.arguments as TransactionModel;
                 return EditPendingTransactionScreen(transaction: transaction);
