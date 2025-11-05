@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/services/biometric_service.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
@@ -20,12 +22,46 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isBiometricAvailable = false;
+  bool _enableBiometric = false;
+  String _biometricType = 'Huella dactilar';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+    _loadSavedEmail();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final isAvailable = await BiometricService.isBiometricAvailable();
+    final biometricType = await BiometricService.getBiometricTypeDescription();
+    
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = isAvailable;
+        _biometricType = biometricType;
+      });
+    }
+  }
+
+  Future<void> _loadSavedEmail() async {
+    final savedEmail = await StorageService.getSavedEmail();
+    final isBiometricEnabled = await StorageService.isBiometricEnabled();
+    
+    if (mounted && savedEmail != null) {
+      setState(() {
+        _emailController.text = savedEmail;
+        _enableBiometric = isBiometricEnabled;
+      });
+    }
   }
 
   String? _validateEmail(String? value) {
@@ -61,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final success = await authProvider.login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          saveBiometricCredentials: _enableBiometric,
         );
 
         setState(() {
@@ -89,6 +126,45 @@ class _LoginScreenState extends State<LoginScreen> {
             'Error inesperado: $e',
           );
         }
+      }
+    }
+  }
+
+  void _handleBiometricLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final success = await authProvider.loginWithBiometric();
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (success && mounted) {
+        // Si hay un callback, ejecutarlo y navegar de vuelta
+        widget.onLoginSuccess?.call();
+        Navigator.of(context).pop(); // Cerrar pantalla de login
+      } else if (mounted) {
+        // Mostrar error
+        CustomSnackBar.showError(
+          context,
+          authProvider.errorMessage ?? 'Error en la autenticación biométrica',
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        CustomSnackBar.showError(
+          context,
+          'Error inesperado: $e',
+        );
       }
     }
   }
@@ -210,7 +286,12 @@ class _LoginScreenState extends State<LoginScreen> {
             // Password field
             _buildPasswordField(),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            
+            // Biometric checkbox (si está disponible)
+            if (_isBiometricAvailable) _buildBiometricCheckbox(),
+            
+            const SizedBox(height: 8),
             
             // Forgot password link
             _buildForgotPasswordLink(),
@@ -219,6 +300,28 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBiometricCheckbox() {
+    return CheckboxListTile(
+      value: _enableBiometric,
+      onChanged: (value) {
+        setState(() {
+          _enableBiometric = value ?? false;
+        });
+      },
+      title: Text(
+        'Habilitar inicio con $_biometricType',
+        style: TextStyle(
+          fontSize: 14,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
+      activeColor: Theme.of(context).colorScheme.primary,
     );
   }
 
@@ -281,10 +384,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
-                                         )
-                   : const Text('Iniciar Sesión'),
+                    )
+                  : const Text('Iniciar Sesión'),
             ),
           ),
+          
+          // Biometric login button (si está disponible y habilitado)
+          if (_isBiometricAvailable && _enableBiometric) ...[
+            const SizedBox(height: 16),
+            _buildBiometricButton(),
+          ],
           
           const SizedBox(height: 16),
           
@@ -295,13 +404,13 @@ class _LoginScreenState extends State<LoginScreen> {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 14,
                   ),
-                             children: [
-                 const TextSpan(text: "¿No tienes cuenta? "),
-                 WidgetSpan(
-                   child: GestureDetector(
-                     onTap: _navigateToRegister,
-                     child: Text(
-                       'Registrarse',
+              children: [
+                const TextSpan(text: "¿No tienes cuenta? "),
+                WidgetSpan(
+                  child: GestureDetector(
+                    onTap: _navigateToRegister,
+                    child: Text(
+                      'Registrarse',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -314,6 +423,38 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBiometricButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton.icon(
+        onPressed: _isLoading ? null : _handleBiometricLogin,
+        icon: Icon(
+          Icons.fingerprint,
+          size: 28,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        label: Text(
+          'Iniciar con $_biometricType',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }

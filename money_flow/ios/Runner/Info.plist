@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>MoneyFlow necesita usar Face ID para iniciar sesión de forma segura y rápida.</string>
 </dict>
 </plist>

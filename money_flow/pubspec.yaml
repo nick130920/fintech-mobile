@@ -67,6 +67,9 @@ dependencies:
   
   # Expandable FAB for animated floating action buttons
   flutter_expandable_fab: ^2.5.2
+  
+  # Biometric authentication
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:

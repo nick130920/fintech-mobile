@@ -2,6 +2,7 @@ import 'dart:convert'; // Added import for jsonEncode
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -89,6 +90,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login({
     required String email,
     required String password,
+    bool saveBiometricCredentials = false,
   }) async {
     try {
       _setStatus(AuthStatus.loading);
@@ -103,6 +105,14 @@ class AuthProvider extends ChangeNotifier {
       _user = response.user;
       _setStatus(AuthStatus.authenticated);
       
+      // Guardar credenciales si el usuario habilitó biometría
+      if (saveBiometricCredentials) {
+        await StorageService.saveBiometricCredentials(
+          email: email,
+          password: password,
+        );
+      }
+      
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -110,12 +120,93 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Login con biometría
+  Future<bool> loginWithBiometric() async {
+    try {
+      _setStatus(AuthStatus.loading);
+
+      // Verificar si la biometría está disponible
+      final isBiometricAvailable = await BiometricService.isBiometricAvailable();
+      if (!isBiometricAvailable) {
+        _setError('La autenticación biométrica no está disponible en este dispositivo');
+        return false;
+      }
+
+      // Verificar si hay credenciales guardadas
+      final email = await StorageService.getSavedEmail();
+      final password = await StorageService.getSavedPassword();
+
+      if (email == null || password == null) {
+        _setError('No hay credenciales guardadas para login biométrico');
+        return false;
+      }
+
+      // Autenticar con biometría
+      final authenticated = await BiometricService.authenticate(
+        localizedReason: 'Autentica para iniciar sesión en MoneyFlow',
+      );
+
+      if (!authenticated) {
+        _setError('Autenticación biométrica cancelada o fallida');
+        return false;
+      }
+
+      // Si la biometría fue exitosa, hacer login con las credenciales guardadas
+      final request = LoginRequest(
+        email: email,
+        password: password,
+      );
+
+      final response = await AuthRepository.login(request);
+
+      _user = response.user;
+      _setStatus(AuthStatus.authenticated);
+
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    }
+  }
+
+  // Verificar si el login biométrico está disponible y habilitado
+  Future<bool> isBiometricLoginAvailable() async {
+    try {
+      final isEnabled = await StorageService.isBiometricEnabled();
+      final hasCredentials = await StorageService.getSavedEmail() != null;
+      final isBiometricAvailable = await BiometricService.isBiometricAvailable();
+
+      return isEnabled && hasCredentials && isBiometricAvailable;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Habilitar/deshabilitar login biométrico
+  Future<void> toggleBiometricLogin(bool enable) async {
+    try {
+      if (enable) {
+        await StorageService.enableBiometric();
+      } else {
+        await StorageService.disableBiometric();
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError('Error al configurar login biométrico: $e');
+    }
+  }
+
   // Logout
-  Future<void> logout() async {
+  Future<void> logout({bool keepBiometricCredentials = false}) async {
     try {
       _setStatus(AuthStatus.loading);
       
       await AuthRepository.logout();
+      
+      // Si el usuario no quiere mantener las credenciales biométricas, eliminarlas
+      if (!keepBiometricCredentials) {
+        await StorageService.disableBiometric();
+      }
       
       _user = null;
       _setStatus(AuthStatus.unauthenticated);

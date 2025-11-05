@@ -14,6 +14,9 @@ class StorageService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userDataKey = 'user_data';
+  static const String _biometricEnabledKey = 'biometric_enabled';
+  static const String _savedEmailKey = 'saved_email';
+  static const String _savedPasswordKey = 'saved_password';
 
   // Token methods
   static Future<void> saveTokens({
@@ -63,5 +66,57 @@ class StorageService {
   static Future<bool> isLoggedIn() async {
     final accessToken = await getAccessToken();
     return accessToken != null && accessToken.isNotEmpty;
+  }
+
+  // Biometric authentication methods
+  
+  /// Guarda las credenciales del usuario de forma segura para login biométrico
+  static Future<void> saveBiometricCredentials({
+    required String email,
+    required String password,
+  }) async {
+    await Future.wait([
+      _storage.write(key: _savedEmailKey, value: email),
+      _storage.write(key: _savedPasswordKey, value: password),
+      _storage.write(key: _biometricEnabledKey, value: 'true'),
+    ]);
+  }
+
+  /// Obtiene el email guardado para login biométrico
+  static Future<String?> getSavedEmail() async {
+    return await _storage.read(key: _savedEmailKey);
+  }
+
+  /// Obtiene la contraseña guardada para login biométrico
+  static Future<String?> getSavedPassword() async {
+    return await _storage.read(key: _savedPasswordKey);
+  }
+
+  /// Verifica si el login biométrico está habilitado
+  static Future<bool> isBiometricEnabled() async {
+    final enabled = await _storage.read(key: _biometricEnabledKey);
+    return enabled == 'true';
+  }
+
+  /// Habilita el login biométrico
+  static Future<void> enableBiometric() async {
+    await _storage.write(key: _biometricEnabledKey, value: 'true');
+  }
+
+  /// Deshabilita el login biométrico y elimina las credenciales guardadas
+  static Future<void> disableBiometric() async {
+    await Future.wait([
+      _storage.delete(key: _biometricEnabledKey),
+      _storage.delete(key: _savedEmailKey),
+      _storage.delete(key: _savedPasswordKey),
+    ]);
+  }
+
+  /// Limpia las credenciales biométricas guardadas
+  static Future<void> clearBiometricCredentials() async {
+    await Future.wait([
+      _storage.delete(key: _savedEmailKey),
+      _storage.delete(key: _savedPasswordKey),
+    ]);
   }
 }
