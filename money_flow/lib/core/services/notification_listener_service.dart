@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
@@ -15,6 +16,8 @@ class NotificationListenerService {
 
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  
+  static const MethodChannel _platform = MethodChannel('notification_listener');
   
   static const String _notificationChannelId = 'transaction_notifications';
   static const String _notificationChannelName = 'Transacciones Automáticas';
@@ -51,6 +54,9 @@ class NotificationListenerService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
+    // Configurar MethodCallHandler para recibir eventos de Android
+    _platform.setMethodCallHandler(_handleMethodCall);
+
     // Crear canal de notificaciones para Android
     await _createNotificationChannel();
     
@@ -62,6 +68,26 @@ class NotificationListenerService {
 
     _isInitialized = true;
     print('✅ NotificationListenerService inicializado');
+  }
+
+  /// Maneja las llamadas desde el código nativo
+  Future<void> _handleMethodCall(MethodCall call) async {
+    if (call.method == 'onNotificationReceived') {
+      final String title = call.arguments['title'] ?? '';
+      final String body = call.arguments['body'] ?? '';
+      final String packageName = call.arguments['packageName'] ?? '';
+      
+      print('📱 Notificación recibida desde Android (Service):');
+      print('   Title: $title');
+      print('   Body: $body');
+      print('   Package: $packageName');
+      
+      // Notificar a listeners (streams)
+      _notificationStreamController?.add('$title|$body|$packageName');
+
+      // Procesar la notificación
+      await processNotification(title, body, packageName);
+    }
   }
 
   /// Crea el canal de notificaciones para Android

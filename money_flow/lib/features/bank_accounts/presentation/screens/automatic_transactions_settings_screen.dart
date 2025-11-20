@@ -28,10 +28,10 @@ class _AutomaticTransactionsSettingsScreenState
   void initState() {
     super.initState();
     _initializeService();
-    _setupNotificationChannel();
   }
 
   Future<void> _initializeService() async {
+    // El servicio ya se inicializa globalmente, pero nos aseguramos
     await _notificationService.initialize();
     await _checkListenerStatus();
   }
@@ -48,25 +48,6 @@ class _AutomaticTransactionsSettingsScreenState
       print('Error checking listener status: $e');
       setState(() => _isLoading = false);
     }
-  }
-
-  /// Configura el canal para recibir notificaciones desde Android
-  void _setupNotificationChannel() {
-    platform.setMethodCallHandler((call) async {
-      if (call.method == 'onNotificationReceived') {
-        final String title = call.arguments['title'] ?? '';
-        final String body = call.arguments['body'] ?? '';
-        final String packageName = call.arguments['packageName'] ?? '';
-        
-        print('📱 Notificación recibida desde Android:');
-        print('   Title: $title');
-        print('   Body: $body');
-        print('   Package: $packageName');
-        
-        // Procesar la notificación
-        await _notificationService.processNotification(title, body, packageName);
-      }
-    });
   }
 
   Future<void> _toggleListener(bool value) async {
@@ -441,7 +422,8 @@ class _AutomaticTransactionsSettingsScreenState
 
   @override
   void dispose() {
-    _notificationService.dispose();
+    // No llamar a dispose del servicio aquí, ya que es un singleton global
+    // y se usa en toda la app
     super.dispose();
   }
 }
