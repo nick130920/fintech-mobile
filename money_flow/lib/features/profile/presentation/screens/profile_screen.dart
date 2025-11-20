@@ -209,6 +209,65 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSettingsOptions(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.notifications_outlined,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                size: 20,
+              ),
+            ),
+            title: const Text('Notificaciones'),
+            subtitle: const Text('Gestionar alertas y avisos'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              // TODO: Implementar pantalla de notificaciones
+            },
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.language,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                size: 20,
+              ),
+            ),
+            title: const Text('Idioma'),
+            subtitle: const Text('Español (Colombia)'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              // TODO: Implementar cambio de idioma
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildThemeSelector(BuildContext context, ThemeProvider themeProvider) {
     return Card(
       elevation: 0,

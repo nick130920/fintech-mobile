@@ -307,8 +307,9 @@ class NotificationParserService {
 
         // Extraer comercio/descripción
         String? merchant;
-        if (pattern.merchantGroup != null) {
-          merchant = match.group(pattern.merchantGroup)?.trim();
+        final merchantGroupIndex = pattern.merchantGroup;
+        if (merchantGroupIndex != null) {
+          merchant = match.group(merchantGroupIndex)?.trim();
           // Limpiar el merchant de caracteres extraños
           merchant = merchant?.replaceAll(RegExp(r'\s+'), ' ');
         }
