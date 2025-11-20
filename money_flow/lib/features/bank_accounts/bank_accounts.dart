@@ -19,7 +19,12 @@ export 'presentation/screens/add_bank_account_screen.dart';
 export 'presentation/screens/notification_patterns_screen.dart';
 export 'presentation/screens/add_notification_pattern_screen.dart';
 export 'presentation/screens/process_notification_screen.dart';
+export 'presentation/screens/automatic_transactions_settings_screen.dart';
+export 'presentation/screens/pending_transactions_screen.dart';
+export 'presentation/screens/edit_pending_transaction_screen.dart';
 
 // Widgets
 export 'presentation/widgets/bank_account_card.dart';
 export 'presentation/widgets/notification_pattern_card.dart';
+export 'presentation/widgets/automatic_transactions_stats_widget.dart';
+export 'presentation/widgets/pending_transactions_fab.dart';

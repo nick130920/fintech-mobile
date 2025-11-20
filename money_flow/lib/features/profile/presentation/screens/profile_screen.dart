@@ -190,72 +190,19 @@ class ProfileScreen extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
+                color: Theme.of(context).colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                Icons.account_tree,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                Icons.notifications_active,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
                 size: 20,
               ),
             ),
-            title: const Text('Flujo de Transacciones'),
-            subtitle: const Text('Visualiza el procesamiento completo'),
+            title: const Text('Transacciones Automáticas'),
+            subtitle: const Text('Activa el registro automático en tiempo real'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/transactions-flow'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsOptions(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.attach_money,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
-            ),
-            title: const Text('Divisa de la Aplicación'),
-            subtitle: const Text('Configura tu divisa preferida'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/currency-settings'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.sms,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
-            ),
-            title: const Text('Gestión de SMS'),
-            subtitle: const Text('Configura el procesamiento de SMS'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/sms-settings'),
+            onTap: () => Navigator.pushNamed(context, '/automatic-transactions-settings'),
           ),
         ],
       ),

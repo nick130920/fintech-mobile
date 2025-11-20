@@ -18,6 +18,7 @@ import 'features/bank_accounts/presentation/providers/bank_account_provider.dart
 import 'features/bank_accounts/presentation/providers/bank_notification_pattern_provider.dart';
 import 'features/bank_accounts/presentation/screens/add_bank_account_screen.dart';
 import 'features/bank_accounts/presentation/screens/add_notification_pattern_screen.dart';
+import 'features/bank_accounts/presentation/screens/automatic_transactions_settings_screen.dart';
 import 'features/bank_accounts/presentation/screens/bank_accounts_screen.dart';
 import 'features/bank_accounts/presentation/screens/edit_pending_transaction_screen.dart';
 import 'features/bank_accounts/presentation/screens/notification_patterns_screen.dart';
@@ -158,6 +159,7 @@ class MyApp extends StatelessWidget {
                 final transaction = ModalRoute.of(context)!.settings.arguments as TransactionModel;
                 return EditPendingTransactionScreen(transaction: transaction);
               },
+              '/automatic-transactions-settings': (context) => const AutomaticTransactionsSettingsScreen(),
             },
           );
         },
