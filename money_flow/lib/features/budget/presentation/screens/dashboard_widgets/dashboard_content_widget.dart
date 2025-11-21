@@ -39,8 +39,6 @@ class DashboardContentWidget extends StatelessWidget {
                   
                   const SizedBox(height: 24),
                   
-                  // Automatic Transactions Stats
-                  const AutomaticTransactionsStatsWidget(),
                   
                   const SizedBox(height: 24),
                   
