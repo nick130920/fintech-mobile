@@ -63,7 +63,6 @@ class NotificationListenerService {
     // Inicializar Workmanager para tareas en background
     await Workmanager().initialize(
       callbackDispatcher,
-      isInDebugMode: false,
     );
 
     _isInitialized = true;
@@ -162,7 +161,7 @@ class NotificationListenerService {
       constraints: Constraints(
         networkType: NetworkType.connected,
       ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
     );
   }
 
