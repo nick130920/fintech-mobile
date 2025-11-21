@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
@@ -60,7 +61,11 @@ class MainActivity : FlutterActivity() {
         
         // Registrar el receiver para notificaciones
         val filter = IntentFilter("PROCESS_BANK_NOTIFICATION")
-        registerReceiver(notificationReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(notificationReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(notificationReceiver, filter)
+        }
         
         Log.d(TAG, "MainActivity created and receiver registered")
     }
