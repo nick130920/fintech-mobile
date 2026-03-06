@@ -658,26 +658,15 @@ class _ProcessNotificationScreenState extends State<ProcessNotificationScreen> {
       return;
     }
 
-    if (_selectedBankAccount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Selecciona una cuenta bancaria'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
-
+    // La cuenta bancaria ya no es requerida para el procesamiento con IA
+    // pero se puede usar opcionalmente para asociar la transacción
+    
     setState(() => _isProcessing = true);
 
-    final request = ProcessNotificationRequest(
-      bankAccountId: _selectedBankAccount!.id,
-      channel: _selectedChannel,
-      message: _messageController.text.trim(),
-    );
-
     final provider = context.read<BankNotificationPatternProvider>();
-    final success = await provider.processNotification(request);
+    
+    // Usar el nuevo endpoint de procesamiento directo con IA (OpenRouter/Mistral)
+    final success = await provider.processSMSWithAI(_messageController.text.trim());
 
     if (!mounted) return;
 

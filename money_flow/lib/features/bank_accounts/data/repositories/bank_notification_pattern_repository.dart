@@ -267,4 +267,32 @@ class BankNotificationPatternRepository {
       throw Exception('Error creating pattern from message: $e');
     }
   }
+
+  /// Process SMS directly with AI (OpenRouter/Mistral)
+  /// This is the new simplified flow that doesn't require patterns
+  Future<ProcessedNotificationModel> processSMSWithAI(String message) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post(
+        '/notification-patterns/process-sms',
+        {'message': message},
+        token: token,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ProcessedNotificationModel.fromJson(data);
+      } else {
+        final errorBody = json.decode(response.body);
+        throw Exception(
+            'Failed to process SMS with AI: ${errorBody['error'] ?? response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error processing SMS with AI: $e');
+    }
+  }
 }

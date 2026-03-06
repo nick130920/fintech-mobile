@@ -7,9 +7,19 @@
     
     <!-- Permisos para internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Permisos para SMS (lectura y recepción en tiempo real) -->
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
+    
+    <!-- Permisos para notificaciones -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    
+    <!-- Permiso para ejecutar en segundo plano -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     
     <!-- Permisos para autenticación biométrica -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
@@ -48,6 +58,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            
+        <!-- SMS Broadcast Receiver for background SMS listening -->
+        <receiver
+            android:name="com.shounakmulay.telephony.sms.IncomingSmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
     </application>
     
     <!-- Required to query activities that can process text, see:

@@ -62,6 +62,9 @@ dependencies:
   # SMS reading for automatic transactions
   flutter_sms_inbox: ^1.0.4
   
+  # Real-time SMS listening
+  telephony: ^0.2.0
+  
   # Geocoding for reverse location lookup
   geocoding: ^3.0.0
   

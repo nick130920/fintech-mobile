@@ -219,13 +219,33 @@ class BankNotificationPatternProvider with ChangeNotifier {
     }
   }
 
-  // Procesar notificación
+  // Procesar notificación (usando patrones - legacy)
   Future<bool> processNotification(ProcessNotificationRequest request) async {
     _isProcessing = true;
     _clearError();
 
     try {
       final result = await _repository.processNotification(request);
+      _lastProcessedNotification = result;
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isProcessing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Process SMS directly with AI (OpenRouter/Mistral)
+  /// This is the new simplified flow - no patterns needed
+  Future<bool> processSMSWithAI(String message) async {
+    _isProcessing = true;
+    _clearError();
+    notifyListeners();
+
+    try {
+      final result = await _repository.processSMSWithAI(message);
       _lastProcessedNotification = result;
       return true;
     } catch (e) {
