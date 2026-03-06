@@ -48,6 +48,17 @@ class PreferencesService {
     await prefs.setString(key, value);
   }
 
+  // Generic methods for bool
+  static Future<bool?> getBool(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(key);
+  }
+
+  static Future<void> setBool(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
   // Remove a specific key
   static Future<bool> remove(String key) async {
     final prefs = await SharedPreferences.getInstance();

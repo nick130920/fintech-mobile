@@ -43,20 +43,29 @@ class SmsService {
     if (autoMode) {
       // Modo automático: solo mensajes nuevos
       final lastSyncTimestamp = await PreferencesService.getInt(_lastSmsSyncKey);
-      messagesToProcess = allSms.where((sms) {
-        if (sms.date == null) return false;
-        
-        // Debe ser más reciente que el último sync
-        final isNewer = lastSyncTimestamp == null || 
-                        sms.date!.millisecondsSinceEpoch > lastSyncTimestamp;
-        
-        // Y debe cumplir con la fecha mínima si está configurada
-        final meetsMinDate = minDate == null || 
-                             sms.date!.isAfter(minDate) || 
-                             sms.date!.isAtSameMomentAs(minDate);
-        
-        return isNewer && meetsMinDate;
-      }).toList();
+
+      if (lastSyncTimestamp == null) {
+        // Si es la primera vez (o se borraron datos), NO procesar el historial completo.
+        // Simplemente marcamos el momento actual como punto de partida.
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await PreferencesService.setInt(_lastSmsSyncKey, now);
+        debugPrint("SmsService: Inicializando sincronización. Se ignoran mensajes previos a: $now");
+        messagesToProcess = [];
+      } else {
+        messagesToProcess = allSms.where((sms) {
+          if (sms.date == null) return false;
+          
+          // Debe ser más reciente que el último sync
+          final isNewer = sms.date!.millisecondsSinceEpoch > lastSyncTimestamp;
+          
+          // Y debe cumplir con la fecha mínima si está configurada
+          final meetsMinDate = minDate == null || 
+                               sms.date!.isAfter(minDate) || 
+                               sms.date!.isAtSameMomentAs(minDate);
+          
+          return isNewer && meetsMinDate;
+        }).toList();
+      }
     } else {
       // Modo manual: todos los mensajes desde minDate
       messagesToProcess = allSms.where((sms) {

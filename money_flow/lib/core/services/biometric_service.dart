@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
+import 'package:local_auth_darwin/local_auth_darwin.dart';
 
 /// Servicio para manejar autenticación biométrica (huella dactilar, Face ID, etc.)
 class BiometricService {
@@ -62,11 +64,18 @@ class BiometricService {
 
       return await _auth.authenticate(
         localizedReason: localizedReason,
-        options: AuthenticationOptions(
-          useErrorDialogs: useErrorDialogs,
-          stickyAuth: stickyAuth,
-          biometricOnly: false, // Permite PIN/patrón como fallback
-        ),
+        authMessages: const <AuthMessages>[
+          AndroidAuthMessages(
+            signInTitle: 'Autenticación requerida',
+            cancelButton: 'Cancelar',
+          ),
+          IOSAuthMessages(
+            cancelButton: 'Cancelar',
+          ),
+        ],
+        // AuthenticationOptions no existe en esta versión de local_auth para authenticate()
+        // Se usan parámetros directos
+        biometricOnly: false, // Permite PIN/patrón como fallback
       );
     } on PlatformException catch (e) {
       // Manejar errores específicos

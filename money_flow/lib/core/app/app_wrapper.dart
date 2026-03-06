@@ -8,6 +8,7 @@ import '../../features/budget/presentation/screens/budget_setup_wrapper.dart';
 import '../../main.dart';
 import '../../shared/screens/main_screen.dart';
 import '../providers/currency_provider.dart';
+import '../services/notification_listener_service.dart';
 
 class AppWrapper extends StatefulWidget {
   const AppWrapper({super.key});
@@ -20,6 +21,10 @@ class _AppWrapperState extends State<AppWrapper> {
   @override
   void initState() {
     super.initState();
+    // Inicializar el listener de notificaciones globalmente al arrancar la app
+    // Esto configurará el MethodChannel para escuchar eventos desde Android
+    NotificationListenerService().initialize();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CurrencyProvider>().initialize();

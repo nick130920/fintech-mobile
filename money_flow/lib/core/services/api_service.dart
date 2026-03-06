@@ -115,19 +115,40 @@ class ApiService {
     }
   }
 
+  static bool _isHandlingAuth = false;
+
   static Future<void> _handleUnauthorized() async {
-    final context = _navigatorKey?.currentContext;
-    if (context != null && context.mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.logout();
-      
-      // Asegurarse de que el widget está montado antes de navegar
-      if (_navigatorKey?.currentState != null) {
-         _navigatorKey?.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const AppWrapper()),
-          (route) => false,
-        );
+    if (_isHandlingAuth) return;
+    _isHandlingAuth = true;
+
+    try {
+      final context = _navigatorKey?.currentContext;
+      if (context != null && context.mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        
+        // Si estamos en proceso de carga/inicialización, no necesitamos navegar
+        // porque el AppWrapper manejará el cambio de estado automáticamente
+        // y evitaremos un bucle de navegación/animación
+        if (authProvider.status == AuthStatus.loading || 
+            authProvider.status == AuthStatus.initial) {
+          await authProvider.logout();
+          return;
+        }
+
+        await authProvider.logout();
+        
+        // Asegurarse de que el widget está montado antes de navegar
+        if (_navigatorKey?.currentState != null) {
+           _navigatorKey?.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AppWrapper()),
+            (route) => false,
+          );
+        }
       }
+    } finally {
+      // Reset flag after a delay to prevent bouncing
+      await Future.delayed(const Duration(seconds: 1));
+      _isHandlingAuth = false;
     }
   }
 

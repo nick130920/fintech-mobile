@@ -103,7 +103,6 @@ class _MainScreenState extends State<MainScreen> {
             foregroundColor: Colors.white,
             child: const Icon(Icons.account_balance),
             onPressed: () {
-              debugPrint('DEBUG: Bank Account button pressed - navigating to /add-bank-account');
               Navigator.pushNamed(context, '/add-bank-account');
             },
           ),

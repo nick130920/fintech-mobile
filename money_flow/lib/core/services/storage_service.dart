@@ -18,6 +18,15 @@ class StorageService {
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
 
+  // Generic data methods
+  static Future<void> saveData(String key, String value) async {
+    await _storage.write(key: key, value: value);
+  }
+
+  static Future<String?> getData(String key) async {
+    return await _storage.read(key: key);
+  }
+
   // Token methods
   static Future<void> saveTokens({
     required String accessToken,

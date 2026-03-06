@@ -221,7 +221,8 @@ class AuthProvider extends ChangeNotifier {
   // Get current user profile from server
   Future<void> refreshProfile() async {
     try {
-      if (_status != AuthStatus.authenticated) return;
+      // Permitir refresh si está autenticado o cargando (durante inicialización)
+      if (_status != AuthStatus.authenticated && _status != AuthStatus.loading) return;
       
       final user = await AuthRepository.getProfile();
       // ignore: unnecessary_null_comparison
