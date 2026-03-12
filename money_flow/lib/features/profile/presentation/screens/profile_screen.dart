@@ -154,26 +154,6 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                Icons.pattern,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
-            ),
-            title: const Text('Patrones de Notificación'),
-            subtitle: const Text('Configura el procesamiento automático'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/notification-patterns'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
                 Icons.smart_toy,
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
                 size: 20,

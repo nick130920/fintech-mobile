@@ -11,8 +11,8 @@ import 'core/services/api_service.dart';
 import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'core/services/notification_listener_service.dart';
 import 'features/bank_accounts/data/models/transaction_model.dart';
-import 'features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_account_provider.dart';
 import 'features/bank_accounts/presentation/screens/add_bank_account_screen.dart';
@@ -78,13 +78,7 @@ void smsSyncHandler(String? message) async {
   debugPrint("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
   debugPrint("Configuración SMS: ${smsSettingsProvider.settings.processMode.displayName}");
 
-  try {
-    debugPrint("Procesando SMS con IA...");
-    await AutomaticTransactionsRepository.processSMSWithAI(message);
-    debugPrint("SMS procesado correctamente con IA");
-  } catch (e) {
-    debugPrint("Error procesando SMS con IA: $e");
-  }
+  await NotificationListenerService().processRawMessage(message);
 }
 
 void main() async {

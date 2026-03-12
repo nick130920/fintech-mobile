@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
-import 'notification_parser_service.dart';
-import 'automatic_transaction_service.dart';
+import 'package:money_flow/features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'preferences_service.dart';
 
 /// Servicio para escuchar notificaciones en tiempo real
@@ -165,60 +164,73 @@ class NotificationListenerService {
     );
   }
 
-  /// Procesa una notificación bancaria
+  /// Procesa una notificación push bancaria con IA.
   Future<void> processNotification(String title, String body, String packageName) async {
-    print('📱 Procesando notificación: $title - $body');
-    print('📦 Package: $packageName');
+    print('📱 Notificación bancaria recibida — Package: $packageName');
 
-    // Verificar si el listener está habilitado
     final isEnabled = await isListenerEnabled();
     if (!isEnabled) {
       print('⏸️ Listener deshabilitado, ignorando notificación');
       return;
     }
 
-    // Parsear la notificación para extraer información de transacción
-    final transactionData = NotificationParserService.parseNotification(
-      title: title,
-      body: body,
-      packageName: packageName,
-    );
+    await processRawMessage('$title\n$body');
+  }
 
-    if (transactionData == null) {
-      print('❌ No se pudo extraer información de transacción de la notificación');
-      return;
-    }
+  /// Punto de convergencia de ambos flujos (SMS y push).
+  /// Llama al backend con IA y muestra la notificación de resultado al usuario.
+  Future<void> processRawMessage(String rawMessage) async {
+    print('🤖 Procesando mensaje con IA: ${rawMessage.length > 80 ? '${rawMessage.substring(0, 80)}…' : rawMessage}');
 
-    print('✅ Información de transacción extraída: $transactionData');
+    try {
+      final result = await AutomaticTransactionsRepository.processSMSWithAI(rawMessage);
 
-    // Guardar la transacción automáticamente
-    final success = await AutomaticTransactionService.saveTransaction(
-      transactionData: transactionData,
-      rawNotification: '$title\n$body',
-    );
+      final transactionCreated = result['transaction_created'] == true ||
+          result['success'] == true;
 
-    if (success) {
-      // Mostrar notificación de confirmación al usuario
-      await _showConfirmationNotification(transactionData);
-      print('✅ Transacción guardada exitosamente');
-    } else {
-      print('❌ Error al guardar la transacción');
+      if (transactionCreated) {
+        final extracted = result['extracted_data'] as Map<String, dynamic>?;
+        await _showSuccessNotification(extracted);
+        print('✅ Transacción registrada correctamente por IA');
+      } else {
+        print('ℹ️ La IA no identificó una transacción en el mensaje');
+      }
+    } catch (e) {
+      print('❌ Error procesando mensaje con IA: $e');
+      await _showErrorNotification();
     }
   }
 
-  /// Muestra una notificación de confirmación al usuario
-  Future<void> _showConfirmationNotification(Map<String, dynamic> transactionData) async {
-    final type = transactionData['type'] as String;
-    final amount = transactionData['amount'] as double;
-    final merchant = transactionData['merchant'] as String?;
-    final description = transactionData['description'] as String;
+  /// Notificación de éxito: transacción guardada.
+  Future<void> _showSuccessNotification(Map<String, dynamic>? extracted) async {
+    final type = extracted?['type'] as String?;
+    final amount = extracted?['amount'];
+    final merchant = extracted?['merchant'] as String?;
+    final description = extracted?['description'] as String?;
 
-    final emoji = type == 'expense' ? '💳' : '💰';
-    final typeText = type == 'expense' ? 'Gasto' : 'Ingreso';
-    
-    final title = '$emoji $typeText registrado automáticamente';
-    final body = '${merchant ?? description} - \$${amount.toStringAsFixed(2)}';
+    final emoji = type == 'income' ? '💰' : '💳';
+    final notifTitle = '$emoji Transacción registrada automáticamente';
 
+    String notifBody;
+    if (amount != null) {
+      final label = merchant ?? description ?? 'Transacción';
+      notifBody = '$label · \$${(amount as num).toStringAsFixed(0)}';
+    } else {
+      notifBody = 'Guardada en tus movimientos';
+    }
+
+    await _showNotification(notifTitle, notifBody);
+  }
+
+  /// Notificación de error al procesar.
+  Future<void> _showErrorNotification() async {
+    await _showNotification(
+      '⚠️ Error al procesar notificación',
+      'No se pudo registrar la transacción. Revisa tu conexión.',
+    );
+  }
+
+  Future<void> _showNotification(String title, String body) async {
     const androidDetails = AndroidNotificationDetails(
       _notificationChannelId,
       _notificationChannelName,
@@ -229,13 +241,11 @@ class NotificationListenerService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
-
     await _flutterLocalNotificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
-      notificationDetails,
+      const NotificationDetails(android: androidDetails),
     );
   }
 
