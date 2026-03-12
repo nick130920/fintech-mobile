@@ -11,19 +11,15 @@ import 'core/services/api_service.dart';
 import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/bank_accounts/data/models/bank_notification_pattern_model.dart';
 import 'features/bank_accounts/data/models/transaction_model.dart';
+import 'features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_account_provider.dart';
-import 'features/bank_accounts/presentation/providers/bank_notification_pattern_provider.dart';
 import 'features/bank_accounts/presentation/screens/add_bank_account_screen.dart';
-import 'features/bank_accounts/presentation/screens/add_notification_pattern_screen.dart';
 import 'features/bank_accounts/presentation/screens/automatic_transactions_settings_screen.dart';
 import 'features/bank_accounts/presentation/screens/bank_accounts_screen.dart';
 import 'features/bank_accounts/presentation/screens/edit_pending_transaction_screen.dart';
-import 'features/bank_accounts/presentation/screens/notification_patterns_screen.dart';
 import 'features/bank_accounts/presentation/screens/pending_transactions_screen.dart';
-import 'features/bank_accounts/presentation/screens/process_notification_screen.dart';
 import 'features/bank_accounts/presentation/screens/transactions_flow_screen.dart';
 import 'features/budget/data/models/expense_model.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
@@ -82,16 +78,12 @@ void smsSyncHandler(String? message) async {
   debugPrint("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
   debugPrint("Configuración SMS: ${smsSettingsProvider.settings.processMode.displayName}");
 
-  final patternProvider = Provider.of<BankNotificationPatternProvider>(context, listen: false);
-
-  for (var account in smsEnabledAccounts) {
-    debugPrint("Procesando SMS para la cuenta: ${account.accountAlias}");
-    final request = ProcessNotificationRequest(
-      bankAccountId: account.id,
-      channel: NotificationChannel.sms,
-      message: message,
-    );
-    await patternProvider.processNotification(request);
+  try {
+    debugPrint("Procesando SMS con IA...");
+    await AutomaticTransactionsRepository.processSMSWithAI(message);
+    debugPrint("SMS procesado correctamente con IA");
+  } catch (e) {
+    debugPrint("Error procesando SMS con IA: $e");
   }
 }
 
@@ -121,7 +113,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
         ChangeNotifierProvider(create: (_) => BankAccountProvider()),
-        ChangeNotifierProvider(create: (_) => BankNotificationPatternProvider()),
         ChangeNotifierProvider(create: (_) => AutomaticTransactionsProvider()),
         ChangeNotifierProvider(create: (_) => SmsSettingsProvider()..initialize()),
       ],
@@ -150,9 +141,6 @@ class MyApp extends StatelessWidget {
               '/sms-settings': (context) => const SmsSettingsScreen(),
               '/bank-accounts': (context) => const BankAccountsScreen(),
               '/add-bank-account': (context) => const AddBankAccountScreen(),
-              '/notification-patterns': (context) => const NotificationPatternsScreen(),
-              '/add-notification-pattern': (context) => const AddNotificationPatternScreen(),
-              '/process-notification': (context) => const ProcessNotificationScreen(),
               '/pending-transactions': (context) => const PendingTransactionsScreen(),
               '/transactions-flow': (context) => const TransactionsFlowScreen(),
               '/edit-pending-transaction': (context) {

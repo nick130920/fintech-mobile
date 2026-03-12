@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:money_flow/core/services/api_service.dart';
 import 'package:money_flow/core/services/storage_service.dart';
 import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
@@ -231,6 +233,33 @@ class AutomaticTransactionsRepository {
       }
     } catch (e) {
       throw Exception('Error en procesamiento en lote: $e');
+    }
+  }
+
+  /// Procesa un SMS con IA para detectar y crear transacciones automáticamente.
+  static Future<Map<String, dynamic>> processSMSWithAI(String message) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post(
+        '/transactions/process-sms',
+        {'message': message},
+        token: token,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        final errorBody = json.decode(response.body);
+        throw Exception(
+          'Error procesando SMS con IA: ${errorBody['error'] ?? response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error procesando SMS con IA: $e');
     }
   }
 }
