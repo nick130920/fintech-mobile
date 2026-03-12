@@ -5,11 +5,13 @@ allprojects {
     }
 }
 
-// Fix for legacy Android plugins (e.g. telephony 0.2.0) that don't declare
-// a namespace in their build.gradle, which is required by AGP 8+.
+// Fix for legacy Android plugins (e.g. telephony 0.2.0) that:
+//   1. Don't declare a namespace (required by AGP 8+)
+//   2. Use a compileSdk lower than what their transitive deps require (min 34)
 subprojects {
     afterEvaluate {
         extensions.findByType<com.android.build.gradle.LibraryExtension>()?.apply {
+            // Inject namespace from AndroidManifest if missing
             if (namespace == null || namespace!!.isBlank()) {
                 val manifestFile = file("src/main/AndroidManifest.xml")
                 if (manifestFile.exists()) {
@@ -17,6 +19,10 @@ subprojects {
                         .find(manifestFile.readText())
                     if (match != null) namespace = match.groupValues[1]
                 }
+            }
+            // Force compileSdk to 36 for libraries stuck on an older SDK
+            if (compileSdkVersion != null && compileSdkVersion!!.removePrefix("android-").toIntOrNull()?.let { it < 34 } == true) {
+                compileSdkVersion(36)
             }
         }
     }
