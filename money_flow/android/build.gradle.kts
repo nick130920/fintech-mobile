@@ -5,6 +5,23 @@ allprojects {
     }
 }
 
+// Fix for legacy Android plugins (e.g. telephony 0.2.0) that don't declare
+// a namespace in their build.gradle, which is required by AGP 8+.
+subprojects {
+    afterEvaluate {
+        extensions.findByType<com.android.build.gradle.LibraryExtension>()?.apply {
+            if (namespace == null || namespace!!.isBlank()) {
+                val manifestFile = file("src/main/AndroidManifest.xml")
+                if (manifestFile.exists()) {
+                    val match = Regex("""package\s*=\s*"([^"]+)"""")
+                        .find(manifestFile.readText())
+                    if (match != null) namespace = match.groupValues[1]
+                }
+            }
+        }
+    }
+}
+
 // Workaround for workmanager compilation issue
 subprojects {
     afterEvaluate {
