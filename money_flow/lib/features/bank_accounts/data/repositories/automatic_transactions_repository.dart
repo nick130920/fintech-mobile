@@ -245,7 +245,7 @@ class AutomaticTransactionsRepository {
       }
 
       final response = await ApiService.post(
-        '/transactions/process-sms',
+        '/notification-patterns/process-sms',
         {'message': message},
         token: token,
       );
@@ -253,7 +253,12 @@ class AutomaticTransactionsRepository {
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
       } else {
-        final errorBody = json.decode(response.body);
+        Map<String, dynamic> errorBody;
+        try {
+          errorBody = json.decode(response.body) as Map<String, dynamic>;
+        } catch (_) {
+          errorBody = {'error': response.body};
+        }
         throw Exception(
           'Error procesando SMS con IA: ${errorBody['error'] ?? response.statusCode}',
         );

@@ -14,23 +14,25 @@ class SmsReceiver : BroadcastReceiver() {
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             try {
                 val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-                if (messages == null) return
+                if (messages.isNullOrEmpty()) return
 
+                // Group parts by sender and concatenate — handles multi-part SMS
+                val grouped = mutableMapOf<String, StringBuilder>()
                 for (sms in messages) {
                     val sender = sms.displayOriginatingAddress ?: "Unknown"
-                    val messageBody = sms.messageBody ?: ""
-                    
-                    Log.d(TAG, "SMS received from: $sender")
-                    
-                    // Reutilizamos la acción PROCESS_BANK_NOTIFICATION que ya maneja el MainActivity
-                    // Pasamos el remitente como título y nombre de paquete para que el parser lo intente identificar
+                    grouped.getOrPut(sender) { StringBuilder() }.append(sms.messageBody ?: "")
+                }
+
+                for ((sender, bodyBuilder) in grouped) {
+                    val fullBody = bodyBuilder.toString()
+                    Log.d(TAG, "SMS received from: $sender (${fullBody.length} chars)")
+
                     val processIntent = Intent("PROCESS_BANK_NOTIFICATION").apply {
                         putExtra("title", sender)
-                        putExtra("body", messageBody)
+                        putExtra("body", fullBody)
                         putExtra("packageName", sender)
-                        setPackage(context.packageName) // Restringir al propio paquete por seguridad
+                        setPackage(context.packageName)
                     }
-                    
                     context.sendBroadcast(processIntent)
                 }
             } catch (e: Exception) {
