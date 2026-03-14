@@ -185,13 +185,18 @@ class NotificationListenerService {
     try {
       final result = await AutomaticTransactionsRepository.processSMSWithAI(rawMessage);
 
-      final transactionCreated = result['transaction_created'] == true ||
-          result['success'] == true;
+      final transactionCreated = result['transaction_created'] == true;
+      final aiDetected = result['success'] == true;
 
       if (transactionCreated) {
         final extracted = result['extracted_data'] as Map<String, dynamic>?;
         await _showSuccessNotification(extracted);
         print('✅ Transacción registrada correctamente por IA');
+      } else if (aiDetected) {
+        // AI extracted data but confidence < 0.8 → requires manual validation
+        final extracted = result['extracted_data'] as Map<String, dynamic>?;
+        await _showValidationNotification(extracted);
+        print('⚠️ Transacción detectada por IA, requiere validación manual');
       } else {
         print('ℹ️ La IA no identificó una transacción en el mensaje');
       }
@@ -220,6 +225,18 @@ class NotificationListenerService {
     }
 
     await _showNotification(notifTitle, notifBody);
+  }
+
+  /// Notificación cuando la IA detectó una transacción pero requiere validación manual.
+  Future<void> _showValidationNotification(Map<String, dynamic>? extracted) async {
+    final amount = extracted?['amount'];
+    String body;
+    if (amount != null) {
+      body = 'Monto: \$${(amount as num).toStringAsFixed(0)} · Revisa en la app';
+    } else {
+      body = 'Revisa la transacción en la app';
+    }
+    await _showNotification('🔍 Transacción pendiente de validación', body);
   }
 
   /// Notificación de error al procesar.
