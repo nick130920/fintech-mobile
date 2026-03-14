@@ -25,6 +25,7 @@ ExpenseModel _$ExpenseModelFromJson(Map<String, dynamic> json) => ExpenseModel(
   canBeCancelled: json['can_be_cancelled'] as bool,
   triggeredAlert: json['triggered_alert'] as bool,
   createdAt: json['created_at'] as String,
+  confidence: (json['confidence'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$ExpenseModelToJson(ExpenseModel instance) =>
@@ -47,6 +48,7 @@ Map<String, dynamic> _$ExpenseModelToJson(ExpenseModel instance) =>
       'can_be_cancelled': instance.canBeCancelled,
       'triggered_alert': instance.triggeredAlert,
       'created_at': instance.createdAt,
+      'confidence': instance.confidence,
     };
 
 CreateExpenseModel _$CreateExpenseModelFromJson(Map<String, dynamic> json) =>

@@ -30,6 +30,7 @@ class ExpenseModel {
   final bool triggeredAlert;
   @JsonKey(name: 'created_at')
   final String createdAt;
+  final double? confidence;
 
   const ExpenseModel({
     required this.id,
@@ -50,6 +51,7 @@ class ExpenseModel {
     required this.canBeCancelled,
     required this.triggeredAlert,
     required this.createdAt,
+    this.confidence,
   });
 
   factory ExpenseModel.fromJson(Map<String, dynamic> json) =>
@@ -68,6 +70,8 @@ class ExpenseModel {
   bool get isFromManual => source == 'manual';
   bool get isFromSMS => source == 'sms';
   bool get isFromWhatsApp => source == 'whatsapp';
+  bool get isFromNotification => source == 'notification';
+  bool get isAutomatic => source == 'notification' || source == 'sms' || source == 'bank_api';
   
   String get statusDisplayName {
     switch (status) {

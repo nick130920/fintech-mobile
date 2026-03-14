@@ -159,10 +159,30 @@ class ProfileScreen extends StatelessWidget {
                 size: 20,
               ),
             ),
-            title: const Text('Procesar Notificación'),
-            subtitle: const Text('Prueba el procesamiento con IA'),
+            title: const Text('Configuración de SMS'),
+            subtitle: const Text('Configura el procesamiento con IA'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/process-notification'),
+            onTap: () => Navigator.pushNamed(context, '/sms-settings'),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                size: 20,
+              ),
+            ),
+            title: const Text('Transacciones de IA'),
+            subtitle: const Text('Revisa y confirma transacciones detectadas'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.pushNamed(context, '/ai-transactions'),
           ),
           const Divider(height: 1),
           ListTile(

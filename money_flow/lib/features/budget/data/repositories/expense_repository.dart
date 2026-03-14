@@ -115,4 +115,49 @@ class ExpenseRepository {
     
     await ApiService.delete('/expenses/$expenseId', token: token);
   }
+
+  // Obtener gastos automáticos (creados por IA)
+  Future<List<ExpenseModel>> getAutomaticExpenses({int limit = 50}) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      
+      if (token == null) {
+        return [];
+      }
+
+      final response = await ApiService.get('/expenses/automatic?limit=$limit', token: token);
+      final responseData = ApiService.handleResponse(response);
+      final data = responseData['data'] as List<dynamic>;
+      
+      return data.map((expense) => ExpenseModel.fromJson(expense)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Confirmar gasto automático
+  Future<ExpenseModel> confirmExpense(int expenseId) async {
+    final token = await StorageService.getAccessToken();
+    
+    if (token == null || token.isEmpty) {
+      throw Exception('Token de autenticación no encontrado');
+    }
+    
+    final response = await ApiService.post('/expenses/$expenseId/confirm', {}, token: token);
+    final responseData = ApiService.handleResponse(response);
+    final data = responseData['data'];
+    
+    return ExpenseModel.fromJson(data);
+  }
+
+  // Rechazar gasto automático
+  Future<void> rejectExpense(int expenseId) async {
+    final token = await StorageService.getAccessToken();
+    
+    if (token == null || token.isEmpty) {
+      throw Exception('Token de autenticación no encontrado');
+    }
+    
+    await ApiService.post('/expenses/$expenseId/reject', {}, token: token);
+  }
 }

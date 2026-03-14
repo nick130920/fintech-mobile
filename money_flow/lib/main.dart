@@ -28,6 +28,7 @@ import 'features/budget/presentation/providers/expense_provider.dart';
 import 'features/budget/presentation/providers/income_provider.dart';
 import 'features/budget/presentation/screens/add_expense_screen.dart';
 import 'features/budget/presentation/screens/add_income_screen.dart';
+import 'features/budget/presentation/screens/ai_transactions_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
 import 'features/settings/presentation/screens/currency_settings_screen.dart';
@@ -142,6 +143,7 @@ class MyApp extends StatelessWidget {
                 return EditPendingTransactionScreen(transaction: transaction);
               },
               '/automatic-transactions-settings': (context) => const AutomaticTransactionsSettingsScreen(),
+              '/ai-transactions': (context) => const AITransactionsScreen(),
             },
           );
         },
