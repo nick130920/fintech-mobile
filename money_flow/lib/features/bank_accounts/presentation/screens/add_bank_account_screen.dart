@@ -300,7 +300,7 @@ class _AddBankAccountScreenState extends State<AddBankAccountScreen> {
               spacing: 12,
               runSpacing: 12,
               children: _availableColors.map((color) {
-                final colorHex = '#${color.value.toRadixString(16).substring(2)}';
+                final colorHex = '#${color.toARGB32().toRadixString(16).substring(2)}';
                 final isSelected = _selectedColor == colorHex;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = colorHex),

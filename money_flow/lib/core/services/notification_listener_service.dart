@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -65,7 +66,7 @@ class NotificationListenerService {
     );
 
     _isInitialized = true;
-    print('✅ NotificationListenerService inicializado');
+    debugPrint('✅ NotificationListenerService inicializado');
   }
 
   /// Maneja las llamadas desde el código nativo
@@ -110,11 +111,11 @@ class NotificationListenerService {
     final notificationStatus = await Permission.notification.request();
     
     if (!notificationStatus.isGranted) {
-      print('❌ Permiso de notificaciones denegado');
+      debugPrint('❌ Permiso de notificaciones denegado');
       return false;
     }
 
-    print('✅ Permisos de notificación concedidos');
+    debugPrint('✅ Permisos de notificación concedidos');
     return true;
   }
 
@@ -135,7 +136,7 @@ class NotificationListenerService {
     // Registrar tarea de background
     await _registerBackgroundTask();
 
-    print('✅ Listener de notificaciones activado');
+    debugPrint('✅ Listener de notificaciones activado');
     return true;
   }
 
@@ -143,7 +144,7 @@ class NotificationListenerService {
   Future<void> disableListener() async {
     await PreferencesService.setBool(_listenerEnabledKey, false);
     await Workmanager().cancelAll();
-    print('⏹️ Listener de notificaciones desactivado');
+    debugPrint('⏹️ Listener de notificaciones desactivado');
   }
 
   /// Verifica si el listener está habilitado
@@ -166,11 +167,11 @@ class NotificationListenerService {
 
   /// Procesa una notificación push bancaria con IA.
   Future<void> processNotification(String title, String body, String packageName) async {
-    print('📱 Notificación bancaria recibida — Package: $packageName');
+    debugPrint('📱 Notificación bancaria recibida — Package: $packageName');
 
     final isEnabled = await isListenerEnabled();
     if (!isEnabled) {
-      print('⏸️ Listener deshabilitado, ignorando notificación');
+      debugPrint('⏸️ Listener deshabilitado, ignorando notificación');
       return;
     }
 
@@ -180,7 +181,7 @@ class NotificationListenerService {
   /// Punto de convergencia de ambos flujos (SMS y push).
   /// Llama al backend con IA y muestra la notificación de resultado al usuario.
   Future<void> processRawMessage(String rawMessage) async {
-    print('🤖 Procesando mensaje con IA: ${rawMessage.length > 80 ? '${rawMessage.substring(0, 80)}…' : rawMessage}');
+    debugPrint('🤖 Procesando mensaje con IA: ${rawMessage.length > 80 ? '${rawMessage.substring(0, 80)}…' : rawMessage}');
 
     try {
       final result = await AutomaticTransactionsRepository.processSMSWithAI(rawMessage);
@@ -191,17 +192,17 @@ class NotificationListenerService {
       if (transactionCreated) {
         final extracted = result['extracted_data'] as Map<String, dynamic>?;
         await _showSuccessNotification(extracted);
-        print('✅ Transacción registrada correctamente por IA');
+        debugPrint('✅ Transacción registrada correctamente por IA');
       } else if (aiDetected) {
         // AI extracted data but confidence < 0.8 → requires manual validation
         final extracted = result['extracted_data'] as Map<String, dynamic>?;
         await _showValidationNotification(extracted);
-        print('⚠️ Transacción detectada por IA, requiere validación manual');
+        debugPrint('⚠️ Transacción detectada por IA, requiere validación manual');
       } else {
-        print('ℹ️ La IA no identificó una transacción en el mensaje');
+        debugPrint('ℹ️ La IA no identificó una transacción en el mensaje');
       }
     } catch (e) {
-      print('❌ Error procesando mensaje con IA: $e');
+      debugPrint('❌ Error procesando mensaje con IA: $e');
       await _showErrorNotification();
     }
   }
@@ -268,7 +269,7 @@ class NotificationListenerService {
 
   /// Callback cuando el usuario toca la notificación
   void _onNotificationTapped(NotificationResponse response) {
-    print('🔔 Notificación tocada: ${response.payload}');
+    debugPrint('🔔 Notificación tocada: ${response.payload}');
     // Aquí puedes navegar a una pantalla específica si es necesario
   }
 
@@ -289,15 +290,15 @@ class NotificationListenerService {
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    print('🔄 Ejecutando tarea en background: $task');
+    debugPrint('🔄 Ejecutando tarea en background: $task');
     
     try {
       // Aquí puedes sincronizar notificaciones pendientes o realizar otras tareas
       // Por ahora, solo registramos que se ejecutó
-      print('✅ Tarea en background completada');
+      debugPrint('✅ Tarea en background completada');
       return Future.value(true);
     } catch (e) {
-      print('❌ Error en tarea de background: $e');
+      debugPrint('❌ Error en tarea de background: $e');
       return Future.value(false);
     }
   });

@@ -695,7 +695,7 @@ class BankAccountDetailScreen extends StatelessWidget {
   }
 
   void _navigateToPatterns(BuildContext context) {
-    Navigator.of(context).pushNamed('/notification-patterns');
+    Navigator.of(context).pushNamed('/automatic-transactions-settings');
   }
 }
 

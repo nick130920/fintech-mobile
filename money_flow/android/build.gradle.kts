@@ -20,9 +20,10 @@ subprojects {
                     if (match != null) namespace = match.groupValues[1]
                 }
             }
-            // Force compileSdk to 36 for libraries stuck on an older SDK
-            if (compileSdkVersion != null && compileSdkVersion!!.removePrefix("android-").toIntOrNull()?.let { it < 34 } == true) {
-                compileSdkVersion(36)
+            // Force compileSdk to 36 for all libraries (avoid android-35 transform issues)
+            val sdkVersion = compileSdkVersion?.removePrefix("android-")?.toIntOrNull()
+            if (sdkVersion != null && sdkVersion < 36) {
+                compileSdk = 36
             }
         }
     }

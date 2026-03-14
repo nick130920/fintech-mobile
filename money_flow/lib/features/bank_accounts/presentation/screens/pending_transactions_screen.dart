@@ -387,6 +387,8 @@ class _PendingTransactionsScreenState extends State<PendingTransactionsScreen> {
     final reason = await _showRejectReasonDialog();
     if (reason == null) return;
 
+    if (!mounted) return;
+    
     final provider = Provider.of<AutomaticTransactionsProvider>(context, listen: false);
     final success = await provider.rejectTransaction(transaction.id, reason: reason);
     

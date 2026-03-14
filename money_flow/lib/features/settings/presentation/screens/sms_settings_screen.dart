@@ -231,33 +231,39 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
             ),
             const SizedBox(height: 16),
             
-            ...SmsProcessMode.values.map((mode) {
-              return RadioListTile<SmsProcessMode>(
-                value: mode,
-                groupValue: provider.processMode,
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.setProcessMode(value);
-                  }
-                },
-                title: Text(
-                  mode.displayName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                subtitle: Text(
-                  mode.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                contentPadding: EdgeInsets.zero,
-              );
-            }),
+            RadioGroup<SmsProcessMode>(
+              groupValue: provider.processMode,
+              onChanged: (value) {
+                if (value != null) {
+                  provider.setProcessMode(value);
+                }
+              },
+              child: Column(
+                children: SmsProcessMode.values.map((mode) {
+                  final isSelected = provider.processMode == mode;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Radio<SmsProcessMode>(value: mode),
+                    title: Text(
+                      mode.displayName,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      mode.description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    onTap: () => provider.setProcessMode(mode),
+                  );
+                }).toList(),
+              ),
+            ),
           ],
         ),
       ),
@@ -525,42 +531,45 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
-        onPressed: () async {
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Restablecer Configuración'),
-              content: const Text(
-                '¿Estás seguro de que quieres restablecer la configuración a los valores por defecto?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancelar'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Restablecer'),
-                ),
-              ],
-            ),
-          );
-          
-          if (confirm == true && mounted) {
-            await provider.resetToDefault();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Configuración restablecida'),
-                ),
-              );
-            }
-          }
-        },
+        onPressed: () => _handleResetSettings(provider),
         icon: const Icon(Icons.restore),
         label: const Text('Restablecer a valores por defecto'),
       ),
     );
+  }
+
+  Future<void> _handleResetSettings(SmsSettingsProvider provider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restablecer Configuración'),
+        content: const Text(
+          '¿Estás seguro de que quieres restablecer la configuración a los valores por defecto?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Restablecer'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    
+    if (confirm == true) {
+      await provider.resetToDefault();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Configuración restablecida'),
+        ),
+      );
+    }
   }
 
   Future<void> _processMessagesManually(BuildContext context) async {
@@ -569,9 +578,10 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
       _processedCount = 0;
     });
 
+    final smsProvider = context.read<SmsSettingsProvider>();
+    final colorScheme = Theme.of(context).colorScheme;
+
     try {
-      final smsProvider = context.read<SmsSettingsProvider>();
-      
       // Procesar SMS usando el servicio
       final minDate = smsProvider.settings.getEffectiveMinDate();
       await smsService.syncInbox(
@@ -591,23 +601,21 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
       // Registrar la sincronización manual
       await smsProvider.recordManualSync();
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$_processedCount mensajes procesados exitosamente'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$_processedCount mensajes procesados exitosamente'),
+          backgroundColor: colorScheme.primary,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al procesar mensajes: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al procesar mensajes: $e'),
+          backgroundColor: colorScheme.error,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {

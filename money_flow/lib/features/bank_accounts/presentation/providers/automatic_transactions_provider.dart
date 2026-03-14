@@ -410,9 +410,5 @@ class AutomaticTransactionsProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
 

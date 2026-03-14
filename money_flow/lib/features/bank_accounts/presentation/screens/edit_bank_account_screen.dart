@@ -293,7 +293,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedCurrency,
+              initialValue: _selectedCurrency,
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -360,7 +360,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
               spacing: 12,
               runSpacing: 12,
               children: _availableColors.map((color) {
-                final colorHex = '#${color.value.toRadixString(16).substring(2)}';
+                final colorHex = '#${color.toARGB32().toRadixString(16).substring(2)}';
                 final isSelected = _selectedColor == colorHex;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = colorHex),

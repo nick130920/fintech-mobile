@@ -1,6 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/services/notification_listener_service.dart';
 import '../../../../core/services/notification_parser_service.dart';
 import '../../../../shared/widgets/glassmorphism_card.dart';
@@ -21,8 +20,6 @@ class _AutomaticTransactionsSettingsScreenState
   bool _isListenerEnabled = false;
   bool _isLoading = true;
   bool _isProcessing = false;
-  
-  static const platform = MethodChannel('notification_listener');
 
   @override
   void initState() {
@@ -45,7 +42,7 @@ class _AutomaticTransactionsSettingsScreenState
         _isLoading = false;
       });
     } catch (e) {
-      print('Error checking listener status: $e');
+      debugPrint('Error checking listener status: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -174,7 +171,7 @@ class _AutomaticTransactionsSettingsScreenState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -201,7 +198,7 @@ class _AutomaticTransactionsSettingsScreenState
                   'Procesa notificaciones bancarias automáticamente',
                   style: TextStyle(
                     fontSize: 14,
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -236,7 +233,7 @@ class _AutomaticTransactionsSettingsScreenState
                       : 'Activa para procesar notificaciones en tiempo real',
                   style: TextStyle(
                     fontSize: 14,
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -252,7 +249,7 @@ class _AutomaticTransactionsSettingsScreenState
               : Switch(
                   value: _isListenerEnabled,
                   onChanged: _toggleListener,
-                  activeColor: colorScheme.primary,
+                  activeTrackColor: colorScheme.primary,
                 ),
         ],
       ),
@@ -333,7 +330,7 @@ class _AutomaticTransactionsSettingsScreenState
                 description,
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -371,7 +368,7 @@ class _AutomaticTransactionsSettingsScreenState
             runSpacing: 8,
             children: banks.map((bank) => Chip(
               label: Text(bank),
-              backgroundColor: colorScheme.primary.withOpacity(0.1),
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
               labelStyle: TextStyle(
                 color: colorScheme.primary,
                 fontSize: 12,
@@ -411,7 +408,7 @@ class _AutomaticTransactionsSettingsScreenState
             '• Puedes desactivar el listener en cualquier momento',
             style: TextStyle(
               fontSize: 13,
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
           ),

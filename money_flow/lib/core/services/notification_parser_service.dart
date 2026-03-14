@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 /// Servicio para parsear notificaciones bancarias y extraer información de transacciones
 class NotificationParserService {
@@ -246,10 +246,10 @@ class NotificationParserService {
     required String body,
     required String packageName,
   }) {
-    print('🔍 Parseando notificación:');
-    print('   Title: $title');
-    print('   Body: $body');
-    print('   Package: $packageName');
+    debugPrint('🔍 Parseando notificación:');
+    debugPrint('   Title: $title');
+    debugPrint('   Body: $body');
+    debugPrint('   Package: $packageName');
 
     // Combinar título y cuerpo para mejor análisis
     final fullText = '$title $body';
@@ -257,7 +257,7 @@ class NotificationParserService {
     // Intentar con patrones específicos del banco
     final bankPattern = _bankPatterns[packageName];
     if (bankPattern != null) {
-      print('🏦 Banco reconocido: ${bankPattern.bankName}');
+      debugPrint('🏦 Banco reconocido: ${bankPattern.bankName}');
       final result = _tryPatterns(fullText, bankPattern.patterns, bankPattern.bankName);
       if (result != null) {
         return result;
@@ -265,11 +265,11 @@ class NotificationParserService {
     }
 
     // Intentar con patrones genéricos
-    print('🔍 Intentando con patrones genéricos...');
+    debugPrint('🔍 Intentando con patrones genéricos...');
     final result = _tryPatterns(fullText, _genericPatterns, 'Desconocido');
     
     if (result == null) {
-      print('❌ No se pudo parsear la notificación');
+      debugPrint('❌ No se pudo parsear la notificación');
     }
     
     return result;
@@ -286,7 +286,7 @@ class NotificationParserService {
       final match = regex.firstMatch(text);
 
       if (match != null) {
-        print('✅ Patrón coincidente: ${pattern.regex}');
+        debugPrint('✅ Patrón coincidente: ${pattern.regex}');
         
         // Extraer monto y convertir formato colombiano a formato de punto decimal
         // Formato colombiano: $1.500.000,50 -> 1500000.50
@@ -301,7 +301,7 @@ class NotificationParserService {
         final amount = double.tryParse(amountStr);
 
         if (amount == null || amount <= 0) {
-          print('❌ Monto inválido: $amountStr');
+          debugPrint('❌ Monto inválido: $amountStr');
           continue;
         }
 
@@ -365,7 +365,7 @@ class NotificationParserService {
       bankName: bankName,
       patterns: patterns,
     );
-    print('✅ Patrón personalizado añadido para $bankName');
+    debugPrint('✅ Patrón personalizado añadido para $bankName');
   }
 
   /// Obtiene la lista de bancos soportados
