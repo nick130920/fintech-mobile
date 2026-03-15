@@ -14,6 +14,7 @@ class BankAccountProvider with ChangeNotifier {
   List<BankAccountSummaryModel> _bankAccountSummary = [];
   BankAccountModel? _selectedBankAccount;
   bool _isLoading = false;
+  bool _hasLoadedSummaryOnce = false;
   String? _error;
 
   // Getters
@@ -22,6 +23,7 @@ class BankAccountProvider with ChangeNotifier {
   BankAccountModel? get selectedBankAccount => _selectedBankAccount;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasCachedSummary => _hasLoadedSummaryOnce;
 
   // Cuentas activas
   List<BankAccountModel> get activeBankAccounts =>
@@ -71,15 +73,18 @@ class BankAccountProvider with ChangeNotifier {
     }
   }
 
-  // Cargar resumen de cuentas bancarias
+  // Cargar resumen de cuentas bancarias. Si ya se cargó antes, refresca en silencio.
   Future<void> loadBankAccountSummary() async {
-    if (_isLoading) return; // Evitar llamadas múltiples
-    
-    _setLoading(true);
+    if (_isLoading) return;
+    final useCache = _hasLoadedSummaryOnce;
+    if (!useCache) {
+      _setLoading(true);
+    }
     _clearError();
 
     try {
       _bankAccountSummary = await _repository.getBankAccountSummary();
+      _hasLoadedSummaryOnce = true;
       notifyListeners();
     } catch (e) {
       _setError(e.toString());

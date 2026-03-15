@@ -659,7 +659,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     if (selectedDate != null) {
       setState(() {
-        _selectedDate = selectedDate;
+        final now = DateTime.now();
+        _selectedDate = DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          now.hour,
+          now.minute,
+          now.second,
+        );
       });
     }
   }
@@ -693,7 +701,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         'category_id': _selectedCategory!.id,
         'amount': amount,
         'description': _descriptionController.text.trim(),
-        'date': _selectedDate.toIso8601String(),
+        'date': _selectedDate.toUtc().toIso8601String(),
         'location': _locationController.text.trim(),
         'merchant': _merchantController.text.trim(),
         'notes': _notesController.text.trim(),

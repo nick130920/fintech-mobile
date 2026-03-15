@@ -29,6 +29,8 @@ class ExpenseProvider with ChangeNotifier {
   // Estado de carga
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _hasInitialLoad = false;
+  bool get hasCachedData => _hasInitialLoad;
 
   bool _isSubmitting = false;
   bool get isSubmitting => _isSubmitting;
@@ -40,22 +42,27 @@ class ExpenseProvider with ChangeNotifier {
   ExpenseFilters _currentFilters = const ExpenseFilters();
   ExpenseFilters get currentFilters => _currentFilters;
 
-  // Inicializar provider
+  // Inicializar provider. Si ya hay datos en caché, refresca en silencio.
   Future<void> initialize() async {
-    _setLoading(true);
+    if (_isLoading) return;
+    final useCache = _hasInitialLoad;
+    if (!useCache) {
+      _setLoading(true);
+    }
     try {
-      // Cargar categorías, presupuesto y gastos del mes actual en paralelo
       await Future.wait([
         _loadCategories(),
         _loadCurrentBudget(),
         _loadRecentExpenses(),
         _loadMonthlyExpenses(),
       ]);
+      _hasInitialLoad = true;
       _clearError();
     } catch (e) {
       _setError('Error al inicializar: $e');
+    } finally {
+      _setLoading(false);
     }
-    _setLoading(false);
   }
 
   // Crear nuevo gasto
@@ -72,12 +79,12 @@ class ExpenseProvider with ChangeNotifier {
     _setSubmitting(true);
     try {
       final expenseDate = date ?? DateTime.now();
-      
+      // Enviar en UTC para que el backend guarde la hora exacta sin ambigüedad
       final newExpense = CreateExpenseModel(
         categoryId: categoryId,
         amount: amount,
         description: description,
-        date: expenseDate.toIso8601String(),
+        date: expenseDate.toUtc().toIso8601String(),
         location: location,
         merchant: merchant,
         tags: tags,
@@ -272,15 +279,16 @@ class ExpenseProvider with ChangeNotifier {
         .fold(0.0, (sum, amount) => sum + amount);
   }
 
-  // Obtener gastos del día actual
+  // Obtener gastos del día actual (solo confirmados, fecha en rango [inicio del día, fin del día)).
   List<ExpenseModel> get todayExpenses {
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+
     return _expenses.where((expense) {
+      if (!expense.isConfirmed) return false;
       final expenseDate = expense.dateTime;
-      return expenseDate.isAfter(startOfDay) && expenseDate.isBefore(endOfDay);
+      return !expenseDate.isBefore(startOfDay) && expenseDate.isBefore(endOfDay);
     }).toList();
   }
 

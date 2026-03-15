@@ -5,8 +5,10 @@ import '../../data/repositories/dashboard_repository.dart';
 
 class DashboardProvider with ChangeNotifier {
   bool _isLoading = false;
-  String? _error;
-  
+  bool _isRefreshing = false;
+   String? _error;
+  bool _hasLoadedOnce = false;
+
   // Dashboard data
   Map<String, dynamic> _dashboardSummary = {};
   Map<String, dynamic> _incomeStats = {};
@@ -15,7 +17,9 @@ class DashboardProvider with ChangeNotifier {
 
   // Getters
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
   String? get error => _error;
+  bool get hasCachedData => _hasLoadedOnce;
   Map<String, dynamic> get dashboardSummary => _dashboardSummary;
   Map<String, dynamic> get incomeStats => _incomeStats;
   Map<String, dynamic> get budgetProgress => _budgetProgress;
@@ -55,18 +59,24 @@ class DashboardProvider with ChangeNotifier {
   bool get isOverBudget => budgetTotal > 0 && budgetSpent > budgetTotal;
   bool get isNearingLimit => budgetTotal > 0 && budgetProgressValue >= 0.8;
 
-  // Initialize dashboard data
+  // Initialize dashboard data (cache-first: no loading si ya hay datos).
   Future<void> initialize() async {
     await loadDashboardData();
   }
 
-  // Load all dashboard data
-  Future<void> loadDashboardData() async {
-    _setLoading(true);
+  // Load all dashboard data. Si ya hay datos en caché, refresca en silencio.
+  Future<void> loadDashboardData({bool forceShowLoading = false}) async {
+    if (_isLoading) return;
+    final useCache = _hasLoadedOnce && !forceShowLoading;
+    if (!useCache) {
+      _setLoading(true);
+    } else {
+      _isRefreshing = true;
+      notifyListeners();
+    }
     _setError(null);
 
     try {
-      // Load data in parallel for better performance
       final futures = await Future.wait([
         DashboardRepository.getDashboardSummary(),
         DashboardRepository.getIncomeStats(),
@@ -79,18 +89,21 @@ class DashboardProvider with ChangeNotifier {
       _budgetProgress = futures[2] as Map<String, dynamic>;
       _availableBalance = futures[3] as double;
 
+      _hasLoadedOnce = true;
       _setError(null);
     } catch (e) {
       _setError('Error al cargar datos del dashboard: $e');
       debugPrint('Dashboard error: $e');
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      _isRefreshing = false;
+      notifyListeners();
     }
   }
 
-  // Refresh dashboard data
+  // Refresh dashboard data (pull-to-refresh: puede mostrar indicador sutil).
   Future<void> refresh() async {
-    await loadDashboardData();
+    await loadDashboardData(forceShowLoading: false);
   }
 
   // Update available balance after income/expense changes

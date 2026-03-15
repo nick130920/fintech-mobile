@@ -31,7 +31,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
   Widget build(BuildContext context) {
     return Consumer<BankAccountProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) {
+        if (provider.isLoading && !provider.hasCachedSummary) {
           return _buildLoadingState();
         }
 

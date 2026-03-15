@@ -50,7 +50,7 @@ class RecentTransactionsWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (provider.isLoading)
+            if (provider.isLoading && !provider.hasCachedData)
               const Center(child: CircularProgressIndicator())
             else if (provider.recentExpenses.isEmpty)
               _buildEmptyTransactions(context)
