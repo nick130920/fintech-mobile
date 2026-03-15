@@ -106,7 +106,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     final pending = stats.pending as int;
 
     return GlassmorphismCard(
-      style: GlassStyles.dynamic,
+      style: GlassStyles.medium,
       enableHoverEffect: true,
       enableEntryAnimation: true,
       child: Padding(

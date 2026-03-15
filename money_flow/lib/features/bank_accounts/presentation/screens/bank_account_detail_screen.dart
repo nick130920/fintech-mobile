@@ -55,7 +55,7 @@ class BankAccountDetailScreen extends StatelessWidget {
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
         return GlassmorphismCard(
-          style: GlassStyles.dynamic,
+          style: GlassStyles.medium,
           enableHoverEffect: true,
           enableEntryAnimation: true,
           child: Padding(

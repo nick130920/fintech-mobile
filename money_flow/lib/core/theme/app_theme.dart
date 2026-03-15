@@ -16,17 +16,13 @@ class AppTheme {
         onSurface: AppColors.lightOnSurface,
         surfaceContainerHighest: AppColors.slate100,
         error: AppColors.error,
-        // Custom colors for glassmorphism
-        secondary: AppColors.lightOnSurfaceMedium, // For secondary text
-        tertiary: AppColors.lightOnSurfaceSoft, // For tertiary text
+        secondary: AppColors.lightOnSurfaceMedium,
+        tertiary: AppColors.lightOnSurfaceSoft,
       ).copyWith(
-        // Extension colors
         outline: AppColors.slate300,
         outlineVariant: AppColors.slate200,
       ),
       scaffoldBackgroundColor: AppColors.lightBackground,
-      
-      // AppBar theme
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,8 +33,6 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      
-      // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.slate100,
@@ -73,8 +67,6 @@ class AppTheme {
           fontSize: 14,
         ),
       ),
-      
-      // Elevated button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -92,8 +84,6 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 50),
         ),
       ),
-      
-      // Icon button theme  
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           backgroundColor: AppColors.slate100,
@@ -103,8 +93,6 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Text theme
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           color: AppColors.slate900,
@@ -179,16 +167,13 @@ class AppTheme {
         onSurface: AppColors.darkOnSurface,
         surfaceContainerHighest: AppColors.darkSurface,
         error: AppColors.error,
-        // Custom colors for glassmorphism
-        secondary: AppColors.darkOnSurfaceMedium, // For secondary text
-        tertiary: AppColors.darkOnSurfaceSoft, // For tertiary text
+        secondary: AppColors.darkOnSurfaceMedium,
+        tertiary: AppColors.darkOnSurfaceSoft,
       ).copyWith(
-        // Extension colors
         outline: AppColors.darkBorder,
         outlineVariant: AppColors.slate700,
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
-      
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -199,7 +184,6 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkSurface,
@@ -234,7 +218,6 @@ class AppTheme {
           fontSize: 14,
         ),
       ),
-      
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -252,7 +235,6 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 50),
         ),
       ),
-      
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           backgroundColor: AppColors.darkSurface,
@@ -262,7 +244,6 @@ class AppTheme {
           ),
         ),
       ),
-      
       textTheme: const TextTheme(
         headlineLarge: TextStyle(color: AppColors.darkOnSurface, fontSize: 32, fontWeight: FontWeight.w700),
         headlineMedium: TextStyle(color: AppColors.darkOnSurface, fontSize: 28, fontWeight: FontWeight.w700),

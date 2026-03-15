@@ -23,26 +23,18 @@ class DashboardContentWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Daily Overview Cards
-                  const DailyOverviewWidget(),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Budget Progress
+                  // Presupuesto Mensual (primera sección como en el diseño)
                   const BudgetProgressWidget(),
-                  
                   const SizedBox(height: 24),
-                  
-                  // Bank Accounts Overview
+                  // Saldo disponible + Gastos de hoy en grid
+                  const DailyOverviewWidget(),
+                  const SizedBox(height: 32),
+                  // Cuentas Bancarias
                   const BankAccountsOverviewWidget(),
-                  
-                  const SizedBox(height: 24),
-                  
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Recent Transactions
+                  const SizedBox(height: 32),
+                  // Transacciones Recientes
                   const RecentTransactionsWidget(),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

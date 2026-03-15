@@ -193,9 +193,10 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
         TextButton(
           onPressed: () => Navigator.pushNamed(context, '/bank-accounts'),
           child: Text(
-            'Ver todas (${provider.bankAccountSummary.length})',
+            'Ver todas',
             style: TextStyle(
               fontSize: 14,
+              fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
@@ -205,50 +206,28 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
   }
 
   Widget _buildAccountsList(BankAccountProvider provider) {
-    final accounts = provider.bankAccountSummary.take(3).toList(); // Mostrar solo las primeras 3
-
-    return Column(
-      children: [
-        ...accounts.map((account) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildAccountCard(account),
-        )),
-        if (provider.bankAccountSummary.length > 3)
-          GlassmorphismCard(
-            style: GlassStyles.light,
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.more_horiz,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Ver ${provider.bankAccountSummary.length - 3} cuentas más',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
+    final accounts = provider.bankAccountSummary;
+    return SizedBox(
+      height: 160,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(bottom: 8),
+        itemCount: accounts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            width: 200,
+            child: _buildAccountCard(accounts[index]),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildAccountCard(BankAccountSummaryModel account) {
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
+        final borderColor = _parseColor(account.color);
         return GlassmorphismCard(
           style: GlassStyles.light,
           enableHoverEffect: true,
@@ -256,74 +235,71 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
             onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
             borderRadius: BorderRadius.circular(12),
             child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border(
+                  left: BorderSide(color: borderColor, width: 4),
+                ),
+              ),
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Color(int.parse(account.color.replaceFirst('#', '0xFF'))),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      _getAccountIcon(account.type),
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: borderColor,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          account.shortBankName.length >= 2
+                              ? account.shortBankName.substring(0, 2).toUpperCase()
+                              : '??',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
                           account.accountAlias,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          '${account.shortBankName} ${account.accountNumberMask}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        'Balance Actual',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
                       Text(
                         '${currencyProvider.currencySymbol}${account.lastBalance.toStringAsFixed(2)}',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: account.lastBalance >= 0
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.error,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      if (!account.isActive)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Inactiva',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onErrorContainer,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ],
@@ -335,18 +311,11 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
     );
   }
 
-  IconData _getAccountIcon(BankAccountType type) {
-    switch (type) {
-      case BankAccountType.checking:
-        return Icons.account_balance;
-      case BankAccountType.savings:
-        return Icons.savings;
-      case BankAccountType.credit:
-        return Icons.credit_card;
-      case BankAccountType.debit:
-        return Icons.payment;
-      case BankAccountType.investment:
-        return Icons.trending_up;
+  Color _parseColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return Theme.of(context).colorScheme.primary;
     }
   }
 }

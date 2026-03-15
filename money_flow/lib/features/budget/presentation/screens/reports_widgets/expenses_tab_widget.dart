@@ -47,9 +47,27 @@ class ExpensesTabWidget extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pushNamed('/expense-history'),
-                        child: const Text('Ver Todas'),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pushNamed('/expense-history'),
+                            child: Text(
+                              'Ver todas',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.tune,
+                            size: 22,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -57,11 +75,12 @@ class ExpensesTabWidget extends StatelessWidget {
                   ...expenseProvider.expenses.take(5).map((expense) {
                     final index = expenseProvider.expenses.indexOf(expense);
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: ExpenseListItemWidget(
                         expense: expense,
                         provider: expenseProvider,
                         index: index,
+                        compact: false,
                       ),
                     );
                   }),

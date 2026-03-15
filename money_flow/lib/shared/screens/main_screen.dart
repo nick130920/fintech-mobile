@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
               ProfileScreenContent(),
             ],
           ),
-          _buildLiquidGlassBottomBar(),
+          _buildBottomBar(),
           const PendingTransactionsFab(),
         ],
       ),
@@ -113,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
 
 
 
-  Widget _buildLiquidGlassBottomBar() {
+  Widget _buildBottomBar() {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     

@@ -149,7 +149,8 @@ class AuthRepository {
         throw Exception('No hay refresh token');
       }
       
-      final response = await ApiService.post('auth/refresh', {
+      // Usar postWithoutRetry para evitar bucle infinito
+      final response = await ApiService.postWithoutRetry('auth/refresh', {
         'refresh_token': refreshToken,
       });
       
@@ -164,9 +165,9 @@ class AuthRepository {
         throw Exception('Error al renovar token');
       }
     } catch (e) {
-      // If refresh fails, logout user
+      // If refresh fails, clear tokens but don't rethrow
       await StorageService.clearAll();
-      throw Exception('Sesión expirada. Por favor, inicia sesión de nuevo.');
+      rethrow;
     }
   }
 }

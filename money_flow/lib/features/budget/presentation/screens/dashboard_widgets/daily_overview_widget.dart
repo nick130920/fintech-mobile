@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../core/providers/currency_provider.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/expense_provider.dart';
+import '../../../../../core/providers/currency_provider.dart';
 
 class DailyOverviewWidget extends StatelessWidget {
   const DailyOverviewWidget({super.key});
@@ -17,34 +17,25 @@ class DailyOverviewWidget extends StatelessWidget {
         final todayExpenses = expenseProvider.todayExpenses;
         final dailyTotal = todayExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
 
-        return Column(
+        return Row(
           children: [
-            GlassmorphismCard(
-              style: GlassStyles.dynamic,
-              enableEntryAnimation: true,
-              enableHoverEffect: true,
-              child: _buildCardContent(
-                context,
-                'Gastos de hoy',
-                currencyProvider.formatAmount(dailyTotal),
-                isNegative: true,
-                trendPercentage: dashboardProvider.spendingTrend.abs(),
-                isUp: dashboardProvider.spendingTrend > 0,
+            Expanded(
+              child: _OverviewCard(
+                title: 'Saldo Disponible',
+                amount: currencyProvider.formatAmount(dashboardProvider.availableBalance),
+                icon: Icons.account_balance_wallet,
+                iconColor: Theme.of(context).colorScheme.primary,
+                iconBgColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               ),
             ),
-            const SizedBox(height: 16),
-            GlassmorphismCard(
-              style: GlassStyles.dynamic,
-              enableEntryAnimation: true,
-              enableHoverEffect: true,
-              animationDuration: const Duration(milliseconds: 1000),
-              child: _buildCardContent(
-                context,
-                'Saldo disponible',
-                currencyProvider.formatAmount(dashboardProvider.availableBalance),
-                isNegative: dashboardProvider.availableBalance < 0,
-                trendPercentage: dashboardProvider.incomeTrend.abs(),
-                isUp: dashboardProvider.incomeTrend > 0,
+            const SizedBox(width: 16),
+            Expanded(
+              child: _OverviewCard(
+                title: 'Gastos de Hoy',
+                amount: currencyProvider.formatAmount(dailyTotal),
+                icon: Icons.shopping_cart,
+                iconColor: AppColors.expenseOrange,
+                iconBgColor: AppColors.expenseOrange.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -52,62 +43,65 @@ class DailyOverviewWidget extends StatelessWidget {
       },
     );
   }
+}
 
-  Widget _buildCardContent(BuildContext context, String title, String amount, {required bool isNegative, double? trendPercentage, bool isUp = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                amount,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
+class _OverviewCard extends StatelessWidget {
+  final String title;
+  final String amount;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+
+  const _OverviewCard({
+    required this.title,
+    required this.amount,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassmorphismCard(
+      style: GlassStyles.medium,
+      enableEntryAnimation: true,
+      enableHoverEffect: true,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(8),
             ),
-            if (trendPercentage != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (isUp ? AppColors.trendUp : AppColors.trendDown).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isUp ? Icons.arrow_downward : Icons.arrow_upward,
-                      size: 14,
-                      color: isUp ? AppColors.trendUp : AppColors.trendDown,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${trendPercentage.toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isUp ? AppColors.trendUp : AppColors.trendDown,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ],
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

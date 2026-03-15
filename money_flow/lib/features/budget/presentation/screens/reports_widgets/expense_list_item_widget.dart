@@ -2,21 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/providers/currency_provider.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../../data/models/expense_model.dart';
 import '../../providers/expense_provider.dart';
 
+/// Item de lista de gasto reutilizable en dashboard (compacto) y en reportes (completo).
 class ExpenseListItemWidget extends StatelessWidget {
   final ExpenseModel expense;
   final ExpenseProvider provider;
   final int index;
+  /// true = estilo dashboard (solo categoría + tiempo); false = categoría, ubicación, timeAgo.
+  final bool compact;
 
   const ExpenseListItemWidget({
     super.key,
     required this.expense,
     required this.provider,
     required this.index,
+    this.compact = false,
   });
 
   @override
@@ -28,102 +33,114 @@ class ExpenseListItemWidget extends StatelessWidget {
           enableHoverEffect: true,
           index: index,
           leading: Container(
-            width: 48,
-            height: 48,
+            width: compact ? 44 : 48,
+            height: compact ? 44 : 48,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: expense.category.color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(compact ? 22 : 12),
             ),
             child: Icon(
               expense.category.iconData,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-              size: 24,
+              color: expense.category.color,
+              size: compact ? 22 : 24,
             ),
           ),
           title: Text(
             expense.description,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: compact ? 14 : 16,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    expense.category.name,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
+          subtitle: compact
+              ? Text(
+                  expense.category.name,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
-                  if (expense.location.isNotEmpty) ...[
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          expense.category.name,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        if (expense.location.isNotEmpty) ...[
+                          Text(
+                            ' • ',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              expense.location,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      ' • ',
+                      expense.timeAgo,
                       style: TextStyle(
+                        fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
-                    Expanded(
-                      child: Text(
-                        expense.location,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                   ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                expense.timeAgo,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-              ),
-            ],
-          ),
           trailing: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                currencyProvider.formatAmount(expense.amount),
+                '-${currencyProvider.formatAmount(expense.amount)}',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: compact ? 16 : 18,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.error,
+                  color: AppColors.expenseRed,
                 ),
               ),
-              const SizedBox(height: 4),
-              if (!expense.isConfirmed)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    expense.statusDisplayName,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w500,
+              if (!compact) ...[
+                const SizedBox(height: 4),
+                if (!expense.isConfirmed)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      expense.statusDisplayName,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
+              ],
             ],
           ),
           onTap: () => _showExpenseDetails(context, expense, provider),
@@ -133,17 +150,18 @@ class ExpenseListItemWidget extends StatelessWidget {
   }
 
   void _showExpenseDetails(BuildContext context, ExpenseModel expense, ExpenseProvider provider) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context, listen: false);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 40,
@@ -154,118 +172,134 @@ class ExpenseListItemWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: expense.category.color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              expense.category.iconData,
-                              color: expense.category.color,
-                              size: 20,
-                            ),
-                          ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: expense.category.color.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(28),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                expense.description,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                expense.category.name,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: Icon(
+                          expense.category.iconData,
+                          color: expense.category.color,
+                          size: 28,
                         ),
-                        Consumer<CurrencyProvider>(
-                          builder: (context, currencyProvider, child) {
-                            return Text(
-                              currencyProvider.formatAmount(expense.amount),
-                              style: const TextStyle(
-                                fontSize: 24,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              expense.description,
+                              style: TextStyle(
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
-                            );
-                          },
+                            ),
+                            Text(
+                              expense.category.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Monto',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        Text(
+                          '-${currencyProvider.formatAmount(expense.amount)}',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ],
                     ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Detalles
-                    _buildExpenseDetailRow(context, 'Fecha', DateFormat('dd/MM/yyyy HH:mm').format(expense.dateTime)),
-                    if (expense.location.isNotEmpty)
-                      _buildExpenseDetailRow(context, 'Lugar', expense.location),
-                    if (expense.merchant.isNotEmpty)
-                      _buildExpenseDetailRow(context, 'Comercio', expense.merchant),
-                    _buildExpenseDetailRow(context, 'Fuente', expense.sourceDisplayName),
-                    _buildExpenseDetailRow(context, 'Estado', expense.statusDisplayName),
-                    if (expense.notes.isNotEmpty)
-                      _buildExpenseDetailRow(context, 'Notas', expense.notes),
-                    
-                    const Spacer(),
-                    
-                    // Acciones
-                    if (expense.canBeModified || expense.canBeCancelled)
-                      Row(
-                        children: [
-                          if (expense.canBeModified)
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  Navigator.of(context).pushNamed(
-                                    '/add-expense',
-                                    arguments: expense,
-                                  );
-                                },
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Editar'),
-                              ),
-                            ),
-                          if (expense.canBeModified && expense.canBeCancelled)
-                            const SizedBox(width: 16),
-                          if (expense.canBeCancelled)
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _deleteExpense(context, expense.id, provider),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(context, Icons.calendar_today, 'Fecha',
+                      DateFormat('dd/MM/yyyy HH:mm').format(expense.dateTime)),
+                  if (expense.location.isNotEmpty)
+                    _buildDetailRow(context, Icons.location_on, 'Ubicación', expense.location),
+                  if (expense.merchant.isNotEmpty)
+                    _buildDetailRow(context, Icons.store, 'Comercio', expense.merchant),
+                  _buildDetailRow(context, Icons.source, 'Fuente', expense.sourceDisplayName),
+                  _buildDetailRow(context, Icons.info_outline, 'Estado', expense.statusDisplayName),
+                  if (expense.notes.isNotEmpty)
+                    _buildDetailRow(context, Icons.note, 'Notas', expense.notes),
+                  const SizedBox(height: 24),
+                  if (expense.canBeModified || expense.canBeCancelled)
+                    Row(
+                      children: [
+                        if (expense.canBeModified) ...[
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.of(context).pushNamed('/add-expense', arguments: expense);
+                              },
+                              icon: const Icon(Icons.edit),
+                              label: const Text('Editar'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(context).colorScheme.error,
+                                side: BorderSide(color: Theme.of(context).colorScheme.error),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                icon: const Icon(Icons.delete),
-                                label: const Text('Eliminar'),
                               ),
                             ),
+                          ),
+                          if (expense.canBeCancelled) const SizedBox(width: 12),
                         ],
-                      ),
-                  ],
-                ),
+                        if (expense.canBeCancelled)
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showDeleteConfirmation(context, expense, provider),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.error,
+                                foregroundColor: Theme.of(context).colorScheme.onError,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Eliminar'),
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
               ),
             ),
           ],
@@ -274,30 +308,35 @@ class ExpenseListItemWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildExpenseDetailRow(BuildContext context, String label, String value) {
+  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w500,
-              ),
+          Icon(
+            icon,
+            size: 20,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
-          Expanded(
+          const Spacer(),
+          Flexible(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
             ),
           ),
         ],
@@ -305,38 +344,56 @@ class ExpenseListItemWidget extends StatelessWidget {
     );
   }
 
-  Future<void> _deleteExpense(BuildContext context, int expenseId, ExpenseProvider provider) async {
-    final confirm = await showDialog<bool>(
+  void _showDeleteConfirmation(BuildContext context, ExpenseModel expense, ExpenseProvider provider) {
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Eliminar Gasto'),
-        content: const Text('¿Estás seguro de que quieres eliminar este gasto?'),
+        content: Text('¿Estás seguro de que deseas eliminar "${expense.description}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                await provider.deleteExpense(expense.id);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Gasto eliminado exitosamente'),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al eliminar: $e'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             child: const Text('Eliminar'),
           ),
         ],
       ),
     );
-
-    if (confirm == true && context.mounted) {
-      Navigator.of(context).pop(); // Cerrar detalles
-      
-      final success = await provider.deleteExpense(expenseId);
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gasto eliminado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
   }
 }

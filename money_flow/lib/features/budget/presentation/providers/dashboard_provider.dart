@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/dashboard_repository.dart';
 
 class DashboardProvider with ChangeNotifier {
@@ -27,6 +28,16 @@ class DashboardProvider with ChangeNotifier {
   double get budgetSpent => (_budgetProgress['spent_amount'] as num?)?.toDouble() ?? 0.0;
   double get budgetRemaining => budgetTotal - budgetSpent;
   double get budgetProgressValue => budgetTotal > 0 ? (budgetSpent / budgetTotal) : 0.0;
+
+  /// Presupuesto restante repartido por los días que quedan en el mes (para chip "Daily Rollover").
+  double get dailyRollover {
+    if (budgetRemaining <= 0) return 0.0;
+    final now = DateTime.now();
+    final lastDay = DateTime(now.year, now.month + 1, 0);
+    final daysLeft = lastDay.day - now.day + 1;
+    if (daysLeft <= 0) return budgetRemaining;
+    return budgetRemaining / daysLeft;
+  }
 
   // Trend calculations (comparing with previous period)
   double get spendingTrend {
@@ -138,14 +149,14 @@ class DashboardProvider with ChangeNotifier {
     }
   }
 
-  // Get budget status color
+  // Get budget status color (AppColors para consistencia con el tema)
   Color getBudgetStatusColor() {
     if (isOverBudget) {
-      return Colors.red;
+      return AppColors.statusDanger;
     } else if (isNearingLimit) {
-      return Colors.orange;
+      return AppColors.statusWarning;
     } else {
-      return Colors.green;
+      return AppColors.statusGood;
     }
   }
 

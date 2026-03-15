@@ -1,18 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../app/app_wrapper.dart';
+import 'storage_service.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
   static const String _apiVersion = '/api/v1';
   
   static GlobalKey<NavigatorState>? _navigatorKey;
+  static bool _isRefreshing = false;
   
   static void initialize(GlobalKey<NavigatorState> navigatorKey) {
     _navigatorKey = navigatorKey;
@@ -92,13 +96,26 @@ class ApiService {
   }
   
   // Wrapper para manejar todas las peticiones y sus errores
-  static Future<http.Response> _handleRequest(Future<http.Response> Function() request) async {
+  static Future<http.Response> _handleRequest(Future<http.Response> Function() request, {bool isRetry = false}) async {
     try {
       final response = await request();
-      if (response.statusCode == 401) {
-        // Token expirado o inválido
+      if (response.statusCode == 401 && !isRetry) {
+        // Token expirado - intentar renovar
+        debugPrint('🔄 Token expirado, intentando renovar...');
+        final refreshed = await _tryRefreshToken();
+        if (refreshed) {
+          // Reintentar la petición original con el nuevo token
+          debugPrint('✅ Token renovado, reintentando petición...');
+          return await _handleRequest(request, isRetry: true);
+        } else {
+          // No se pudo renovar, cerrar sesión
+          debugPrint('❌ No se pudo renovar el token, cerrando sesión...');
+          await _handleUnauthorized();
+          throw Exception('Sesión expirada');
+        }
+      } else if (response.statusCode == 401 && isRetry) {
+        // Si falla después del retry, cerrar sesión
         await _handleUnauthorized();
-        // Lanzar una excepción para que la lógica de negocio no continúe
         throw Exception('Sesión expirada');
       }
       return response;
@@ -107,11 +124,32 @@ class ApiService {
     } on HttpException {
       throw Exception('Error en la conexión');
     } catch (e) {
-      // Re-lanzar la excepción si ya es del tipo correcto
       if (e.toString().contains('Sesión expirada')) {
         throw Exception('Sesión expirada');
       }
       throw Exception('Error inesperado: $e');
+    }
+  }
+
+  // Intenta renovar el access token usando el refresh token
+  static Future<bool> _tryRefreshToken() async {
+    if (_isRefreshing) {
+      // Ya hay un refresh en progreso, esperar
+      await Future.delayed(const Duration(milliseconds: 500));
+      final token = await StorageService.getAccessToken();
+      return token != null;
+    }
+
+    _isRefreshing = true;
+    try {
+      await AuthRepository.refreshToken();
+      debugPrint('✅ Token renovado exitosamente');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error renovando token: $e');
+      return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -126,9 +164,6 @@ class ApiService {
       if (context != null && context.mounted) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         
-        // Si estamos en proceso de carga/inicialización, no necesitamos navegar
-        // porque el AppWrapper manejará el cambio de estado automáticamente
-        // y evitaremos un bucle de navegación/animación
         if (authProvider.status == AuthStatus.loading || 
             authProvider.status == AuthStatus.initial) {
           await authProvider.logout();
@@ -137,7 +172,6 @@ class ApiService {
 
         await authProvider.logout();
         
-        // Asegurarse de que el widget está montado antes de navegar
         if (_navigatorKey?.currentState != null) {
            _navigatorKey?.currentState?.pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AppWrapper()),
@@ -146,7 +180,6 @@ class ApiService {
         }
       }
     } finally {
-      // Reset flag after a delay to prevent bouncing
       await Future.delayed(const Duration(seconds: 1));
       _isHandlingAuth = false;
     }
@@ -193,4 +226,31 @@ class ApiService {
 
   // Base URL getter for external use
   static String get baseUrl => _baseUrl + _apiVersion;
+
+  // POST sin manejo automático de 401 (para refresh token)
+  static Future<http.Response> postWithoutRetry(
+    String endpoint,
+    Map<String, dynamic> body, {
+    String? token,
+  }) async {
+    final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
+    final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
+    
+    final headers = Map<String, String>.from(_defaultHeaders);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    try {
+      return await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+    } on SocketException {
+      throw Exception('No hay conexión a internet');
+    } catch (e) {
+      throw Exception('Error en la conexión: $e');
+    }
+  }
 }

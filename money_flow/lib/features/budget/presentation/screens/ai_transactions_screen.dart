@@ -15,6 +15,8 @@ class AITransactionsScreen extends StatefulWidget {
 
 class _AITransactionsScreenState extends State<AITransactionsScreen> {
   final ExpenseRepository _repository = ExpenseRepository();
+  GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  static const Duration _removalAnimationDuration = Duration(milliseconds: 280);
   List<ExpenseModel> _automaticExpenses = [];
   bool _isLoading = true;
   String? _error;
@@ -25,11 +27,14 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
     _loadAutomaticExpenses();
   }
 
-  Future<void> _loadAutomaticExpenses() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  /// [silent] true = no mostrar loading (evita destello al confirmar/rechazar).
+  Future<void> _loadAutomaticExpenses({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final expenses = await _repository.getAutomaticExpenses();
@@ -37,6 +42,7 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
         setState(() {
           _automaticExpenses = expenses;
           _isLoading = false;
+          _listKey = GlobalKey<AnimatedListState>();
         });
       }
     } catch (e) {
@@ -49,9 +55,40 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
     }
   }
 
+  void _removeItemWithAnimation(int index, ExpenseModel expense, VoidCallback onRemoved) {
+    _listKey.currentState!.removeItem(
+      index,
+      (context, animation) => _buildRemovingCard(expense, animation),
+      duration: _removalAnimationDuration,
+    );
+    setState(() {
+      _automaticExpenses.removeAt(index);
+    });
+    onRemoved();
+  }
+
+  Widget _buildRemovingCard(ExpenseModel expense, Animation<double> animation) {
+    return SizeTransition(
+      sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      child: FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildExpenseCard(expense),
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmExpense(ExpenseModel expense) async {
+    final expenseId = expense.id;
+    final index = _automaticExpenses.indexWhere((e) => e.id == expenseId);
+    if (index < 0) return;
+
+    _removeItemWithAnimation(index, expense, () {});
+
     try {
-      await _repository.confirmExpense(expense.id);
+      await _repository.confirmExpense(expenseId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -59,10 +96,13 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-        _loadAutomaticExpenses();
+        _loadAutomaticExpenses(silent: true);
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _automaticExpenses = [..._automaticExpenses, expense]..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al confirmar: $e'),
@@ -96,18 +136,27 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
     );
 
     if (confirmed == true) {
+      final expenseId = expense.id;
+      final index = _automaticExpenses.indexWhere((e) => e.id == expenseId);
+      if (index < 0) return;
+
+      _removeItemWithAnimation(index, expense, () {});
+
       try {
-        await _repository.rejectExpense(expense.id);
+        await _repository.rejectExpense(expenseId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Transacción rechazada'),
             ),
           );
-          _loadAutomaticExpenses();
+          _loadAutomaticExpenses(silent: true);
         }
       } catch (e) {
         if (mounted) {
+          setState(() {
+            _automaticExpenses = [..._automaticExpenses, expense]..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al rechazar: $e'),
@@ -189,13 +238,17 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
         children: [
           _buildHeader(),
           Expanded(
-            child: ListView.separated(
+            child: AnimatedList(
+              key: _listKey,
               padding: const EdgeInsets.all(16),
-              itemCount: _automaticExpenses.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
+              initialItemCount: _automaticExpenses.length,
+              itemBuilder: (context, index, animation) {
+                if (index >= _automaticExpenses.length) return const SizedBox.shrink();
                 final expense = _automaticExpenses[index];
-                return _buildExpenseCard(expense);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildExpenseCard(expense),
+                );
               },
             ),
           ),
@@ -305,7 +358,10 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
 
   Widget _buildExpenseCard(ExpenseModel expense) {
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'es');
-    
+    final categoryName = expense.category.name.isEmpty ? 'Sin categoría' : expense.category.name;
+    final iconColor = expense.category.color;
+    final iconBgColor = iconColor.withValues(alpha: 0.2);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -324,13 +380,14 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.errorContainer,
+                  color: iconBgColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(
-                    expense.category.icon,
-                    style: const TextStyle(fontSize: 20),
+                  child: Icon(
+                    expense.category.iconData,
+                    color: iconColor,
+                    size: 22,
                   ),
                 ),
               ),
@@ -351,7 +408,7 @@ class _AITransactionsScreenState extends State<AITransactionsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      expense.category.name,
+                      categoryName,
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),

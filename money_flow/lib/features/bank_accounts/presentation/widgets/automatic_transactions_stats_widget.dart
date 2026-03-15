@@ -41,7 +41,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
         }
 
         return GlassmorphismCard(
-          style: GlassStyles.dynamic,
+          style: GlassStyles.medium,
           enableHoverEffect: true,
           enableEntryAnimation: true,
           child: Padding(

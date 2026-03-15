@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class GlassmorphismListItem extends StatefulWidget {
@@ -24,9 +22,9 @@ class GlassmorphismListItem extends StatefulWidget {
     this.onTap,
     this.padding = const EdgeInsets.all(16),
     this.margin = const EdgeInsets.only(bottom: 12),
-    this.enableSlideAnimation = true,
-    this.enableHoverEffect = true,
-    this.animationDelay = const Duration(milliseconds: 100),
+    this.enableSlideAnimation = false,
+    this.enableHoverEffect = false,
+    this.animationDelay = const Duration(milliseconds: 50),
     this.index = 0,
   });
 
@@ -35,42 +33,32 @@ class GlassmorphismListItem extends StatefulWidget {
 }
 
 class _GlassmorphismListItemState extends State<GlassmorphismListItem>
-    with TickerProviderStateMixin {
-  late AnimationController _slideController;
-  late AnimationController _hoverController;
-  
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _hoverScaleAnimation;
-  late Animation<double> _hoverBlurAnimation;
-
+    with SingleTickerProviderStateMixin {
+  AnimationController? _slideController;
+  Animation<Offset>? _slideAnimation;
+  Animation<double>? _fadeAnimation;
   bool _isHovered = false;
+  bool _animationStarted = false;
 
   @override
   void initState() {
     super.initState();
-    _setupAnimations();
     if (widget.enableSlideAnimation) {
-      _startSlideAnimation();
+      _setupAnimations();
     }
   }
 
   void _setupAnimations() {
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _hoverController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.3, 0),
+      begin: const Offset(0.2, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _slideController,
+      parent: _slideController!,
       curve: Curves.easeOutCubic,
     ));
 
@@ -78,174 +66,165 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
-
-    _hoverScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.01,
-    ).animate(CurvedAnimation(
-      parent: _hoverController,
-      curve: Curves.easeInOut,
-    ));
-
-    _hoverBlurAnimation = Tween<double>(
-      begin: 0.0,
-      end: 3.0,
-    ).animate(CurvedAnimation(
-      parent: _hoverController,
-      curve: Curves.easeInOut,
+      parent: _slideController!,
+      curve: Curves.easeIn,
     ));
   }
 
-  void _startSlideAnimation() {
+  void _startAnimation() {
+    if (_animationStarted || _slideController == null) return;
+    _animationStarted = true;
+    
     final delay = widget.animationDelay.inMilliseconds * widget.index;
     Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) {
-        _slideController.forward();
+        _slideController?.forward();
       }
     });
   }
 
-  void _onHoverEnter() {
-    if (!widget.enableHoverEffect) return;
-    setState(() => _isHovered = true);
-    _hoverController.forward();
-  }
-
-  void _onHoverExit() {
-    if (!widget.enableHoverEffect) return;
-    setState(() => _isHovered = false);
-    _hoverController.reverse();
-  }
-
   @override
   void dispose() {
-    _slideController.dispose();
-    _hoverController.dispose();
+    _slideController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Start animation on first build
+    if (widget.enableSlideAnimation && !_animationStarted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startAnimation());
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return AnimatedBuilder(
-      animation: Listenable.merge([_slideController, _hoverController]),
-      builder: (context, child) {
-        return SlideTransition(
-          position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Transform.scale(
-              scale: _hoverScaleAnimation.value,
-              child: Container(
-                margin: widget.margin,
-                child: MouseRegion(
-                  onEnter: (_) => _onHoverEnter(),
-                  onExit: (_) => _onHoverExit(),
-                  child: GestureDetector(
-                    onTap: widget.onTap,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: 10 + _hoverBlurAnimation.value,
-                          sigmaY: 10 + _hoverBlurAnimation.value,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: widget.padding,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: isDark ? [
-                                Colors.white.withValues(alpha: _isHovered ? 0.15 : 0.1),
-                                Colors.white.withValues(alpha: _isHovered ? 0.08 : 0.05),
-                              ] : [
-                                Colors.white.withValues(alpha: _isHovered ? 0.9 : 0.8),
-                                Colors.white.withValues(alpha: _isHovered ? 0.7 : 0.6),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDark 
-                                ? Colors.white.withValues(alpha: _isHovered ? 0.3 : 0.2)
-                                : Colors.white.withValues(alpha: _isHovered ? 0.8 : 0.6),
-                              width: _isHovered ? 1.5 : 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark 
-                                  ? Colors.black.withValues(alpha: 0.2)
-                                  : Colors.black.withValues(alpha: 0.08),
-                                blurRadius: _isHovered ? 15 : 10,
-                                offset: Offset(0, _isHovered ? 6 : 4),
-                                spreadRadius: -3,
-                              ),
-                              if (_isHovered)
-                                BoxShadow(
-                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 0),
-                                  spreadRadius: 0,
-                                ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              if (widget.leading != null) ...[
-                                widget.leading!,
-                                const SizedBox(width: 16),
-                              ],
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    DefaultTextStyle(
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                      child: widget.title,
-                                    ),
-                                    if (widget.subtitle != null) ...[
-                                      const SizedBox(height: 4),
-                                      DefaultTextStyle(
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Theme.of(context).colorScheme.secondary,
-                                        ),
-                                        child: widget.subtitle!,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (widget.trailing != null) ...[
-                                const SizedBox(width: 16),
-                                widget.trailing!,
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+    final primary = Theme.of(context).colorScheme.primary;
+
+    // Mismo estilo que GlassmorphismCard (medium) para que coincida con Saldo, Gastos, Cuentas
+    final decoration = isDark
+        ? BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primary.withValues(alpha: 0.15),
+                primary.withValues(alpha: 0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: _isHovered ? 0.25 : 0.15),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
+            ],
+          )
+        : BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: _isHovered ? 0.3 : 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          );
+
+    Widget content = Container(
+      margin: widget.margin,
+      padding: widget.padding,
+      decoration: decoration,
+      child: Row(
+        children: [
+          if (widget.leading != null) ...[
+            widget.leading!,
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DefaultTextStyle(
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  child: widget.title,
+                ),
+                if (widget.subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  DefaultTextStyle(
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    child: widget.subtitle!,
+                  ),
+                ],
+              ],
             ),
           ),
-        );
-      },
+          if (widget.trailing != null) ...[
+            const SizedBox(width: 16),
+            widget.trailing!,
+          ],
+        ],
+      ),
     );
+
+    // Wrap with gesture detector if onTap provided
+    if (widget.onTap != null) {
+      content = GestureDetector(
+        onTap: widget.onTap,
+        child: content,
+      );
+    }
+
+    // Wrap with hover effects on desktop
+    if (widget.enableHoverEffect) {
+      content = MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: AnimatedScale(
+          scale: _isHovered ? 1.01 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: content,
+        ),
+      );
+    }
+
+    // Wrap with slide animation if enabled
+    if (widget.enableSlideAnimation && _slideController != null) {
+      return AnimatedBuilder(
+        animation: _slideController!,
+        child: content,
+        builder: (context, child) {
+          return SlideTransition(
+            position: _slideAnimation!,
+            child: FadeTransition(
+              opacity: _fadeAnimation!,
+              child: child,
+            ),
+          );
+        },
+      );
+    }
+
+    return content;
   }
 }
 
-// Helper widget for creating glassmorphism list views
 class GlassmorphismListView extends StatelessWidget {
   final List<Widget> children;
   final EdgeInsetsGeometry? padding;
@@ -270,26 +249,7 @@ class GlassmorphismListView extends StatelessWidget {
       physics: physics,
       padding: padding,
       itemCount: children.length,
-      itemBuilder: (context, index) {
-        final child = children[index];
-        if (child is GlassmorphismListItem) {
-          return GlassmorphismListItem(
-            key: child.key,
-            leading: child.leading,
-            title: child.title,
-            subtitle: child.subtitle,
-            trailing: child.trailing,
-            onTap: child.onTap,
-            padding: child.padding,
-            margin: child.margin,
-            enableSlideAnimation: child.enableSlideAnimation,
-            enableHoverEffect: child.enableHoverEffect,
-            animationDelay: child.animationDelay,
-            index: index, // Pass the actual index
-          );
-        }
-        return child;
-      },
+      itemBuilder: (context, index) => children[index],
     );
   }
 }

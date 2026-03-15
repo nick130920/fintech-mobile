@@ -40,14 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (isDarkTheme) {
         return Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.darkBackground,
-                AppColors.darkBackgroundGradient,
-              ],
-            ),
+            color: AppColors.darkBackground,
           ),
           child: scaffoldWidget,
         );
@@ -59,14 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (isDarkTheme) {
       return Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.darkBackground,
-              AppColors.darkBackgroundGradient,
-            ],
-          ),
+          color: AppColors.darkBackground,
         ),
         child: scaffoldWidget,
       );
@@ -74,5 +60,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return scaffoldWidget;
     }
   }
-
 }

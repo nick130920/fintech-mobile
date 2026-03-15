@@ -88,9 +88,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
         return GlassmorphismCard(
-          style: GlassStyles.dynamic,
-          enableHoverEffect: true,
-          enableEntryAnimation: true,
+          style: GlassStyles.medium,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
