@@ -312,6 +312,45 @@ class ExpenseProvider with ChangeNotifier {
         .fold(0.0, (sum, amount) => sum + amount);
   }
 
+  /// Gastos del mes actual repartidos en 10 periodos (para gráfico Tendencia de Gastos).
+  /// Cada índice = un tramo del mes (1º = días 1–3, 2º = 4–6, …); valor = suma de gastos confirmados.
+  List<double> get monthlyExpensesByPeriod {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 1);
+    final daysInMonth = endOfMonth.difference(startOfMonth).inDays;
+    if (daysInMonth <= 0) return List.filled(10, 0.0);
+
+    final periods = List<double>.filled(10, 0.0);
+    for (final e in monthlyExpenses.where((x) => x.isConfirmed)) {
+      final dayOfMonth = e.dateTime.day; // 1..31
+      final periodIndex = ((dayOfMonth - 1) * 10 / daysInMonth).floor().clamp(0, 9);
+      periods[periodIndex] += e.amount;
+    }
+    return periods;
+  }
+
+  /// Rango de días del mes para el periodo [periodIndex] (0..9). Devuelve (dayStart, dayEnd) inclusive.
+  (int startDay, int endDay) getPeriodDayRange(int periodIndex) {
+    final now = DateTime.now();
+    final endOfMonth = DateTime(now.year, now.month + 1, 0);
+    final daysInMonth = endOfMonth.day;
+    final periodIndexClamped = periodIndex.clamp(0, 9);
+    final startDay = (periodIndexClamped * daysInMonth / 10).floor() + 1;
+    final endDay = ((periodIndexClamped + 1) * daysInMonth / 10).floor();
+    return (startDay, endDay > 0 ? endDay : startDay);
+  }
+
+  /// Gastos del mes actual que caen en el periodo [periodIndex] (solo confirmados).
+  List<ExpenseModel> getMonthlyExpensesInPeriod(int periodIndex) {
+    final (startDay, endDay) = getPeriodDayRange(periodIndex);
+    return monthlyExpenses.where((e) {
+      if (!e.isConfirmed) return false;
+      final day = e.dateTime.day;
+      return day >= startDay && day <= endDay;
+    }).toList();
+  }
+
   // Obtener categorías principales por gasto
   List<Map<String, dynamic>> get topCategories {
     final Map<String, double> categoryTotals = {};

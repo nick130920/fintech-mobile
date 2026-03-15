@@ -130,7 +130,7 @@ class MyApp extends StatelessWidget {
               },
               '/add-income': (context) => const AddIncomeScreen(),
               '/expense-history': (context) => const MainScreen(initialTab: 1),
-              '/income-history': (context) => const ReportsScreen(useScaffold: true, initialTabIndex: 1),
+              '/income-history': (context) => const ReportsScreen(useScaffold: true),
               '/category-management': (context) => const MainScreen(initialTab: 2),
               '/currency-settings': (context) => const CurrencySettingsScreen(),
               '/sms-settings': (context) => const SmsSettingsScreen(),

@@ -1,65 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../data/models/income_model.dart';
 import '../../providers/income_provider.dart';
-import 'income_list_item_widget.dart';
 
+/// Pestaña Ingresos con lista estilo Stitch: divide-y, icono en círculo,
+/// título, subtítulo (fecha), monto en primary.
 class IncomeTabWidget extends StatelessWidget {
   const IncomeTabWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Consumer2<IncomeProvider, CurrencyProvider>(
       builder: (context, incomeProvider, currencyProvider, child) {
         if (incomeProvider.isLoading && incomeProvider.incomes.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
+        final incomes = incomeProvider.incomes.take(10).toList();
+
         return RefreshIndicator(
-          onRefresh: incomeProvider.refresh,
+          onRefresh: incomeProvider.initialize,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildPeriodSelector(context),
-                const SizedBox(height: 24),
-                _buildIncomeSummarySection(context),
-                const SizedBox(height: 24),
-                if (incomeProvider.incomes.isNotEmpty) ...[
+                if (incomes.isNotEmpty) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Ingresos Recientes',
+                        'Ingresos',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pushNamed('/income-history'),
-                        child: const Text('Ver Todos'),
+                      GestureDetector(
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/income-history'),
+                        child: Text(
+                          'VER TODO',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ...incomeProvider.incomes.take(5).map((income) {
-                    final index = incomeProvider.incomes.indexOf(income);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: IncomeListItemWidget(
-                        income: income,
-                        provider: incomeProvider,
-                        index: index,
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                        ),
                       ),
-                    );
-                  }),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: incomes.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                      itemBuilder: (context, index) {
+                        final income = incomes[index];
+                        return _StitchIncomeRow(
+                          income: income,
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/income-history'),
+                        );
+                      },
+                    ),
+                  ),
                 ] else
-                  _buildIncomesEmptyState(context),
+                  _buildEmptyState(context),
               ],
             ),
           ),
@@ -68,180 +93,141 @@ class IncomeTabWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPeriodSelector(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Ingresos',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          children: [
+            Icon(
+              Icons.trending_up,
+              size: 64,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No hay ingresos este mes',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Registra tu primer ingreso',
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/add-income'),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('Registrar Ingreso'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
         ),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              _buildPeriodButton(context, 'Mensual', true),
-              _buildPeriodButton(context, 'Anual', false),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildPeriodButton(BuildContext context, String text, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? Theme.of(context).colorScheme.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+/// Fila de ingreso estilo Stitch: círculo + emoji/icono, título, fecha, monto primary.
+class _StitchIncomeRow extends StatelessWidget {
+  final IncomeSummaryModel income;
+  final VoidCallback? onTap;
+
+  const _StitchIncomeRow({
+    required this.income,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateStr = _formatDate(income.dateTime);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 ),
-              ]
-            : null,
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected
-              ? Theme.of(context).colorScheme.onSurface
-              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIncomeSummarySection(BuildContext context) {
-    return Consumer<IncomeProvider>(
-      builder: (context, incomeProvider, child) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+              child: Center(
+                child: Text(
+                  income.sourceIcon,
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total Ingresos (Mensual)',
+                    income.description,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Icon(
-                    Icons.more_horiz,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                incomeProvider.formattedTotalIncome,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatItem(
-                      context,
-                      'Promedio Mensual',
-                      incomeProvider.formattedMonthlyAverage,
+                  Text(
+                    dateStr,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatItem(BuildContext context, String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIncomesEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.trending_up,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No hay ingresos registrados',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Comienza registrando tu primer ingreso',
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            Text(
+              '+${income.formattedAmount}',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pushNamed('/add-income'),
-            icon: const Icon(Icons.add),
-            label: const Text('Registrar Ingreso'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly == today) {
+      return 'Hoy, ${DateFormat('HH:mm').format(date)}';
+    }
+    if (dateOnly == yesterday) {
+      return 'Ayer, ${DateFormat('HH:mm').format(date)}';
+    }
+    return DateFormat('dd/MM/yyyy, HH:mm').format(date);
   }
 }
