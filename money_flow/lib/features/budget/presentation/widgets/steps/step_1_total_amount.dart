@@ -1,9 +1,12 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/services/sms_service.dart';
 import '../../providers/budget_setup_provider.dart';
+import '../../providers/budget_suggestions_provider.dart';
 import '../currency_selector.dart';
 
 class Step1TotalAmount extends StatefulWidget {
@@ -39,6 +42,103 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
     final text = _controller.text.replaceAll(',', '');
     final amount = double.tryParse(text) ?? 0.0;
     context.read<BudgetSetupProvider>().setTotalAmount(amount);
+  }
+
+  Future<void> _suggestFromSms(BuildContext context) async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        title: Text(
+          'Sugerencias con tus SMS',
+          style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+        ),
+        content: Text(
+          'Para sugerirte montos leeremos solo los SMS de tu banco de los últimos 3 meses. '
+          'No guardamos mensajes ni creamos transacciones.',
+          style: TextStyle(
+            color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.9),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Usar mis SMS'),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !context.mounted) return;
+    final hasPermission = await SmsService().requestPermissions();
+    if (!context.mounted) return;
+    if (!hasPermission) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Sin problema, puedes ingresar el monto manualmente'),
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final suggestionsProvider = context.read<BudgetSuggestionsProvider>();
+    await suggestionsProvider.analyzeLast3Months();
+    if (!context.mounted) return;
+    if (suggestionsProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(suggestionsProvider.error!),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final suggestion = suggestionsProvider.suggestion;
+    if (suggestion != null &&
+        (suggestion.totalSuggested > 0 || suggestion.byCategory.isNotEmpty)) {
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      if (mounted) {
+        setState(() {
+          _controller.text = _formatNumber(suggestion.totalSuggested.toInt());
+        });
+      }
+    }
+  }
+
+  Future<void> _suggestFromExtracto(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+    if (result == null || result.files.isEmpty || result.files.single.path == null) return;
+    final path = result.files.single.path!;
+    final suggestionsProvider = context.read<BudgetSuggestionsProvider>();
+    await suggestionsProvider.analyzeStatement(path);
+    if (!context.mounted) return;
+    if (suggestionsProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(suggestionsProvider.error!),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final suggestion = suggestionsProvider.suggestion;
+    if (suggestion != null) {
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      if (mounted) {
+        setState(() {
+          _controller.text = _formatNumber(suggestion.totalSuggested.toInt());
+        });
+      }
+    }
   }
 
   @override
@@ -270,6 +370,77 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
                         ),
                         if (i < suggestions.length - 1) const SizedBox(width: 8),
                       ],
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Opción sugerencias por SMS o extracto
+              Consumer<BudgetSuggestionsProvider>(
+                builder: (context, suggestionsProvider, _) {
+                  final isAnalyzing = suggestionsProvider.isAnalyzing;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¿Quieres que te sugieran montos a partir de tus SMS o de un extracto?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: isAnalyzing ? null : () => _suggestFromSms(context),
+                            icon: Icon(
+                              Icons.sms_outlined,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            label: Text(
+                              'Sugerir con SMS',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            onPressed: isAnalyzing ? null : () => _suggestFromExtracto(context),
+                            icon: Icon(
+                              Icons.upload_file,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            label: Text(
+                              'Sugerir con extracto',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          if (isAnalyzing)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   );
                 },

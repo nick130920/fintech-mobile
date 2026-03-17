@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:money_flow/core/services/api_service.dart';
 import 'package:money_flow/core/services/storage_service.dart';
 import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
@@ -236,6 +237,74 @@ class AutomaticTransactionsRepository {
     }
   }
 
+  /// Analiza un lote de SMS para sugerencias de presupuesto (no crea transacciones).
+  /// [messages] lista de mapas con "body" y "date" (date en ISO8601 opcional).
+  static Future<BudgetSuggestionsResponse> analyzeSmsBatch(
+    List<Map<String, dynamic>> messages,
+  ) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post(
+        '/notification-patterns/analyze-sms-batch',
+        {'messages': messages},
+        token: token,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        return BudgetSuggestionsResponse.fromJson(data);
+      } else {
+        final errorBody = _parseErrorBody(response);
+        throw Exception(
+          'Error analizando SMS: ${errorBody['error'] ?? response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error analizando SMS para sugerencias: $e');
+    }
+  }
+
+  /// Analiza un extracto bancario (PDF o imagen) por ruta de archivo.
+  static Future<BudgetSuggestionsResponse> analyzeStatement(String filePath) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.postMultipartFile(
+        '/notification-patterns/analyze-statement',
+        filePath,
+        fieldName: 'file',
+        token: token,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        return BudgetSuggestionsResponse.fromJson(data);
+      } else {
+        final errorBody = _parseErrorBody(response);
+        throw Exception(
+          'Error analizando extracto: ${errorBody['error'] ?? response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error analizando extracto bancario: $e');
+    }
+  }
+
+  static Map<String, dynamic> _parseErrorBody(http.Response response) {
+    try {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      return {'error': response.body};
+    }
+  }
+
   /// Procesa un SMS con IA para detectar y crear transacciones automáticamente.
   static Future<Map<String, dynamic>> processSMSWithAI(String message) async {
     try {
@@ -360,6 +429,52 @@ class BatchProcessResult {
       successful: json['successful'] ?? 0,
       failed: json['failed'] ?? 0,
       errors: List<String>.from(json['errors'] ?? []),
+    );
+  }
+}
+
+/// Respuesta de analyze-sms-batch y analyze-statement (sugerencias de presupuesto).
+class BudgetSuggestionsResponse {
+  final double totalExpense3m;
+  final List<BudgetSuggestionCategoryItem> byCategory;
+
+  const BudgetSuggestionsResponse({
+    required this.totalExpense3m,
+    required this.byCategory,
+  });
+
+  factory BudgetSuggestionsResponse.fromJson(Map<String, dynamic> json) {
+    final suggestions = json['suggestions'] as Map<String, dynamic>? ?? {};
+    final list = suggestions['by_category'] as List<dynamic>? ?? [];
+    return BudgetSuggestionsResponse(
+      totalExpense3m: (suggestions['total_expense_3m'] ?? 0.0).toDouble(),
+      byCategory: list
+          .map((e) => BudgetSuggestionCategoryItem.fromJson(
+              e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class BudgetSuggestionCategoryItem {
+  final int categoryId;
+  final String categoryName;
+  final double total;
+  final int count;
+
+  const BudgetSuggestionCategoryItem({
+    required this.categoryId,
+    required this.categoryName,
+    required this.total,
+    required this.count,
+  });
+
+  factory BudgetSuggestionCategoryItem.fromJson(Map<String, dynamic> json) {
+    return BudgetSuggestionCategoryItem(
+      categoryId: json['category_id'] ?? 0,
+      categoryName: json['category_name'] ?? '',
+      total: (json['total'] ?? 0.0).toDouble(),
+      count: json['count'] ?? 0,
     );
   }
 }

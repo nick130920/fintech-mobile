@@ -94,6 +94,31 @@ class ApiService {
 
     return await _handleRequest(() => http.delete(url, headers: headers));
   }
+
+  /// POST multipart/form-data with a single file by path (e.g. for analyze-statement). Mobile only.
+  static Future<http.Response> postMultipartFile(
+    String endpoint,
+    String filePath, {
+    String fieldName = 'file',
+    String? token,
+  }) async {
+    final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
+    final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
+
+    return await _handleRequest(() async {
+      final request = http.MultipartRequest('POST', url);
+      request.headers['Accept'] = 'application/json';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      final filename = filePath.split(Platform.pathSeparator).last;
+      request.files.add(
+        await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
+      );
+      final streamed = await request.send();
+      return await http.Response.fromStream(streamed);
+    });
+  }
   
   // Wrapper para manejar todas las peticiones y sus errores
   static Future<http.Response> _handleRequest(Future<http.Response> Function() request, {bool isRetry = false}) async {

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../data/models/budget_model.dart';
 import '../../data/models/category_model.dart';
+import '../../data/models/sms_budget_suggestion.dart';
 import '../../data/repositories/budget_repository.dart';
 
 enum BudgetSetupStep {
@@ -93,6 +94,31 @@ class BudgetSetupProvider with ChangeNotifier {
   // PASO 1: Configurar monto total
   void setTotalAmount(double amount) {
     _totalAmount = amount;
+    notifyListeners();
+  }
+
+  /// Pre-rellena el setup con sugerencias (SMS o extracto). No cambia de paso.
+  void prefillFromSuggestions(SmsBudgetSuggestion s) {
+    if (s.totalSuggested > 0) {
+      _totalAmount = s.totalSuggested;
+    }
+    for (final item in s.byCategory) {
+      if (item.percentage <= 0) continue;
+      CategoryModel? category;
+      for (final c in _availableCategories) {
+        if (c.id == item.categoryId) {
+          category = c;
+          break;
+        }
+      }
+      final cat = category;
+      if (cat != null &&
+          !_selectedCategories.any((c) => c.id == cat.id)) {
+        _selectedCategories.add(cat);
+        _categoryPercentages[cat.id] = item.percentage;
+      }
+    }
+    _redistributePercentages();
     notifyListeners();
   }
 

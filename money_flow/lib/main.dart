@@ -23,6 +23,7 @@ import 'features/bank_accounts/presentation/screens/pending_transactions_screen.
 import 'features/bank_accounts/presentation/screens/transactions_flow_screen.dart';
 import 'features/budget/data/models/expense_model.dart';
 import 'features/budget/presentation/providers/budget_setup_provider.dart';
+import 'features/budget/presentation/providers/budget_suggestions_provider.dart';
 import 'features/budget/presentation/providers/dashboard_provider.dart';
 import 'features/budget/presentation/providers/expense_provider.dart';
 import 'features/budget/presentation/providers/income_provider.dart';
@@ -103,6 +104,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         ChangeNotifierProvider(create: (_) => BudgetSetupProvider()),
+        ChangeNotifierProvider(create: (_) => BudgetSuggestionsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),

@@ -7,17 +7,22 @@ import 'preferences_service.dart';
 // Callback to be executed when a message is processed
 typedef OnSmsCallback = void Function(String? message);
 
+/// Callback that receives both body and date (e.g. for budget suggestions analysis).
+typedef OnSmsWithDateCallback = void Function(String? body, DateTime? date);
+
 class SmsService {
   final SmsQuery _query = SmsQuery();
   static const String _lastSmsSyncKey = 'last_sms_sync_timestamp';
 
   /// Sincronizar inbox de SMS
-  /// 
-  /// [onSmsReceived] - Callback que se ejecuta por cada mensaje
+  ///
+  /// [onSmsReceived] - Callback que se ejecuta por cada mensaje (solo body).
+  /// [onSmsWithDateReceived] - Opcional: callback con (body, date) para análisis con fecha (ej. sugerencias de presupuesto).
   /// [minDate] - Fecha mínima desde la cual procesar mensajes (opcional)
   /// [autoMode] - Si es true, solo procesa mensajes nuevos. Si es false, procesa todos desde minDate
   Future<void> syncInbox(
     OnSmsCallback onSmsReceived, {
+    OnSmsWithDateCallback? onSmsWithDateReceived,
     DateTime? minDate,
     bool autoMode = true,
   }) async {
@@ -82,7 +87,11 @@ class SmsService {
       debugPrint("Rango: ${minDate != null ? 'Desde ${minDate.toString().split(' ')[0]}' : 'Sin límite'}");
       
       for (final message in messagesToProcess) {
-        onSmsReceived(message.body);
+        if (onSmsWithDateReceived != null) {
+          onSmsWithDateReceived(message.body, message.date);
+        } else {
+          onSmsReceived(message.body);
+        }
       }
 
       // Guardar el timestamp del mensaje más reciente procesado
