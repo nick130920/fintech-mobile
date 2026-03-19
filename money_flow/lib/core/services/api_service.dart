@@ -40,15 +40,20 @@ class ApiService {
     return await _handleRequest(() => http.get(url, headers: headers));
   }
 
+  /// Timeout por defecto para POST (p. ej. login, crear recurso).
+  static const Duration defaultPostTimeout = Duration(seconds: 30);
+
   // POST request
   static Future<http.Response> post(
     String endpoint,
     Map<String, dynamic> body, {
     String? token,
+    Duration? timeout,
   }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
-    
+    final effectiveTimeout = timeout ?? defaultPostTimeout;
+
     final headers = Map<String, String>.from(_defaultHeaders);
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
@@ -58,7 +63,7 @@ class ApiService {
       url,
       headers: headers,
       body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 30)));
+    ).timeout(effectiveTimeout));
   }
 
   // PUT request
@@ -101,9 +106,11 @@ class ApiService {
     String filePath, {
     String fieldName = 'file',
     String? token,
+    Duration? timeout,
   }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
+    final effectiveTimeout = timeout ?? defaultPostTimeout;
 
     return await _handleRequest(() async {
       final request = http.MultipartRequest('POST', url);
@@ -116,7 +123,8 @@ class ApiService {
         await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
       );
       final streamed = await request.send();
-      return await http.Response.fromStream(streamed);
+      final response = await http.Response.fromStream(streamed).timeout(effectiveTimeout);
+      return response;
     });
   }
   
@@ -271,7 +279,7 @@ class ApiService {
         url,
         headers: headers,
         body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(defaultPostTimeout);
     } on SocketException {
       throw Exception('No hay conexión a internet');
     } catch (e) {

@@ -6,6 +6,9 @@ import 'package:money_flow/features/budget/data/models/sms_budget_suggestion.dar
 class BudgetSuggestionsService {
   final SmsService _smsService = SmsService();
 
+  /// Máximo de SMS enviados al backend (los más recientes): respuesta rápida y muestra suficiente para sugerencias.
+  static const int maxSmsForSuggestions = 100;
+
   /// Analiza los SMS de los últimos 3 meses y devuelve sugerencias (solo en este dispositivo, no crea transacciones).
   Future<SmsBudgetSuggestion> analyzeLast3Months() async {
     final minDate = DateTime.now().subtract(const Duration(days: 90));
@@ -25,7 +28,12 @@ class BudgetSuggestionsService {
       autoMode: false,
     );
 
-    final response = await AutomaticTransactionsRepository.analyzeSmsBatch(messages);
+    _sortMessagesNewestFirst(messages);
+    final toSend = messages.length > maxSmsForSuggestions
+        ? messages.sublist(0, maxSmsForSuggestions)
+        : messages;
+
+    final response = await AutomaticTransactionsRepository.analyzeSmsBatch(toSend);
     return _responseToSuggestion(response);
   }
 
@@ -33,6 +41,16 @@ class BudgetSuggestionsService {
   Future<SmsBudgetSuggestion> analyzeStatement(String filePath) async {
     final response = await AutomaticTransactionsRepository.analyzeStatement(filePath);
     return _responseToSuggestion(response);
+  }
+
+  static void _sortMessagesNewestFirst(List<Map<String, dynamic>> list) {
+    int ts(Map<String, dynamic> m) {
+      final raw = m['date'];
+      if (raw is! String || raw.isEmpty) return 0;
+      return DateTime.tryParse(raw)?.millisecondsSinceEpoch ?? 0;
+    }
+
+    list.sort((a, b) => ts(b).compareTo(ts(a)));
   }
 
   static SmsBudgetSuggestion _responseToSuggestion(BudgetSuggestionsResponse response) {

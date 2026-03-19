@@ -143,7 +143,9 @@ class _SmsOption extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Solo en este dispositivo, solo para sugerencias. No se crean transacciones.',
+                        isAnalyzing
+                            ? 'Analizando hasta 100 SMS recientes (suele tardar poco)…'
+                            : 'Usamos hasta 100 SMS más recientes (rápido). Solo sugerencias, no se crean transacciones.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -184,8 +186,8 @@ class _SmsOption extends StatelessWidget {
           style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
         ),
         content: Text(
-          'Para sugerirte presupuestos podemos leer solo los SMS de tu banco de los últimos 3 meses. '
-          'No guardamos esos mensajes ni creamos transacciones. ¿Quieres activar esto?',
+          'Leemos SMS de los últimos 3 meses pero solo enviamos al análisis los 100 más recientes, '
+          'para que no tengas que esperar tanto. No guardamos esos mensajes ni creamos transacciones. ¿Activar?',
           style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.9)),
         ),
         actions: [
@@ -299,7 +301,9 @@ class _ExtractoOption extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'El archivo se analiza solo para sugerirte montos. No se guarda.',
+                        isAnalyzing
+                            ? 'Analizando el extracto, puede tardar varios minutos…'
+                            : 'El archivo se analiza solo para sugerirte montos. No se guarda.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),

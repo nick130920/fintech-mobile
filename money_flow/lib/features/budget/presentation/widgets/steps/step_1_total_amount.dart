@@ -54,7 +54,7 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
           style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
         ),
         content: Text(
-          'Para sugerirte montos leeremos solo los SMS de tu banco de los últimos 3 meses. '
+          'Solo analizamos los 100 SMS más recientes de los últimos 3 meses (respuesta más rápida). '
           'No guardamos mensajes ni creamos transacciones.',
           style: TextStyle(
             color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.9),
@@ -391,7 +391,7 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '¿Quieres que te sugieran montos a partir de tus SMS o de un extracto?',
+                        '¿Sugerencias con SMS (100 más recientes) o con un extracto?',
                         style: TextStyle(
                           fontSize: 14,
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
@@ -447,6 +447,16 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
                             ),
                         ],
                       ),
+                      if (isAnalyzing) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Analizando hasta 100 SMS recientes…',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
                     ],
                   );
                 },

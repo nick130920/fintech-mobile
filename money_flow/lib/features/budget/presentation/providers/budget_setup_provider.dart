@@ -288,16 +288,29 @@ class BudgetSetupProvider with ChangeNotifier {
         throw Exception('Sesión expirada. Por favor inicia sesión nuevamente.');
       }
       final now = DateTime.now();
-      final allocations = _selectedCategories.map((category) {
+      // Última categoría recibe el remanente para que la suma == totalAmount exacto (evita error de validación por float).
+      final allocations = <CreateAllocationModel>[];
+      double allocatedSoFar = 0;
+      for (var i = 0; i < _selectedCategories.length; i++) {
+        final category = _selectedCategories[i];
         final percentage = _categoryPercentages[category.id]!;
-        final amount = (_totalAmount * percentage / 100);
-        
-        return CreateAllocationModel(
-          categoryId: category.id,
-          allocatedAmount: amount,
-          alertThreshold: 0.8, // 80% por defecto
+        final double amount;
+        if (i == _selectedCategories.length - 1) {
+          amount = (_totalAmount - allocatedSoFar).clamp(0.0, double.infinity);
+        } else {
+          amount = double.parse(
+            (_totalAmount * percentage / 100).toStringAsFixed(2),
+          );
+          allocatedSoFar += amount;
+        }
+        allocations.add(
+          CreateAllocationModel(
+            categoryId: category.id,
+            allocatedAmount: amount,
+            alertThreshold: 0.8,
+          ),
         );
-      }).toList();
+      }
 
       final budgetRequest = CreateBudgetModel(
         year: now.year,

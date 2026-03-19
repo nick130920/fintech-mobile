@@ -248,10 +248,12 @@ class AutomaticTransactionsRepository {
         throw Exception('Token de autenticación no encontrado');
       }
 
+      // Backend limita a ~100 SMS y 4 chunks; 6 min cubre reintentos 429.
       final response = await ApiService.post(
         '/notification-patterns/analyze-sms-batch',
         {'messages': messages},
         token: token,
+        timeout: const Duration(minutes: 6),
       );
 
       if (response.statusCode == 200) {
@@ -281,6 +283,7 @@ class AutomaticTransactionsRepository {
         filePath,
         fieldName: 'file',
         token: token,
+        timeout: const Duration(minutes: 6),
       );
 
       if (response.statusCode == 200) {
