@@ -6,6 +6,7 @@ import '../../../../core/models/sms_settings.dart';
 import '../../../../core/providers/sms_settings_provider.dart';
 import '../../../../main.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
+import '../../../bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import '../../../bank_accounts/presentation/providers/bank_account_provider.dart';
 
 class SmsSettingsScreen extends StatefulWidget {
@@ -584,27 +585,43 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
     try {
       // Procesar SMS usando el servicio
       final minDate = smsProvider.settings.getEffectiveMinDate();
+      ProcessSMSBatchWithAIResult? batchResult;
+
       await smsService.syncInbox(
-        (message) async {
-          // Este callback se ejecutará para cada SMS
-          smsSyncHandler(message);
+        onInboxBatch: (items) async {
+          batchResult = await smsBatchSyncHandler(items, bulkSilent: true);
           if (mounted) {
             setState(() {
-              _processedCount++;
+              _processedCount = items
+                  .where((e) => e.body != null && e.body!.trim().isNotEmpty)
+                  .length;
             });
           }
         },
         minDate: minDate,
         autoMode: false, // Modo manual: procesa todos desde minDate
       );
-      
+
       // Registrar la sincronización manual
       await smsProvider.recordManualSync();
-      
+
       if (!mounted) return;
+
+      final r = batchResult;
+      final summary = r == null
+          ? '$_processedCount SMS revisados (sin enviar al servidor: revisa sesión y cuentas con SMS).'
+          : '${r.transactionsCreated} transacción(es) creadas · '
+              '${r.smsAfterFilter} SMS enviados a la IA tras filtrar '
+              '${r.filteredOut} · ${r.chunksProcessed} lote(s) IA'
+              '${r.processingErrors > 0 ? ' · ${r.processingErrors} error(es)' : ''}';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$_processedCount mensajes procesados exitosamente'),
+          content: Text(
+            _processedCount == 0
+                ? 'No había SMS para procesar con el filtro actual.'
+                : summary,
+          ),
           backgroundColor: colorScheme.primary,
         ),
       );

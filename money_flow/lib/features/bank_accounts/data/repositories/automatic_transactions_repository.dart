@@ -238,6 +238,7 @@ class AutomaticTransactionsRepository {
   }
 
   /// Analiza un lote de SMS para sugerencias de presupuesto (no crea transacciones).
+  /// Usa job asíncrono en backend + polling (evita conexión HTTP larga / "connection reset").
   /// [messages] lista de mapas con "body" y "date" (date en ISO8601 opcional).
   static Future<BudgetSuggestionsResponse> analyzeSmsBatch(
     List<Map<String, dynamic>> messages,
@@ -248,23 +249,75 @@ class AutomaticTransactionsRepository {
         throw Exception('Token de autenticación no encontrado');
       }
 
-      // Backend limita a ~100 SMS y 4 chunks; 6 min cubre reintentos 429.
-      final response = await ApiService.post(
-        '/notification-patterns/analyze-sms-batch',
+      final startResponse = await ApiService.post(
+        '/notification-patterns/analyze-sms-batch/jobs',
         {'messages': messages},
         token: token,
-        timeout: const Duration(minutes: 6),
+        timeout: const Duration(seconds: 60),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        return BudgetSuggestionsResponse.fromJson(data);
-      } else {
-        final errorBody = _parseErrorBody(response);
+      if (startResponse.statusCode != 200 && startResponse.statusCode != 202) {
+        final errorBody = _parseErrorBody(startResponse);
         throw Exception(
-          'Error analizando SMS: ${errorBody['error'] ?? response.statusCode}',
+          'Error analizando SMS: ${errorBody['error'] ?? errorBody['message'] ?? startResponse.statusCode}',
         );
       }
+
+      final data = json.decode(startResponse.body) as Map<String, dynamic>;
+      final jobId = data['job_id'] as String?;
+      if (jobId == null || jobId.isEmpty) {
+        return BudgetSuggestionsResponse.fromJson(data);
+      }
+
+      const pollInterval = Duration(seconds: 2);
+      final deadline = DateTime.now().add(const Duration(minutes: 15));
+
+      while (DateTime.now().isBefore(deadline)) {
+        final statusResp = await _getSmsBatchJobStatusWithRetries(
+          jobId: jobId,
+          token: token,
+        );
+
+        // Fallos de red/timeout tras reintentos: no abortar el flujo; el job sigue en servidor.
+        if (statusResp == null) {
+          await Future<void>.delayed(pollInterval);
+          continue;
+        }
+
+        if (statusResp.statusCode == 404) {
+          throw Exception(
+            'No se encontró el análisis. Vuelve a iniciarlo desde la app.',
+          );
+        }
+
+        if (statusResp.statusCode != 200) {
+          if (_isTransientJobPollHttpStatus(statusResp.statusCode)) {
+            await Future<void>.delayed(pollInterval);
+            continue;
+          }
+          final errorBody = _parseErrorBody(statusResp);
+          throw Exception(
+            'Error consultando estado del análisis: ${errorBody['message'] ?? errorBody['error'] ?? statusResp.statusCode}',
+          );
+        }
+
+        final statusData = json.decode(statusResp.body) as Map<String, dynamic>;
+        final status = statusData['status'] as String? ?? '';
+
+        if (status == 'failed') {
+          final err = statusData['error'] as String? ?? 'Falló el análisis de SMS';
+          throw Exception(err);
+        }
+        if (status == 'completed') {
+          return BudgetSuggestionsResponse.fromJson(statusData);
+        }
+
+        await Future<void>.delayed(pollInterval);
+      }
+
+      throw Exception(
+        'El análisis de SMS está tardando demasiado. Cierra y vuelve a intentar más tarde.',
+      );
     } catch (e) {
       throw Exception('Error analizando SMS para sugerencias: $e');
     }
@@ -283,7 +336,7 @@ class AutomaticTransactionsRepository {
         filePath,
         fieldName: 'file',
         token: token,
-        timeout: const Duration(minutes: 6),
+        timeout: const Duration(minutes: 10),
       );
 
       if (response.statusCode == 200) {
@@ -306,6 +359,43 @@ class AutomaticTransactionsRepository {
     } catch (_) {
       return {'error': response.body};
     }
+  }
+
+  /// Códigos habituales de proxy / sobrecarga donde conviene seguir haciendo polling.
+  static bool _isTransientJobPollHttpStatus(int statusCode) {
+    return statusCode == 429 ||
+        statusCode == 502 ||
+        statusCode == 503 ||
+        statusCode == 504;
+  }
+
+  /// GET del estado del job con reintentos (evita fallar por un timeout o glitch puntual).
+  static Future<http.Response?> _getSmsBatchJobStatusWithRetries({
+    required String jobId,
+    required String token,
+  }) async {
+    const maxAttempts = 4;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await ApiService.get(
+          '/notification-patterns/analyze-sms-batch/jobs/$jobId',
+          token: token,
+          timeout: const Duration(seconds: 45),
+        );
+      } catch (e) {
+        final msg = e.toString();
+        if (msg.contains('Sesión expirada')) {
+          rethrow;
+        }
+        if (attempt == maxAttempts - 1) {
+          return null;
+        }
+        await Future<void>.delayed(
+          Duration(milliseconds: 400 * (1 << attempt)),
+        );
+      }
+    }
+    return null;
   }
 
   /// Procesa un SMS con IA para detectar y crear transacciones automáticamente.
@@ -338,6 +428,82 @@ class AutomaticTransactionsRepository {
     } catch (e) {
       throw Exception('Error procesando SMS con IA: $e');
     }
+  }
+
+  /// Procesa muchos SMS en el servidor por chunks (pocas llamadas a la IA) y crea transacciones.
+  static Future<ProcessSMSBatchWithAIResult> processSMSBatchWithAI(
+    List<Map<String, dynamic>> messages,
+  ) async {
+    try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) {
+        throw Exception('Token de autenticación no encontrado');
+      }
+
+      final response = await ApiService.post(
+        '/notification-patterns/process-sms-batch',
+        {'messages': messages},
+        token: token,
+        timeout: const Duration(minutes: 12),
+      );
+
+      if (response.statusCode == 200) {
+        final map = json.decode(response.body) as Map<String, dynamic>;
+        return ProcessSMSBatchWithAIResult.fromJson(map);
+      }
+      Map<String, dynamic> errorBody;
+      try {
+        errorBody = json.decode(response.body) as Map<String, dynamic>;
+      } catch (_) {
+        errorBody = {'error': response.body};
+      }
+      throw Exception(
+        'Error procesando lote SMS: ${errorBody['error'] ?? response.statusCode}',
+      );
+    } catch (e) {
+      throw Exception('Error procesando lote SMS: $e');
+    }
+  }
+}
+
+/// Respuesta de [AutomaticTransactionsRepository.processSMSBatchWithAI].
+class ProcessSMSBatchWithAIResult {
+  final int totalReceived;
+  final int filteredOut;
+  final int smsAfterFilter;
+  final int chunksProcessed;
+  final int transactionsCreated;
+  final int lowConfidenceOrSkipped;
+  final int notBankSms;
+  final int processingErrors;
+  final String? patternUsed;
+
+  const ProcessSMSBatchWithAIResult({
+    required this.totalReceived,
+    required this.filteredOut,
+    required this.smsAfterFilter,
+    required this.chunksProcessed,
+    required this.transactionsCreated,
+    required this.lowConfidenceOrSkipped,
+    required this.notBankSms,
+    required this.processingErrors,
+    this.patternUsed,
+  });
+
+  factory ProcessSMSBatchWithAIResult.fromJson(Map<String, dynamic> json) {
+    int n(String key) => (json[key] as num?)?.toInt() ?? 0;
+
+    return ProcessSMSBatchWithAIResult(
+      totalReceived: n('total_received'),
+      filteredOut: n('filtered_out'),
+      smsAfterFilter: n('sms_after_filter'),
+      chunksProcessed: n('chunks_processed'),
+      transactionsCreated: n('transactions_created'),
+      lowConfidenceOrSkipped: n('low_confidence_or_skipped'),
+      notBankSms: n('not_bank_sms'),
+      processingErrors: n('processing_errors'),
+      patternUsed: json['pattern_used'] as String?,
+    );
   }
 }
 

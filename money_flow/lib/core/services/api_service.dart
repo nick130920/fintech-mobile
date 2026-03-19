@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -28,7 +29,11 @@ class ApiService {
   };
 
   // GET request
-  static Future<http.Response> get(String endpoint, {String? token}) async {
+  static Future<http.Response> get(
+    String endpoint, {
+    String? token,
+    Duration? timeout,
+  }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     
@@ -37,7 +42,15 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    return await _handleRequest(() => http.get(url, headers: headers));
+    Future<http.Response> doGet() {
+      final future = http.get(url, headers: headers);
+      if (timeout != null) {
+        return future.timeout(timeout);
+      }
+      return future;
+    }
+
+    return await _handleRequest(doGet);
   }
 
   /// Timeout por defecto para POST (p. ej. login, crear recurso).
@@ -156,6 +169,11 @@ class ApiService {
       throw Exception('No hay conexión a internet');
     } on HttpException {
       throw Exception('Error en la conexión');
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Si estabas analizando SMS o un extracto, '
+        'puede tardar varios minutos; comprueba tu conexión e inténtalo de nuevo.',
+      );
     } catch (e) {
       if (e.toString().contains('Sesión expirada')) {
         throw Exception('Sesión expirada');

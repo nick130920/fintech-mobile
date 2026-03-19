@@ -77,7 +77,11 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
 
   Future<void> _syncSmsInbox() async {
     // No necesitamos el contexto aquí porque el handler lo obtiene del navigatorKey
-    await smsService.syncInbox(smsSyncHandler);
+    await smsService.syncInbox(
+      onInboxBatch: (items) async {
+        await smsBatchSyncHandler(items, bulkSilent: items.length != 1);
+      },
+    );
   }
 
   Future<bool> _checkBudgetSetup() async {

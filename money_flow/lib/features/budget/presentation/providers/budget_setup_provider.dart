@@ -287,19 +287,25 @@ class BudgetSetupProvider with ChangeNotifier {
       if (!hasToken) {
         throw Exception('Sesión expirada. Por favor inicia sesión nuevamente.');
       }
+      _redistributePercentages();
+
       final now = DateTime.now();
-      // Última categoría recibe el remanente para que la suma == totalAmount exacto (evita error de validación por float).
+      // Total monetario alineado a 2 decimales (mismo criterio que el backend en centavos).
+      final totalBudget =
+          double.parse(_totalAmount.toStringAsFixed(2));
+
+      // Última categoría recibe el remanente para que la suma == totalBudget exacto.
       final allocations = <CreateAllocationModel>[];
-      double allocatedSoFar = 0;
+      var allocatedSoFar = 0.0;
       for (var i = 0; i < _selectedCategories.length; i++) {
         final category = _selectedCategories[i];
         final percentage = _categoryPercentages[category.id]!;
         final double amount;
         if (i == _selectedCategories.length - 1) {
-          amount = (_totalAmount - allocatedSoFar).clamp(0.0, double.infinity);
+          amount = (totalBudget - allocatedSoFar).clamp(0.0, double.infinity);
         } else {
           amount = double.parse(
-            (_totalAmount * percentage / 100).toStringAsFixed(2),
+            (totalBudget * percentage / 100).toStringAsFixed(2),
           );
           allocatedSoFar += amount;
         }
@@ -315,7 +321,7 @@ class BudgetSetupProvider with ChangeNotifier {
       final budgetRequest = CreateBudgetModel(
         year: now.year,
         month: now.month,
-        totalAmount: _totalAmount,
+        totalAmount: totalBudget,
         allocations: allocations,
       );
 

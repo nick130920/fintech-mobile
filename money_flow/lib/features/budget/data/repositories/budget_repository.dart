@@ -37,7 +37,12 @@ class BudgetRepository {
         throw Exception('Token de autenticación no encontrado. Por favor inicia sesión.');
       }
       
-      final response = await ApiService.post('/budgets/', budget.toJson(), token: token);
+      final response = await ApiService.post(
+        '/budgets/',
+        budget.toJson(),
+        token: token,
+        timeout: const Duration(seconds: 90),
+      );
       
       final responseData = ApiService.handleResponse(response);
       final data = responseData['data'];

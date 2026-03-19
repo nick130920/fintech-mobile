@@ -18,6 +18,8 @@ class BudgetSuggestionsProvider with ChangeNotifier {
 
   /// Analiza SMS de los últimos 3 meses y guarda la sugerencia en [suggestion].
   Future<void> analyzeLast3Months() async {
+    if (_isAnalyzing) return;
+
     _isAnalyzing = true;
     _error = null;
     _suggestion = null;
@@ -37,6 +39,8 @@ class BudgetSuggestionsProvider with ChangeNotifier {
 
   /// Analiza un archivo de extracto bancario por ruta y guarda la sugerencia en [suggestion].
   Future<void> analyzeStatement(String filePath) async {
+    if (_isAnalyzing) return;
+
     _isAnalyzing = true;
     _error = null;
     _suggestion = null;

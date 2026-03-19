@@ -12,6 +12,7 @@ import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'core/services/notification_listener_service.dart';
+import 'features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'features/bank_accounts/data/models/transaction_model.dart';
 import 'features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_account_provider.dart';
@@ -39,48 +40,85 @@ import 'shared/screens/main_screen.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final SmsService smsService = SmsService();
 
-void smsSyncHandler(String? message) async {
-  if (message == null) return;
+/// Procesa varios SMS en una sola petición al backend (chunks de IA en servidor).
+/// Devuelve `null` si no aplica (sin sesión, sin cuentas SMS, etc.).
+Future<ProcessSMSBatchWithAIResult?> smsBatchSyncHandler(
+  List<SmsInboxItem> items, {
+  bool bulkSilent = true,
+}) async {
+  final messages = items
+      .where((e) => e.body != null && e.body!.trim().isNotEmpty)
+      .map(
+        (e) => <String, dynamic>{
+          'body': e.body!.trim(),
+          'date': e.date?.toIso8601String() ?? '',
+        },
+      )
+      .toList();
 
-  debugPrint("smsSyncHandler procesando mensaje...");
+  if (messages.isEmpty) {
+    return ProcessSMSBatchWithAIResult(
+      totalReceived: 0,
+      filteredOut: 0,
+      smsAfterFilter: 0,
+      chunksProcessed: 0,
+      transactionsCreated: 0,
+      lowConfidenceOrSkipped: 0,
+      notBankSms: 0,
+      processingErrors: 0,
+    );
+  }
+
+  debugPrint('smsBatchSyncHandler: ${messages.length} SMS para lote...');
   final context = navigatorKey.currentContext;
   if (context == null) {
-    debugPrint("Error: No se pudo obtener el contexto del navegador");
-    return;
+    debugPrint('Error: No se pudo obtener el contexto del navegador');
+    return null;
   }
 
-  // Verificar si hay una sesión activa antes de procesar
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   if (authProvider.status != AuthStatus.authenticated) {
-    debugPrint("No hay sesión activa, omitiendo procesamiento de SMS");
-    return;
+    debugPrint('No hay sesión activa, omitiendo procesamiento de SMS');
+    return null;
   }
 
-  // Verificar configuración de SMS
   final smsSettingsProvider = Provider.of<SmsSettingsProvider>(context, listen: false);
-  
   final bankAccountProvider = Provider.of<BankAccountProvider>(context, listen: false);
   await bankAccountProvider.loadBankAccounts(activeOnly: true);
-  
+
   final smsEnabledAccounts = bankAccountProvider.activeBankAccounts
       .where((acc) => acc.isNotificationEnabled && acc.notificationPhone.isNotEmpty)
       .toList();
 
-  // Verificar si se puede procesar automáticamente
   if (!smsSettingsProvider.canAutoProcess(smsEnabledAccounts.isNotEmpty)) {
-    debugPrint("Procesamiento automático deshabilitado o no cumple condiciones");
-    return;
+    debugPrint('Procesamiento automático deshabilitado o no cumple condiciones');
+    return null;
   }
 
   if (smsEnabledAccounts.isEmpty) {
-    debugPrint("No hay cuentas con notificaciones SMS activas.");
-    return;
+    debugPrint('No hay cuentas con notificaciones SMS activas.');
+    return null;
   }
-  
-  debugPrint("Cuentas con SMS activado: ${smsEnabledAccounts.length}");
-  debugPrint("Configuración SMS: ${smsSettingsProvider.settings.processMode.displayName}");
 
-  await NotificationListenerService().processRawMessage(message);
+  debugPrint('Cuentas con SMS activado: ${smsEnabledAccounts.length}');
+  debugPrint('Configuración SMS: ${smsSettingsProvider.settings.processMode.displayName}');
+
+  final result = await AutomaticTransactionsRepository.processSMSBatchWithAI(messages);
+
+  if (bulkSilent) {
+    debugPrint(
+      'Lote SMS: creadas=${result.transactionsCreated}, '
+      'recibidos=${result.totalReceived}, filtrados=${result.filteredOut}, '
+      'chunks=${result.chunksProcessed}, errores=${result.processingErrors}',
+    );
+  } else if (result.transactionsCreated > 0) {
+    await NotificationListenerService().showBatchSummaryNotification(
+      created: result.transactionsCreated,
+      totalAnalyzed: result.smsAfterFilter,
+    );
+  }
+
+  return result;
 }
 
 void main() async {

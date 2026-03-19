@@ -15,7 +15,6 @@ class BudgetSuggestionsService {
     final messages = <Map<String, dynamic>>[];
 
     await _smsService.syncInbox(
-      (_) {},
       onSmsWithDateReceived: (body, date) {
         if (body != null && body.trim().isNotEmpty) {
           messages.add({

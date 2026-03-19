@@ -180,7 +180,9 @@ class NotificationListenerService {
 
   /// Punto de convergencia de ambos flujos (SMS y push).
   /// Llama al backend con IA y muestra la notificación de resultado al usuario.
-  Future<void> processRawMessage(String rawMessage) async {
+  ///
+  /// [silent]: no muestra notificaciones locales (útil al procesar muchos SMS seguidos).
+  Future<void> processRawMessage(String rawMessage, {bool silent = false}) async {
     debugPrint('🤖 Procesando mensaje con IA: ${rawMessage.length > 80 ? '${rawMessage.substring(0, 80)}…' : rawMessage}');
 
     try {
@@ -191,20 +193,43 @@ class NotificationListenerService {
 
       if (transactionCreated) {
         final extracted = result['extracted_data'] as Map<String, dynamic>?;
-        await _showSuccessNotification(extracted);
+        if (!silent) {
+          await _showSuccessNotification(extracted);
+        }
         debugPrint('✅ Transacción registrada correctamente por IA');
       } else if (aiDetected) {
         // AI extracted data but confidence < 0.8 → requires manual validation
         final extracted = result['extracted_data'] as Map<String, dynamic>?;
-        await _showValidationNotification(extracted);
+        if (!silent) {
+          await _showValidationNotification(extracted);
+        }
         debugPrint('⚠️ Transacción detectada por IA, requiere validación manual');
       } else {
         debugPrint('ℹ️ La IA no identificó una transacción en el mensaje');
       }
     } catch (e) {
       debugPrint('❌ Error procesando mensaje con IA: $e');
-      await _showErrorNotification();
+      if (!silent) {
+        await _showErrorNotification();
+      }
     }
+  }
+
+  /// Resumen tras procesar un lote de SMS en el servidor (una sola notificación).
+  Future<void> showBatchSummaryNotification({
+    required int created,
+    required int totalAnalyzed,
+  }) async {
+    if (created <= 0) {
+      return;
+    }
+    final title = created == 1
+        ? '💳 Transacción registrada automáticamente'
+        : '💳 $created transacciones registradas';
+    final body = totalAnalyzed > 0
+        ? 'Según $totalAnalyzed SMS analizados en lote'
+        : 'Sincronización por lote completada';
+    await _showNotification(title, body);
   }
 
   /// Notificación de éxito: transacción guardada.

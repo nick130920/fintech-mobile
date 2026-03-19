@@ -4,11 +4,16 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'preferences_service.dart';
 
-// Callback to be executed when a message is processed
-typedef OnSmsCallback = void Function(String? message);
-
 /// Callback that receives both body and date (e.g. for budget suggestions analysis).
 typedef OnSmsWithDateCallback = void Function(String? body, DateTime? date);
+
+/// Un SMS del inbox para procesamiento por lote (body + fecha del dispositivo).
+class SmsInboxItem {
+  final String? body;
+  final DateTime? date;
+
+  const SmsInboxItem({this.body, this.date});
+}
 
 class SmsService {
   final SmsQuery _query = SmsQuery();
@@ -16,12 +21,14 @@ class SmsService {
 
   /// Sincronizar inbox de SMS
   ///
-  /// [onSmsReceived] - Callback que se ejecuta por cada mensaje (solo body).
-  /// [onSmsWithDateReceived] - Opcional: callback con (body, date) para análisis con fecha (ej. sugerencias de presupuesto).
+  /// [onInboxBatch] - Si se define, se entrega **toda la lista** de una vez (ideal: una petición batch al backend).
+  /// [onMessage] - Por cada SMS (body), con **await** entre mensajes.
+  /// [onSmsWithDateReceived] - Opcional: callback síncrono (body, date) para recopilar mensajes (ej. sugerencias).
   /// [minDate] - Fecha mínima desde la cual procesar mensajes (opcional)
   /// [autoMode] - Si es true, solo procesa mensajes nuevos. Si es false, procesa todos desde minDate
-  Future<void> syncInbox(
-    OnSmsCallback onSmsReceived, {
+  Future<void> syncInbox({
+    Future<void> Function(List<SmsInboxItem> items)? onInboxBatch,
+    Future<void> Function(String? message)? onMessage,
     OnSmsWithDateCallback? onSmsWithDateReceived,
     DateTime? minDate,
     bool autoMode = true,
@@ -35,6 +42,11 @@ class SmsService {
     final hasPermission = await requestPermissions();
     if (!hasPermission) {
       debugPrint("No se tienen permisos de SMS para sincronizar.");
+      return;
+    }
+
+    if (onInboxBatch == null && onMessage == null && onSmsWithDateReceived == null) {
+      debugPrint('SmsService.syncInbox: sin callbacks; no se procesará ningún mensaje.');
       return;
     }
 
@@ -85,12 +97,20 @@ class SmsService {
     if (messagesToProcess.isNotEmpty) {
       debugPrint("${messagesToProcess.length} SMS encontrados para procesar.");
       debugPrint("Rango: ${minDate != null ? 'Desde ${minDate.toString().split(' ')[0]}' : 'Sin límite'}");
-      
-      for (final message in messagesToProcess) {
-        if (onSmsWithDateReceived != null) {
-          onSmsWithDateReceived(message.body, message.date);
-        } else {
-          onSmsReceived(message.body);
+
+      if (onInboxBatch != null) {
+        final batch = messagesToProcess
+            .map((m) => SmsInboxItem(body: m.body, date: m.date))
+            .toList();
+        await onInboxBatch(batch);
+      } else {
+        for (final message in messagesToProcess) {
+          if (onSmsWithDateReceived != null) {
+            onSmsWithDateReceived(message.body, message.date);
+          }
+          if (onMessage != null) {
+            await onMessage(message.body);
+          }
         }
       }
 
