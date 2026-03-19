@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../providers/budget_setup_provider.dart';
 import '../widgets/budget_setup_app_bar.dart';
 import '../widgets/budget_setup_stepper.dart';
@@ -97,7 +98,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
   Widget _buildSuccessView(BuildContext context, BudgetSetupProvider provider) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -109,10 +110,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check,
                 size: 40,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
             const SizedBox(height: 24),
@@ -146,6 +147,35 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               ),
               textAlign: TextAlign.center,
             ),
+            if (provider.postSetupInsightText != null) ...[
+              const SizedBox(height: 24),
+              GlassmorphismCard(
+                style: GlassStyles.medium,
+                padding: const EdgeInsets.all(16),
+                enableEntryAnimation: true,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.insights_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        provider.postSetupInsightText!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.45,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,

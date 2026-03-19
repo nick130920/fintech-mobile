@@ -48,6 +48,7 @@ class BudgetSuggestionsService {
             categoryName: item.categoryName,
             total: item.total,
             percentage: percentage,
+            transactionCount: item.count,
           ));
         }
       }

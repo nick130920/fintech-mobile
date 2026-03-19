@@ -13,6 +13,12 @@ enum BudgetSetupStep {
   completed,
 }
 
+enum BudgetSuggestionSource {
+  none,
+  sms,
+  statement,
+}
+
 class BudgetSetupProvider with ChangeNotifier {
   final BudgetRepository _repository = BudgetRepository();
   
@@ -44,6 +50,44 @@ class BudgetSetupProvider with ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  BudgetSuggestionSource _suggestionSource = BudgetSuggestionSource.none;
+  BudgetSuggestionSource get suggestionSource => _suggestionSource;
+
+  SmsBudgetSuggestion? _suggestionSnapshot;
+  SmsBudgetSuggestion? get suggestionSnapshot => _suggestionSnapshot;
+
+  bool get hasSuggestionContext =>
+      _suggestionSource != BudgetSuggestionSource.none &&
+      _suggestionSnapshot != null &&
+      (_suggestionSnapshot!.totalSuggested > 0 ||
+          _suggestionSnapshot!.byCategory.isNotEmpty);
+
+  /// Texto para pantalla de éxito (insights según SMS/extracto).
+  String? get postSetupInsightText {
+    final snap = _suggestionSnapshot;
+    if (snap == null ||
+        _suggestionSource == BudgetSuggestionSource.none ||
+        snap.byCategory.isEmpty) {
+      return null;
+    }
+    final byAmount = List<SmsBudgetSuggestionCategory>.from(snap.byCategory)
+      ..sort((a, b) => b.total.compareTo(a.total));
+    final byCount = List<SmsBudgetSuggestionCategory>.from(snap.byCategory)
+      ..sort((a, b) => b.transactionCount.compareTo(a.transactionCount));
+    final topAmount = byAmount.first;
+    final topCount = byCount.first;
+    final origin = _suggestionSource == BudgetSuggestionSource.sms
+        ? 'tus SMS'
+        : 'tu extracto';
+    if (topAmount.categoryId == topCount.categoryId ||
+        topCount.transactionCount <= 0) {
+      return 'Según $origin, lo que más pesó fue ${topAmount.categoryName} '
+          '(${topAmount.percentage.toStringAsFixed(0)} % del total detectado).';
+    }
+    return 'Según $origin: mayor monto en ${topAmount.categoryName}; '
+        'más movimientos en ${topCount.categoryName}.';
+  }
 
   // Verificar si ya existe presupuesto
   Future<bool> checkExistingBudget() async {
@@ -98,7 +142,25 @@ class BudgetSetupProvider with ChangeNotifier {
   }
 
   /// Pre-rellena el setup con sugerencias (SMS o extracto). No cambia de paso.
-  void prefillFromSuggestions(SmsBudgetSuggestion s) {
+  void prefillFromSuggestions(
+    SmsBudgetSuggestion s, {
+    BudgetSuggestionSource source = BudgetSuggestionSource.sms,
+  }) {
+    _suggestionSource = source;
+    _suggestionSnapshot = SmsBudgetSuggestion(
+      totalSuggested: s.totalSuggested,
+      byCategory: s.byCategory
+          .map(
+            (c) => SmsBudgetSuggestionCategory(
+              categoryId: c.categoryId,
+              categoryName: c.categoryName,
+              total: c.total,
+              percentage: c.percentage,
+              transactionCount: c.transactionCount,
+            ),
+          )
+          .toList(),
+    );
     if (s.totalSuggested > 0) {
       _totalAmount = s.totalSuggested;
     }
@@ -245,9 +307,10 @@ class BudgetSetupProvider with ChangeNotifier {
       );
 
       await _repository.createBudget(budgetRequest);
-      
+
       _currentStep = BudgetSetupStep.completed;
       _clearError();
+      // Mantener snapshot para la vista de éxito; se limpia en reset()
     } catch (e) {
       if (e.toString().contains('budget already exists')) {
         _setError('Ya existe un presupuesto para este mes.');
@@ -278,6 +341,8 @@ class BudgetSetupProvider with ChangeNotifier {
     _totalAmount = 0.0;
     _selectedCategories.clear();
     _categoryPercentages.clear();
+    _suggestionSource = BudgetSuggestionSource.none;
+    _suggestionSnapshot = null;
     _clearError();
     notifyListeners();
   }

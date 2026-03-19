@@ -91,8 +91,8 @@ class Step3AssignPercentages extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: provider.canProceedFromStep3 
-                      ? () => _showConfirmationDialog(context, provider)
+                  onPressed: provider.canProceedFromStep3
+                      ? () => _onTapCreateBudget(context, provider)
                       : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -101,12 +101,14 @@ class Step3AssignPercentages extends StatelessWidget {
                     ),
                   ),
                   child: provider.isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
                           ),
                         )
                       : const Text(
@@ -323,6 +325,98 @@ class Step3AssignPercentages extends StatelessWidget {
         provider.setCategoryPercentage(category.id, recommendedPercentage);
       }
     }
+  }
+
+  void _onTapCreateBudget(BuildContext context, BudgetSetupProvider provider) {
+    if (!provider.hasSuggestionContext) {
+      _showConfirmationDialog(context, provider);
+      return;
+    }
+    final snap = provider.suggestionSnapshot!;
+    final origin = provider.suggestionSource == BudgetSuggestionSource.sms
+        ? 'tus SMS'
+        : 'tu extracto bancario';
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        title: Text(
+          'Así vimos tus gastos',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(ctx).colorScheme.onSurface,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Según $origin (solo para sugerir). Puedes cambiar todo después.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (snap.byCategory.isEmpty)
+                  Text(
+                    'Poco detalle para desglosar; el total sugerido viene de $origin.',
+                    style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  )
+                else
+                  ...snap.byCategory.map((c) {
+                    final mov = c.transactionCount > 0
+                        ? ' · ${c.transactionCount} mov.'
+                        : '';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              c.categoryName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(ctx).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${c.percentage.toStringAsFixed(1)}%$mov',
+                            style: TextStyle(
+                              color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Volver a porcentajes'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _showConfirmationDialog(context, provider);
+            },
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showConfirmationDialog(BuildContext context, BudgetSetupProvider provider) {

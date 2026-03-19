@@ -101,7 +101,10 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
     final suggestion = suggestionsProvider.suggestion;
     if (suggestion != null &&
         (suggestion.totalSuggested > 0 || suggestion.byCategory.isNotEmpty)) {
-      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(
+            suggestion,
+            source: BudgetSuggestionSource.sms,
+          );
       if (mounted) {
         setState(() {
           _controller.text = _formatNumber(suggestion.totalSuggested.toInt());
@@ -132,7 +135,10 @@ class _Step1TotalAmountState extends State<Step1TotalAmount> {
     }
     final suggestion = suggestionsProvider.suggestion;
     if (suggestion != null) {
-      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(
+            suggestion,
+            source: BudgetSuggestionSource.statement,
+          );
       if (mounted) {
         setState(() {
           _controller.text = _formatNumber(suggestion.totalSuggested.toInt());

@@ -233,7 +233,10 @@ class _SmsOption extends StatelessWidget {
     if (suggestion != null && (suggestion.totalSuggested > 0 || suggestion.byCategory.isNotEmpty)) {
       await context.read<BudgetSetupProvider>().initialize();
       if (!context.mounted) return;
-      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(
+            suggestion,
+            source: BudgetSuggestionSource.sms,
+          );
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
@@ -352,7 +355,10 @@ class _ExtractoOption extends StatelessWidget {
     if (suggestion != null) {
       await context.read<BudgetSetupProvider>().initialize();
       if (!context.mounted) return;
-      context.read<BudgetSetupProvider>().prefillFromSuggestions(suggestion);
+      context.read<BudgetSetupProvider>().prefillFromSuggestions(
+            suggestion,
+            source: BudgetSuggestionSource.statement,
+          );
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
