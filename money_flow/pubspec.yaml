@@ -82,6 +82,9 @@ dependencies:
   # File picker for bank statement upload
   file_picker: ^8.1.6
 
+  # OAuth Gmail: abrir URL del navegador
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

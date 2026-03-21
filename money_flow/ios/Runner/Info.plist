@@ -47,5 +47,18 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>MoneyFlow necesita usar Face ID para iniciar sesión de forma segura y rápida.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.moneyflow.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>moneyflow</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -61,6 +61,10 @@ Botón personalizado que incluye:
 - **Placeholders**: Slate-400
 - **Borders**: Slate-300
 
+### 📧 Gmail (correo bancario)
+- Pantalla **Correo Gmail** (`/email-connection`) desde el perfil: OAuth vía backend (`GET /email-connections/gmail/authorize`), `url_launcher` abre el navegador.
+- Tras autorizar, el backend redirige a `moneyflow://email-connected` (deep link registrado en Android/iOS); al volver a la app se refresca el estado automáticamente.
+
 ## Próximos Pasos
 
 1. Implementar Login Screen

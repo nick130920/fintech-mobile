@@ -34,6 +34,7 @@ import 'features/budget/presentation/screens/ai_transactions_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
 import 'features/settings/presentation/screens/currency_settings_screen.dart';
+import 'features/settings/presentation/screens/email_connection_screen.dart';
 import 'features/settings/presentation/screens/sms_settings_screen.dart';
 import 'shared/screens/main_screen.dart';
 
@@ -174,6 +175,7 @@ class MyApp extends StatelessWidget {
               '/category-management': (context) => const MainScreen(initialTab: 2),
               '/currency-settings': (context) => const CurrencySettingsScreen(),
               '/sms-settings': (context) => const SmsSettingsScreen(),
+              '/email-connection': (context) => const EmailConnectionScreen(),
               '/bank-accounts': (context) => const BankAccountsScreen(),
               '/add-bank-account': (context) => const AddBankAccountScreen(),
               '/pending-transactions': (context) => const PendingTransactionsScreen(),
