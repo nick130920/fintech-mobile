@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'core/app/app_wrapper.dart';
 import 'core/models/sms_settings.dart';
@@ -8,12 +10,12 @@ import 'core/providers/currency_provider.dart';
 import 'core/providers/sms_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/api_service.dart';
+import 'core/services/notification_listener_service.dart';
 import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'core/services/notification_listener_service.dart';
-import 'features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'features/bank_accounts/data/models/transaction_model.dart';
+import 'features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'features/bank_accounts/presentation/providers/bank_account_provider.dart';
 import 'features/bank_accounts/presentation/screens/add_bank_account_screen.dart';
@@ -122,15 +124,53 @@ Future<ProcessSMSBatchWithAIResult?> smsBatchSyncHandler(
   return result;
 }
 
-void main() async {
+/// DSN de GlitchTip/Sentry vía build: `--dart-define=SENTRY_DSN=...`
+/// Opcional: `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`.
+const String _sentryDsn = 'https://a424a6d32f2e4ded9b8247a475d74c9c@glitchtip-web-production-c26a.up.railway.app/2';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   ApiService.initialize(navigatorKey);
-  
-  // Inicializar datos de localización para español
+
   await initializeDateFormatting('es', null);
-  
-  runApp(const MyApp());
+
+  if (_sentryDsn.isEmpty) {
+    if (kReleaseMode) {
+      debugPrint(
+        'Sentry/GlitchTip: SENTRY_DSN no definido; define con --dart-define=SENTRY_DSN=... en release.',
+      );
+    }
+    runApp(const MyApp());
+    return;
+  }
+
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = _sentryDsn;
+      options.tracesSampleRate = kReleaseMode ? 0.01 : 0;
+      options.enableAutoSessionTracking = false;
+      final env = const String.fromEnvironment('SENTRY_ENVIRONMENT', defaultValue: '');
+      if (env.isNotEmpty) {
+        options.environment = env;
+      }
+      final release = const String.fromEnvironment('SENTRY_RELEASE', defaultValue: '');
+      if (release.isNotEmpty) {
+        options.release = release;
+      }
+      options.beforeSend = (event, hint) {
+        final headers = event.request?.headers;
+        if (headers != null) {
+          headers.remove('Authorization');
+          headers.remove('authorization');
+          headers.remove('Cookie');
+          headers.remove('cookie');
+        }
+        return event;
+      };
+    },
+    appRunner: () => runApp(const MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
