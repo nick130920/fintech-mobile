@@ -1,7 +1,7 @@
 import 'dart:convert';
+
 import 'package:money_flow/core/services/api_service.dart';
 import 'package:money_flow/core/services/storage_service.dart';
-import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
 
 /// Servicio para guardar transacciones automáticas desde notificaciones
 class AutomaticTransactionService {

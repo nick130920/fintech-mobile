@@ -2,6 +2,21 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'bank_account_model.g.dart';
 
+/// `true` si [isoString] es una fecha real de actualización de balance.
+///
+/// El backend Go serializa [time.Time] cero como `0001-01-01T00:00:00Z` (u similar);
+/// eso no debe mostrarse como “última actualización”.
+bool isMeaningfulLastBalanceUpdate(String isoString) {
+  final trimmed = isoString.trim();
+  if (trimmed.isEmpty) return false;
+  final normalized =
+      trimmed.contains('T') ? trimmed : trimmed.replaceFirst(' ', 'T');
+  final dt = DateTime.tryParse(normalized);
+  if (dt == null) return false;
+  if (dt.year <= 1) return false;
+  return true;
+}
+
 enum BankAccountType {
   @JsonValue('checking')
   checking,
@@ -173,6 +188,9 @@ class BankAccountModel {
   bool get isDebit => type == BankAccountType.debit;
   bool get canReceiveNotifications => isActive && isNotificationEnabled;
 
+  bool get hasMeaningfulLastBalanceUpdate =>
+      isMeaningfulLastBalanceUpdate(lastBalanceUpdate);
+
   String get typeDisplayName {
     switch (type) {
       case BankAccountType.checking:
@@ -233,6 +251,9 @@ class BankAccountSummaryModel {
       _$BankAccountSummaryModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$BankAccountSummaryModelToJson(this);
+
+  bool get hasMeaningfulLastBalanceUpdate =>
+      isMeaningfulLastBalanceUpdate(lastBalanceUpdate);
 
   @override
   bool operator ==(Object other) =>

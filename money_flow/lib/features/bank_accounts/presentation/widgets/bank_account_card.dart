@@ -236,7 +236,7 @@ class BankAccountCard extends StatelessWidget {
                       : Theme.of(context).colorScheme.onErrorContainer,
                 ),
               ),
-              if (account.lastBalanceUpdate.isNotEmpty) ...[
+              if (account.hasMeaningfulLastBalanceUpdate) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Actualizado: ${_formatDate(account.lastBalanceUpdate)}',

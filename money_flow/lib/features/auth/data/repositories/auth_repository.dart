@@ -1,8 +1,23 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import '../../../../core/exceptions/temporary_auth_failure_exception.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../models/user_model.dart';
+
+/// Resultado de intentar renovar tokens con el servidor.
+enum TokenRefreshResult {
+  /// Nuevos access/refresh guardados.
+  success,
+
+  /// Refresh inválido o ausente: hay que iniciar sesión de nuevo.
+  invalidRefreshToken,
+
+  /// Red, timeout o error del servidor: no se borra la sesión local.
+  transientFailure,
+}
 
 class AuthRepository {
   // Register user
@@ -97,6 +112,8 @@ class AuthRepository {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData['message'] ?? 'Error al obtener perfil');
       }
+    } on TemporaryAuthFailureException {
+      rethrow;
     } catch (e) {
       throw Exception('Error al obtener perfil: $e');
     }
@@ -140,34 +157,51 @@ class AuthRepository {
     return await StorageService.isLoggedIn();
   }
 
-  // Refresh access token
-  static Future<void> refreshToken() async {
+  /// Renueva tokens. No usa [clearAll]: errores temporales no borran biometría ni sesión.
+  static Future<TokenRefreshResult> attemptTokenRefresh() async {
+    final refreshToken = await StorageService.getRefreshToken();
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await StorageService.clearTokens();
+      await StorageService.clearUserData();
+      return TokenRefreshResult.invalidRefreshToken;
+    }
+
     try {
-      final refreshToken = await StorageService.getRefreshToken();
-      
-      if (refreshToken == null) {
-        throw Exception('No hay refresh token');
-      }
-      
-      // Usar postWithoutRetry para evitar bucle infinito
       final response = await ApiService.postWithoutRetry('auth/refresh', {
         'refresh_token': refreshToken,
       });
-      
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final access = data['access_token'];
+        final refresh = data['refresh_token'];
+        if (access is! String ||
+            refresh is! String ||
+            access.isEmpty ||
+            refresh.isEmpty) {
+          return TokenRefreshResult.transientFailure;
+        }
         await StorageService.saveTokens(
-          accessToken: data['access_token'],
-          refreshToken: data['refresh_token'],
+          accessToken: access,
+          refreshToken: refresh,
         );
-      } else {
-        throw Exception('Error al renovar token');
+        return TokenRefreshResult.success;
       }
-    } catch (e) {
-      // If refresh fails, clear tokens but don't rethrow
-      await StorageService.clearAll();
-      rethrow;
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await StorageService.clearTokens();
+        await StorageService.clearUserData();
+        return TokenRefreshResult.invalidRefreshToken;
+      }
+
+      return TokenRefreshResult.transientFailure;
+    } on SocketException {
+      return TokenRefreshResult.transientFailure;
+    } on TimeoutException {
+      return TokenRefreshResult.transientFailure;
+    } catch (_) {
+      return TokenRefreshResult.transientFailure;
     }
   }
 }

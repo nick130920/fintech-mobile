@@ -2,6 +2,7 @@ import 'dart:convert'; // Added import for jsonEncode
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/exceptions/temporary_auth_failure_exception.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../data/models/user_model.dart';
@@ -232,10 +233,11 @@ class AuthProvider extends ChangeNotifier {
         await StorageService.saveUserData(jsonEncode(user.toJson()));
         notifyListeners();
       }
+    } on TemporaryAuthFailureException {
+      // Red / servidor al renovar: mantener sesión y usuario en caché si existe.
+      debugPrint('refreshProfile: sin red o servidor al renovar token, se usa caché');
     } catch (e) {
       _setError('Error al actualizar perfil: $e');
-      // Si el refresh falla (ej. token inválido), la sesión será cerrada por el ApiService
-      // await logout();
     }
   }
 

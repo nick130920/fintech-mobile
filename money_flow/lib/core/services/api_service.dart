@@ -9,14 +9,16 @@ import 'package:provider/provider.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../app/app_wrapper.dart';
-import 'storage_service.dart';
+import '../exceptions/temporary_auth_failure_exception.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
   static const String _apiVersion = '/api/v1';
   
   static GlobalKey<NavigatorState>? _navigatorKey;
-  static bool _isRefreshing = false;
+
+  /// Una sola renovación en vuelo para no invalidar tokens con carreras.
+  static Future<TokenRefreshResult>? _refreshInFlight;
   
   static void initialize(GlobalKey<NavigatorState> navigatorKey) {
     _navigatorKey = navigatorKey;
@@ -145,21 +147,22 @@ class ApiService {
     try {
       final response = await request();
       if (response.statusCode == 401 && !isRetry) {
-        // Token expirado - intentar renovar
         debugPrint('🔄 Token expirado, intentando renovar...');
-        final refreshed = await _tryRefreshToken();
-        if (refreshed) {
-          // Reintentar la petición original con el nuevo token
+        final outcome = await _tryRefreshToken();
+        if (outcome == TokenRefreshResult.success) {
           debugPrint('✅ Token renovado, reintentando petición...');
           return await _handleRequest(request, isRetry: true);
-        } else {
-          // No se pudo renovar, cerrar sesión
-          debugPrint('❌ No se pudo renovar el token, cerrando sesión...');
+        }
+        if (outcome == TokenRefreshResult.invalidRefreshToken) {
+          debugPrint('❌ Refresh inválido, cerrando sesión...');
           await _handleUnauthorized();
           throw Exception('Sesión expirada');
         }
+        debugPrint('⚠️ Renovación temporalmente no disponible (red/servidor)');
+        throw TemporaryAuthFailureException(
+          'No se pudo renovar la sesión. Comprueba tu conexión e inténtalo de nuevo.',
+        );
       } else if (response.statusCode == 401 && isRetry) {
-        // Si falla después del retry, cerrar sesión
         await _handleUnauthorized();
         throw Exception('Sesión expirada');
       }
@@ -174,6 +177,9 @@ class ApiService {
         'puede tardar varios minutos; comprueba tu conexión e inténtalo de nuevo.',
       );
     } catch (e) {
+      if (e is TemporaryAuthFailureException) {
+        rethrow;
+      }
       if (e.toString().contains('Sesión expirada')) {
         throw Exception('Sesión expirada');
       }
@@ -181,26 +187,12 @@ class ApiService {
     }
   }
 
-  // Intenta renovar el access token usando el refresh token
-  static Future<bool> _tryRefreshToken() async {
-    if (_isRefreshing) {
-      // Ya hay un refresh en progreso, esperar
-      await Future.delayed(const Duration(milliseconds: 500));
-      final token = await StorageService.getAccessToken();
-      return token != null;
-    }
-
-    _isRefreshing = true;
-    try {
-      await AuthRepository.refreshToken();
-      debugPrint('✅ Token renovado exitosamente');
-      return true;
-    } catch (e) {
-      debugPrint('❌ Error renovando token: $e');
-      return false;
-    } finally {
-      _isRefreshing = false;
-    }
+  static Future<TokenRefreshResult> _tryRefreshToken() {
+    _refreshInFlight ??=
+        AuthRepository.attemptTokenRefresh().whenComplete(() {
+      _refreshInFlight = null;
+    });
+    return _refreshInFlight!;
   }
 
   static bool _isHandlingAuth = false;

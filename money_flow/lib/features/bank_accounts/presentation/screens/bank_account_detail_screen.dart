@@ -121,14 +121,16 @@ class BankAccountDetailScreen extends StatelessWidget {
                               : Theme.of(context).colorScheme.error,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Actualizado: ${_formatDate(account.lastBalanceUpdate)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      if (account.hasMeaningfulLastBalanceUpdate) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Actualizado: ${_formatDate(account.lastBalanceUpdate)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
