@@ -12,7 +12,11 @@ workflows:
         - keystore_moneyflow
       groups:
         - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS)
+        # Opcional: grupo con SENTRY_DSN (secure) si no lo defines a nivel de app/equipo
       vars:
+        # GlitchTip/Sentry: crea SENTRY_DSN en Codemagic (App settings → Environment variables,
+        # Secure: sí). No commitees el DSN en este archivo.
+        SENTRY_ENVIRONMENT: production
         PACKAGE_NAME: "com.money.flow" # <-- Put your package name here
         GOOGLE_PLAY_TRACK: internal # <-- Any of the following: internal, alpha, beta, production
         CM_KEYSTORE_ALIAS: "upload"
@@ -46,7 +50,10 @@ workflows:
           flutter build appbundle --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$BUILD_NUMBER \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY
+            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
+            --dart-define=SENTRY_DSN="$SENTRY_DSN" \
+            --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
+            --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${BUILD_NUMBER}"
     artifacts:
       - money_flow/build/**/outputs/**/*.aab
       - money_flow/build/**/outputs/**/mapping.txt
@@ -75,6 +82,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.money.flow
       vars:
+        SENTRY_ENVIRONMENT: production
         APP_ID: 1555555551 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
         FREECURRENCY_API_KEY: "fca_live_e5ILZOXiYU8BqiF5A6doBO3J1l7Y1uZem8M0hAz2" # FreeCurrency API Key
       flutter: stable
@@ -105,10 +113,14 @@ workflows:
       - name: Flutter build ipa and automatic versioning
         script: |
           cd money_flow
+          IOS_BUILD=$(($(app-store-connect get-latest-app-store-build-number "$APP_ID") + 1))
           flutter build ipa --release \
             --build-name=1.0.$BUILD_NUMBER \
-            --build-number=$(($(app-store-connect get-latest-app-store-build-number "$APP_ID") + 1)) \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY
+            --build-number=$IOS_BUILD \
+            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
+            --dart-define=SENTRY_DSN="$SENTRY_DSN" \
+            --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
+            --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${IOS_BUILD}"
     artifacts:
       - money_flow/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log

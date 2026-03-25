@@ -277,13 +277,13 @@ class TransactionModel {
 
   // Formatear el monto con símbolo de moneda
   String get formattedAmount {
-    final symbol = currency == 'MXN' ? '\$' : currency;
+    final symbol = currency == 'COP' ? '\$' : currency;
     final absAmount = amount.toStringAsFixed(2);
     return '$symbol$absAmount';
   }
 
   String get formattedSignedAmount {
-    final symbol = currency == 'MXN' ? '\$' : currency;
+    final symbol = currency == 'COP' ? '\$' : currency;
     final signed = signedAmount;
     final prefix = signed >= 0 ? '+' : '';
     return '$prefix$symbol${signed.abs().toStringAsFixed(2)}';

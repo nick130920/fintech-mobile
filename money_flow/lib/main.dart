@@ -126,7 +126,7 @@ Future<ProcessSMSBatchWithAIResult?> smsBatchSyncHandler(
 
 /// DSN de GlitchTip/Sentry vía build: `--dart-define=SENTRY_DSN=...`
 /// Opcional: `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`.
-const String _sentryDsn = 'https://a424a6d32f2e4ded9b8247a475d74c9c@glitchtip-web-production-c26a.up.railway.app/2';
+const String _sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
