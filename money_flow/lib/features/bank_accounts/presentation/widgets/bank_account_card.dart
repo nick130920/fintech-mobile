@@ -191,7 +191,11 @@ class BankAccountCard extends StatelessWidget {
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
         final isPositive = account.lastBalance >= 0;
-        
+        final formattedBalance = currencyProvider.formatAmountWithCode(
+          account.lastBalance,
+          account.currency,
+        );
+
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -227,7 +231,7 @@ class BankAccountCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '${currencyProvider.currencySymbol}${account.lastBalance.toStringAsFixed(2)}',
+                formattedBalance,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

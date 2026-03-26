@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../../../core/services/currency_service.dart';
+
 part 'transaction_model.g.dart';
 
 enum TransactionType {
@@ -275,18 +277,15 @@ class TransactionModel {
     }
   }
 
-  // Formatear el monto con símbolo de moneda
   String get formattedAmount {
-    final symbol = currency == 'COP' ? '\$' : currency;
-    final absAmount = amount.toStringAsFixed(2);
-    return '$symbol$absAmount';
+    return CurrencyService.formatAmountByCode(amount, currency);
   }
 
   String get formattedSignedAmount {
-    final symbol = currency == 'COP' ? '\$' : currency;
     final signed = signedAmount;
     final prefix = signed >= 0 ? '+' : '';
-    return '$prefix$symbol${signed.abs().toStringAsFixed(2)}';
+    final formatted = CurrencyService.formatAmountByCode(signed.abs(), currency);
+    return '$prefix$formatted';
   }
 }
 

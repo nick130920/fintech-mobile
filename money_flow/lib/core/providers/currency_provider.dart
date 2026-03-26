@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
+import '../../features/auth/data/repositories/auth_repository.dart';
 import '../services/currency_service.dart';
 
 class CurrencyProvider with ChangeNotifier {
@@ -15,87 +17,116 @@ class CurrencyProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  // Inicializar provider
   Future<void> initialize() async {
     _setDetecting(true);
-    
+
     try {
-      // Primero intentar cargar divisa guardada
+      // Cargar catalogo del backend (con cache)
+      await CurrencyService.fetchCatalogFromBackend();
+
       final savedCurrency = await CurrencyService.getSavedCurrency();
       _selectedCurrency = savedCurrency;
-      
-      // Si es la divisa por defecto, intentar detectar por ubicación
+
       if (_selectedCurrency.code == CurrencyService.defaultCurrency.code) {
         await _detectCurrencyFromLocation();
       }
-      
+
       _clearError();
     } catch (e) {
-      _setError('Error al cargar configuración de divisa: $e');
+      _setError('Error al cargar configuracion de divisa: $e');
     }
-    
+
     _setDetecting(false);
   }
 
-  // Detectar divisa basada en ubicación
   Future<void> _detectCurrencyFromLocation() async {
     try {
       final detectedCurrency = await CurrencyService.detectCurrencyFromLocation();
-      
-      // Solo cambiar si se detectó una divisa diferente
+
       if (detectedCurrency.code != CurrencyService.defaultCurrency.code) {
         _selectedCurrency = detectedCurrency;
         _hasDetectedLocation = true;
-        
-        // Guardar automáticamente la divisa detectada
         await CurrencyService.saveCurrency(detectedCurrency);
       }
     } catch (e) {
-      _setError('No se pudo detectar tu ubicación para la divisa');
+      _setError('No se pudo detectar tu ubicacion para la divisa');
     }
   }
 
-  // Cambiar divisa manualmente
   Future<void> setCurrency(CurrencyInfo currency) async {
     try {
       _selectedCurrency = currency;
       await CurrencyService.saveCurrency(currency);
       _clearError();
       notifyListeners();
+
+      // Sincronizar con el backend
+      try {
+        await AuthRepository.updateProfile({'currency': currency.code});
+      } catch (e) {
+        debugPrint('Error syncing currency to backend: $e');
+      }
     } catch (e) {
       _setError('Error al guardar divisa: $e');
     }
   }
 
-  // Formatear cantidad con la divisa actual
+  /// Carga la moneda desde el perfil del usuario del backend.
+  /// Llamar despues de login o refreshProfile.
+  Future<void> syncFromUser(String currencyCode) async {
+    if (currencyCode.isEmpty) return;
+    final info = CurrencyService.getCurrencyByCode(currencyCode);
+    if (info != null && info.code != _selectedCurrency.code) {
+      _selectedCurrency = info;
+      await CurrencyService.saveCurrency(info);
+      notifyListeners();
+    }
+  }
+
   String formatAmount(double amount) {
     return CurrencyService.formatAmount(amount, _selectedCurrency);
   }
 
-  // Formatear cantidad compacta (para espacios pequeños)
   String formatAmountCompact(double amount) {
     if (amount >= 1000000) {
-      return '${_selectedCurrency.symbol} ${(amount / 1000000).toStringAsFixed(1)}M';
+      return '${_selectedCurrency.symbol}${(amount / 1000000).toStringAsFixed(1)}M';
     } else if (amount >= 1000) {
-      return '${_selectedCurrency.symbol} ${(amount / 1000).toStringAsFixed(1)}K';
+      return '${_selectedCurrency.symbol}${(amount / 1000).toStringAsFixed(1)}K';
     }
     return CurrencyService.formatAmount(amount, _selectedCurrency);
   }
 
-  // Obtener símbolo de divisa actual
+  /// Formatea un monto usando el codigo ISO del recurso (cuenta/transaccion),
+  /// no la preferencia global del usuario.
+  String formatAmountWithCode(double amount, String currencyCode) {
+    return CurrencyService.formatAmountByCode(amount, currencyCode);
+  }
+
+  /// Obtiene el simbolo correcto para un codigo ISO dado.
+  String symbolForCode(String code) {
+    final info = CurrencyService.getCurrencyByCode(code);
+    if (info != null) return info.symbol;
+    try {
+      return NumberFormat.simpleCurrency(name: code).currencySymbol;
+    } catch (_) {
+      return code;
+    }
+  }
+
   String get currencySymbol => _selectedCurrency.symbol;
-
-  // Obtener código de divisa actual
   String get currencyCode => _selectedCurrency.code;
+  String get currencyDisplayName {
+    final flag = _selectedCurrency.flag ?? CurrencyService.getFlagForCode(_selectedCurrency.code) ?? '';
+    return '$flag ${_selectedCurrency.name}'.trim();
+  }
 
-  // Obtener nombre completo de divisa
-  String get currencyDisplayName => '${_selectedCurrency.flag} ${_selectedCurrency.name}';
+  bool get isNoDecimalCurrency => _selectedCurrency.decimals == 0;
 
-  // Verificar si es una divisa sin decimales
-  bool get isNoDecimalCurrency => 
-      _selectedCurrency.code == 'JPY' || _selectedCurrency.code == 'KRW' || _selectedCurrency.code == 'COP';
+  bool isNoDecimalForCode(String code) {
+    final info = CurrencyService.getCurrencyByCode(code);
+    return info?.decimals == 0;
+  }
 
-  // Redondear cantidad según tipo de divisa
   double roundAmount(double amount) {
     if (isNoDecimalCurrency) {
       return amount.roundToDouble();
@@ -103,14 +134,12 @@ class CurrencyProvider with ChangeNotifier {
     return double.parse(amount.toStringAsFixed(2));
   }
 
-  // Reintentar detección de ubicación
   Future<void> retryLocationDetection() async {
     _setDetecting(true);
     await _detectCurrencyFromLocation();
     _setDetecting(false);
   }
 
-  // Helpers de estado
   void _setDetecting(bool detecting) {
     _isDetecting = detecting;
     notifyListeners();
@@ -126,7 +155,6 @@ class CurrencyProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Método para testing/desarrollo
   void setTestCurrency(CurrencyInfo currency) {
     _selectedCurrency = currency;
     notifyListeners();

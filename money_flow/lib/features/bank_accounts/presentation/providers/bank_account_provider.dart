@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/exchange_rate_service.dart';
 import '../../data/models/bank_account_model.dart';
 import '../../data/repositories/bank_account_repository.dart';
 
@@ -37,9 +38,28 @@ class BankAccountProvider with ChangeNotifier {
   List<BankAccountModel> get notificationEnabledAccounts =>
       _bankAccounts.where((account) => account.canReceiveNotifications).toList();
 
-  // Balance total
   double get totalBalance =>
       _bankAccounts.fold(0.0, (sum, account) => sum + account.lastBalance);
+
+  /// Suma los balances de todas las cuentas convertidos a [targetCurrency].
+  /// Usa el ExchangeRateService; si la conversion falla para alguna cuenta,
+  /// suma el monto sin convertir.
+  Future<double> totalBalanceIn(String targetCurrency) async {
+    double total = 0.0;
+    for (final account in _bankAccounts) {
+      if (account.currency == targetCurrency) {
+        total += account.lastBalance;
+      } else {
+        final converted = await ExchangeRateService.tryConvert(
+          amount: account.lastBalance,
+          fromCurrency: account.currency,
+          toCurrency: targetCurrency,
+        );
+        total += converted ?? account.lastBalance;
+      }
+    }
+    return total;
+  }
 
   // Métodos privados
   void _setLoading(bool loading) {

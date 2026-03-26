@@ -39,7 +39,7 @@ class AutomaticTransactionService {
         'source': 'notification',
         'raw_notification': rawNotification,
         'ai_confidence': transactionData['ai_confidence'],
-        'currency': 'COP', // Peso Colombiano
+        'currency': transactionData['currency'] ?? 'USD',
         'notes': 'Transacción automática desde notificación (${transactionData['bank_name']})',
       };
 

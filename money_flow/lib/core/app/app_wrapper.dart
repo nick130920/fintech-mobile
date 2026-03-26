@@ -72,7 +72,15 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
   void initState() {
     super.initState();
     _needsBudgetSetupFuture = _checkBudgetSetup();
+    _syncCurrencyFromUser();
     _syncSmsInbox();
+  }
+
+  void _syncCurrencyFromUser() {
+    final user = context.read<AuthProvider>().user;
+    if (user != null) {
+      context.read<CurrencyProvider>().syncFromUser(user.currency);
+    }
   }
 
   Future<void> _syncSmsInbox() async {

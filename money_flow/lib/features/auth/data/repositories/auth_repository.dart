@@ -119,6 +119,30 @@ class AuthRepository {
     }
   }
 
+  // Update user profile
+  static Future<UserModel> updateProfile(Map<String, dynamic> fields) async {
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) {
+        throw Exception('No hay token de acceso');
+      }
+
+      final response = await ApiService.put('users/profile', fields, token: accessToken);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final user = UserModel.fromJson(data);
+        await StorageService.saveUserData(jsonEncode(user.toJson()));
+        return user;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Error al actualizar perfil');
+      }
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
+
   // Validate current token
   static Future<bool> validateToken() async {
     try {

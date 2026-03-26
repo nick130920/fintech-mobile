@@ -34,7 +34,7 @@ class CurrencySelector extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  currencyProvider.selectedCurrency.flag,
+                  currencyProvider.selectedCurrency.flag ?? '',
                   style: const TextStyle(fontSize: 20),
                 ),
                 const SizedBox(width: 8),
@@ -165,7 +165,7 @@ class CurrencySelector extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          currency.flag,
+                          currency.flag ?? '',
                           style: const TextStyle(fontSize: 24),
                         ),
                       ),
@@ -180,7 +180,7 @@ class CurrencySelector extends StatelessWidget {
                       ),
                     ),
                     subtitle: Text(
-                      '${currency.code} • ${currency.country}',
+                      '${currency.code}${currency.country != null ? ' • ${currency.country}' : ''}',
                       style: TextStyle(
                         color: isSelected 
                             ? Theme.of(context).colorScheme.primary 

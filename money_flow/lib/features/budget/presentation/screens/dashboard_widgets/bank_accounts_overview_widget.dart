@@ -293,7 +293,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
                         ),
                       ),
                       Text(
-                        '${currencyProvider.currencySymbol}${account.lastBalance.toStringAsFixed(2)}',
+                        currencyProvider.formatAmountWithCode(account.lastBalance, account.currency),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

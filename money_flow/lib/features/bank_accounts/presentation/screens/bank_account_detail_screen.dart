@@ -112,7 +112,7 @@ class BankAccountDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${currencyProvider.currencySymbol}${account.lastBalance.toStringAsFixed(2)}',
+                        currencyProvider.formatAmountWithCode(account.lastBalance, account.currency),
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,

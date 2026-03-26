@@ -19,6 +19,7 @@ class UserModel {
   final bool isVerified;
   final String locale;
   final String timezone;
+  final String currency;
   @JsonKey(name: 'created_at')
   final String createdAt;
   @JsonKey(name: 'last_login_at')
@@ -35,6 +36,7 @@ class UserModel {
     required this.isVerified,
     required this.locale,
     required this.timezone,
+    this.currency = 'USD',
     required this.createdAt,
     this.lastLoginAt,
   });

@@ -17,6 +17,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   isVerified: json['is_verified'] as bool,
   locale: json['locale'] as String,
   timezone: json['timezone'] as String,
+  currency: json['currency'] as String? ?? 'USD',
   createdAt: json['created_at'] as String,
   lastLoginAt: json['last_login_at'] as String?,
 );
@@ -32,6 +33,7 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
   'is_verified': instance.isVerified,
   'locale': instance.locale,
   'timezone': instance.timezone,
+  'currency': instance.currency,
   'created_at': instance.createdAt,
   'last_login_at': instance.lastLoginAt,
 };

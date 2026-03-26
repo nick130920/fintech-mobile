@@ -176,7 +176,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
                 Row(
                   children: [
                     Text(
-                      provider.selectedCurrency.flag,
+                      provider.selectedCurrency.flag ?? '',
                       style: const TextStyle(fontSize: 48),
                     ),
                     const SizedBox(width: 16),
@@ -200,7 +200,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
                             ),
                           ),
                           Text(
-                            provider.selectedCurrency.country,
+                            provider.selectedCurrency.country ?? '',
                             style: TextStyle(
                               fontSize: 14,
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -407,7 +407,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
             ),
             child: Center(
               child: Text(
-                currency.flag,
+                currency.flag ?? '',
                 style: const TextStyle(fontSize: 24),
               ),
             ),
@@ -483,7 +483,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
             Row(
               children: [
                 Text(
-                  currency.flag,
+                  currency.flag ?? '',
                   style: const TextStyle(fontSize: 32),
                 ),
                 const SizedBox(width: 12),
@@ -613,7 +613,7 @@ class _CurrencySearchBottomSheetState extends State<_CurrencySearchBottomSheet> 
         _filteredCurrencies = _allCurrencies.where((currency) {
           return currency.name.toLowerCase().contains(query) ||
                  currency.code.toLowerCase().contains(query) ||
-                 currency.country.toLowerCase().contains(query) ||
+                 (currency.country?.toLowerCase().contains(query) ?? false) ||
                  currency.symbol.contains(query);
         }).toList();
       }
@@ -818,7 +818,7 @@ class _CurrencySearchBottomSheetState extends State<_CurrencySearchBottomSheet> 
                     ),
                     child: Center(
                       child: Text(
-                        currency.flag,
+                        currency.flag ?? '',
                         style: const TextStyle(fontSize: 24),
                       ),
                     ),
@@ -838,7 +838,7 @@ class _CurrencySearchBottomSheetState extends State<_CurrencySearchBottomSheet> 
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${currency.code} (${currency.symbol}) • ${currency.country}',
+                          '${currency.code} (${currency.symbol})${currency.country != null ? ' • ${currency.country}' : ''}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
