@@ -6,6 +6,7 @@ import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -180,10 +181,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleForgotPassword() {
-    // TODO: Implementar forgot password
-    CustomSnackBar.showWarning(
-      context,
-      'Funcionalidad de recuperar contraseña próximamente',
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ForgotPasswordScreen(),
+      ),
     );
   }
 
@@ -228,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: _navigateBack,
             icon: const Icon(Icons.arrow_back),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.transparent,
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
               foregroundColor: Theme.of(context).colorScheme.onSurface,
               iconSize: 24,
             ),
@@ -371,23 +372,28 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         children: [
           // Login button
-          SizedBox(
+          Semantics(
+            button: true,
+            label: 'Iniciar sesión',
+            child: SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _handleLogin,
               child: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.onPrimary,
+                        ),
                       ),
                     )
                   : const Text('Iniciar Sesión'),
             ),
-          ),
+          ),),
           
           // Biometric login button (si está disponible y habilitado)
           if (_isBiometricAvailable && _enableBiometric) ...[
@@ -428,7 +434,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildBiometricButton() {
-    return SizedBox(
+    return Semantics(
+      button: true,
+      label: 'Iniciar con $_biometricType',
+      child: SizedBox(
       width: double.infinity,
       height: 56,
       child: OutlinedButton.icon(
@@ -456,6 +465,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

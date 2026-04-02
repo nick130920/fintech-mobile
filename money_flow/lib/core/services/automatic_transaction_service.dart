@@ -17,8 +17,7 @@ class AutomaticTransactionService {
         return false;
       }
 
-      // Obtener la cuenta bancaria predeterminada o la primera disponible
-      // TODO: Mejorar esto para que el usuario pueda configurar qué cuenta usar
+      // Obtener la cuenta bancaria configurada por el usuario o fallback.
       final accountId = await _getDefaultAccountId(token);
       if (accountId == null) {
         print('❌ No se encontró cuenta bancaria');
@@ -82,9 +81,26 @@ class AutomaticTransactionService {
   }
 
   /// Obtiene el ID de la cuenta bancaria predeterminada
-  /// TODO: Permitir al usuario configurar qué cuenta usar para transacciones automáticas
   static Future<int?> _getDefaultAccountId(String token) async {
     try {
+      final localPreferred = await StorageService.getAutoTransactionAccountId();
+      if (localPreferred != null && localPreferred > 0) {
+        return localPreferred;
+      }
+
+      final profileResponse = await ApiService.get('/users/profile', token: token);
+      if (profileResponse.statusCode == 200) {
+        final profileData = json.decode(profileResponse.body) as Map<String, dynamic>;
+        final defaultAccountID = profileData['default_account_id'];
+        if (defaultAccountID != null) {
+          final parsed = int.tryParse(defaultAccountID.toString());
+          if (parsed != null && parsed > 0) {
+            await StorageService.saveAutoTransactionAccountId(parsed);
+            return parsed;
+          }
+        }
+      }
+
       // Intentar obtener cuentas bancarias
       final response = await ApiService.get('/bank-accounts', token: token);
       
@@ -93,10 +109,13 @@ class AutomaticTransactionService {
         final List<dynamic> accounts = responseData['data'] ?? responseData;
         
         if (accounts.isNotEmpty) {
-          // Por ahora, usar la primera cuenta
-          // TODO: Mejorar para usar una cuenta configurada o detectar por el banco
+          // Fallback: usar la primera cuenta disponible.
           final firstAccount = accounts.first;
-          return int.tryParse(firstAccount['id'].toString());
+          final id = int.tryParse(firstAccount['id'].toString());
+          if (id != null) {
+            await StorageService.saveAutoTransactionAccountId(id);
+            return id;
+          }
         }
       }
 
@@ -109,7 +128,11 @@ class AutomaticTransactionService {
         
         if (budgetAccounts.isNotEmpty) {
           final firstAccount = budgetAccounts.first;
-          return int.tryParse(firstAccount['id'].toString());
+          final id = int.tryParse(firstAccount['id'].toString());
+          if (id != null) {
+            await StorageService.saveAutoTransactionAccountId(id);
+            return id;
+          }
         }
       }
 

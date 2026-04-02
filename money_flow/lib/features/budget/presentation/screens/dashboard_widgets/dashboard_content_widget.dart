@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/dashboard_provider.dart';
+import '../../providers/expense_provider.dart';
+import '../../../../../shared/widgets/skeleton_widgets.dart';
 
 import 'bank_accounts_overview_widget.dart';
 import 'budget_progress_widget.dart';
@@ -11,6 +16,12 @@ class DashboardContentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dashboardLoading = context.select<DashboardProvider, bool>((p) => p.isLoading);
+    final expenseLoading = context.select<ExpenseProvider, bool>((p) => p.isLoading);
+    if (dashboardLoading || expenseLoading) {
+      return const SafeArea(child: DashboardSkeletonWidget());
+    }
+
     return SafeArea(
       child: Column(
         children: [

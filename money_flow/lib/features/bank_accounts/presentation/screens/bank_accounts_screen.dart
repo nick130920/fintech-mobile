@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
+import '../../../../shared/widgets/skeleton_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 import '../providers/bank_account_provider.dart';
 import 'add_bank_account_screen.dart';
@@ -35,17 +37,21 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Cuentas Bancarias'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         actions: [
-          TextButton.icon(
-            onPressed: () => _navigateToAddBankAccount(),
-            icon: const Icon(Icons.add),
-            label: const Text(
-              'Agregar',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+          Semantics(
+            button: true,
+            label: 'Agregar cuenta bancaria',
+            child: TextButton.icon(
+              onPressed: () => _navigateToAddBankAccount(),
+              icon: const Icon(Icons.add),
+              label: const Text(
+                'Agregar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -54,7 +60,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       body: Consumer<BankAccountProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.bankAccounts.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const DashboardSkeletonWidget();
           }
 
           if (provider.error != null) {
@@ -214,7 +220,10 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
           separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final account = provider.bankAccounts[index];
-            return GlassmorphismListItem(
+            return Semantics(
+              button: true,
+              label: 'Cuenta ${account.accountAlias} con balance ${account.lastBalance.toStringAsFixed(2)}',
+              child: GlassmorphismListItem(
               enableSlideAnimation: true,
               enableHoverEffect: true,
               index: index,
@@ -295,7 +304,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                 ],
               ),
               onTap: () => _showAccountDetails(account),
-            );
+            ));
           },
         ),
       ],
@@ -312,7 +321,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       ),
       child: Icon(
         _getAccountIcon(account.type),
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onPrimary,
         size: 24,
       ),
     );
@@ -334,53 +343,12 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(60),
-              ),
-              child: Icon(
-                Icons.account_balance,
-                size: 60,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No tienes cuentas bancarias',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Agrega tu primera cuenta bancaria para comenzar a gestionar tus finanzas',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 32),
-            GlassmorphismButton(
-              style: GlassButtonStyles.primary,
-              enablePulseEffect: true,
-              onPressed: _navigateToAddBankAccount,
-              child: const Text('Agregar Cuenta Bancaria'),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      icon: Icons.account_balance,
+      title: 'No tienes cuentas bancarias',
+      subtitle: 'Agrega tu primera cuenta bancaria para comenzar a gestionar tus finanzas',
+      actionLabel: 'Agregar Cuenta Bancaria',
+      onAction: _navigateToAddBankAccount,
     );
   }
 

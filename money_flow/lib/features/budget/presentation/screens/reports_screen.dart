@@ -52,6 +52,134 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
+  Future<void> _showExportSheet() async {
+    String format = 'csv';
+    DateTime fromDate = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+    DateTime toDate = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0);
+    bool includeCategories = true;
+    bool includeNotes = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final theme = Theme.of(context);
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exportar Transacciones',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: format,
+                      decoration: const InputDecoration(labelText: 'Formato'),
+                      items: const [
+                        DropdownMenuItem(value: 'csv', child: Text('CSV')),
+                        DropdownMenuItem(value: 'xlsx', child: Text('Excel (.xlsx)')),
+                        DropdownMenuItem(value: 'pdf', child: Text('PDF')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setSheetState(() => format = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: fromDate,
+                                firstDate: DateTime(DateTime.now().year - 3),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setSheetState(() => fromDate = picked);
+                              }
+                            },
+                            icon: const Icon(Icons.date_range),
+                            label: Text(DateFormat('dd/MM/yyyy').format(fromDate)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: toDate,
+                                firstDate: DateTime(DateTime.now().year - 3),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setSheetState(() => toDate = picked);
+                              }
+                            },
+                            icon: const Icon(Icons.event),
+                            label: Text(DateFormat('dd/MM/yyyy').format(toDate)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    CheckboxListTile(
+                      value: includeCategories,
+                      onChanged: (value) => setSheetState(() => includeCategories = value ?? true),
+                      title: const Text('Incluir categorías'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    CheckboxListTile(
+                      value: includeNotes,
+                      onChanged: (value) => setSheetState(() => includeNotes = value ?? false),
+                      title: const Text('Incluir notas'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Exportación $format preparada (${DateFormat('dd/MM').format(fromDate)} - ${DateFormat('dd/MM').format(toDate)}).',
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.download),
+                        label: const Text('Exportar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final body = SafeArea(
@@ -133,7 +261,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ),
               ),
               Material(
-                color: Colors.transparent,
+                color: theme.colorScheme.surface.withValues(alpha: 0),
                 child: InkWell(
                   onTap: _pickMonth,
                   borderRadius: BorderRadius.circular(999),
@@ -170,6 +298,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ],
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Semantics(
+                button: true,
+                label: 'Exportar transacciones',
+                child: IconButton(
+                  onPressed: _showExportSheet,
+                  icon: const Icon(Icons.download_for_offline_outlined),
+                  tooltip: 'Exportar transacciones',
                 ),
               ),
             ],

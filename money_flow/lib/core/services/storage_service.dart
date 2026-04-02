@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class StorageService {
@@ -17,6 +19,7 @@ class StorageService {
   static const String _biometricEnabledKey = 'biometric_enabled';
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
+  static const String _autoTransactionAccountIdKey = 'auto_transaction_account_id';
 
   // Generic data methods
   static Future<void> saveData(String key, String value) async {
@@ -84,21 +87,29 @@ class StorageService {
     required String email,
     required String password,
   }) async {
-    await Future.wait([
-      _storage.write(key: _savedEmailKey, value: email),
-      _storage.write(key: _savedPasswordKey, value: password),
-      _storage.write(key: _biometricEnabledKey, value: 'true'),
-    ]);
+    // Mantener firma del método por compatibilidad, pero no almacenar credenciales.
+    // Solo habilitamos biometría y limpiamos claves legacy sensibles.
+    await enableBiometric();
+    await clearBiometricCredentials();
   }
 
   /// Obtiene el email guardado para login biométrico
   static Future<String?> getSavedEmail() async {
-    return await _storage.read(key: _savedEmailKey);
+    final rawUserData = await _storage.read(key: _userDataKey);
+    if (rawUserData == null || rawUserData.isEmpty) return null;
+    try {
+      final jsonMap = jsonDecode(rawUserData) as Map<String, dynamic>;
+      final email = jsonMap['email'];
+      if (email is String && email.isNotEmpty) return email;
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Obtiene la contraseña guardada para login biométrico
   static Future<String?> getSavedPassword() async {
-    return await _storage.read(key: _savedPasswordKey);
+    return null;
   }
 
   /// Verifica si el login biométrico está habilitado
@@ -127,5 +138,19 @@ class StorageService {
       _storage.delete(key: _savedEmailKey),
       _storage.delete(key: _savedPasswordKey),
     ]);
+  }
+
+  // Automatic transaction account preference
+  static Future<void> saveAutoTransactionAccountId(int accountId) async {
+    await _storage.write(
+      key: _autoTransactionAccountIdKey,
+      value: accountId.toString(),
+    );
+  }
+
+  static Future<int?> getAutoTransactionAccountId() async {
+    final raw = await _storage.read(key: _autoTransactionAccountIdKey);
+    if (raw == null || raw.isEmpty) return null;
+    return int.tryParse(raw);
   }
 }

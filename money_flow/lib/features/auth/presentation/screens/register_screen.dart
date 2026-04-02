@@ -219,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: 96,
       height: 96,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         borderRadius: BorderRadius.circular(48),
       ),
       child: const Center(

@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:provider/provider.dart';
 
+import '../config/api_security_config.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../app/app_wrapper.dart';
@@ -14,6 +17,7 @@ import '../exceptions/temporary_auth_failure_exception.dart';
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
   static const String _apiVersion = '/api/v1';
+  static final http.Client _client = _buildPinnedClient();
   
   static GlobalKey<NavigatorState>? _navigatorKey;
 
@@ -28,6 +32,18 @@ class ApiService {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  static http.Client _buildPinnedClient() {
+    final securityContext = SecurityContext(withTrustedRoots: false);
+    securityContext.setTrustedCertificatesBytes(
+      Uint8List.fromList(
+        utf8.encode(ApiSecurityConfig.pinnedLeafCertificatePem),
+      ),
+    );
+
+    final client = HttpClient(context: securityContext);
+    return IOClient(client);
+  }
 
   // GET request
   static Future<http.Response> get(
@@ -44,7 +60,7 @@ class ApiService {
     }
 
     Future<http.Response> doGet() {
-      final future = http.get(url, headers: headers);
+      final future = _client.get(url, headers: headers);
       if (timeout != null) {
         return future.timeout(timeout);
       }
@@ -73,7 +89,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    return await _handleRequest(() => http.post(
+    return await _handleRequest(() => _client.post(
       url,
       headers: headers,
       body: jsonEncode(body),
@@ -94,7 +110,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    return await _handleRequest(() => http.put(
+    return await _handleRequest(() => _client.put(
       url,
       headers: headers,
       body: jsonEncode(body),
@@ -111,7 +127,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    return await _handleRequest(() => http.delete(url, headers: headers));
+    return await _handleRequest(() => _client.delete(url, headers: headers));
   }
 
   /// POST multipart/form-data with a single file by path (e.g. for analyze-statement). Mobile only.
@@ -136,7 +152,7 @@ class ApiService {
       request.files.add(
         await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
       );
-      final streamed = await request.send();
+      final streamed = await _client.send(request);
       final response = await http.Response.fromStream(streamed).timeout(effectiveTimeout);
       return response;
     });
@@ -263,7 +279,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    return await _handleRequest(() => http.get(uri, headers: headers));
+    return await _handleRequest(() => _client.get(uri, headers: headers));
   }
 
   // Base URL getter for external use
@@ -284,7 +300,7 @@ class ApiService {
     }
 
     try {
-      return await http.post(
+      return await _client.post(
         url,
         headers: headers,
         body: jsonEncode(body),

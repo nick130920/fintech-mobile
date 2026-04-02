@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/sms_settings.dart';
 import '../../../../core/providers/sms_settings_provider.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../main.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
+import '../../../bank_accounts/data/models/bank_account_model.dart';
 import '../../../bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import '../../../bank_accounts/presentation/providers/bank_account_provider.dart';
 
@@ -19,6 +22,21 @@ class SmsSettingsScreen extends StatefulWidget {
 class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
   bool _isProcessing = false;
   int _processedCount = 0;
+  int? _selectedAccountId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedAccount();
+  }
+
+  Future<void> _loadSelectedAccount() async {
+    final storedAccountId = await StorageService.getAutoTransactionAccountId();
+    if (!mounted) return;
+    setState(() {
+      _selectedAccountId = storedAccountId;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +44,7 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Configuración de SMS'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
       ),
       body: Consumer2<SmsSettingsProvider, BankAccountProvider>(
@@ -49,6 +67,9 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
                 
                 _buildAutoProcessSection(context, smsProvider),
                 const SizedBox(height: 16),
+
+                _buildDefaultAccountSection(context, bankProvider),
+                const SizedBox(height: 16),
                 
                 _buildProcessModeSection(context, smsProvider),
                 const SizedBox(height: 16),
@@ -69,6 +90,104 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildDefaultAccountSection(BuildContext context, BankAccountProvider bankProvider) {
+    final accounts = bankProvider.activeBankAccounts;
+
+    return GlassmorphismCard(
+      style: GlassStyles.light,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.account_balance_wallet,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Cuenta para automatización',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Selecciona la cuenta que se usará al crear transacciones automáticas desde SMS.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: _resolveDropdownValue(accounts),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                ),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                filled: true,
+              ),
+              items: accounts
+                  .map(
+                    (account) => DropdownMenuItem<int>(
+                      value: account.id,
+                      child: Text('${account.accountAlias} (${account.bankName})'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: accounts.isEmpty
+                  ? null
+                  : (value) async {
+                      if (value == null) return;
+                      await _saveDefaultAccountPreference(value);
+                    },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int? _resolveDropdownValue(List<BankAccountModel> accounts) {
+    if (accounts.isEmpty) return null;
+    final exists = accounts.any((account) => account.id == _selectedAccountId);
+    if (exists) return _selectedAccountId;
+    return accounts.first.id;
+  }
+
+  Future<void> _saveDefaultAccountPreference(int accountId) async {
+    await StorageService.saveAutoTransactionAccountId(accountId);
+    setState(() {
+      _selectedAccountId = accountId;
+    });
+
+    final token = await StorageService.getAccessToken();
+    if (token == null) return;
+
+    await ApiService.put(
+      '/users/preferences',
+      {'default_account_id': accountId},
+      token: token,
     );
   }
 
@@ -475,12 +594,14 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
                   ),
                 ),
                 icon: _isProcessing
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.onPrimary,
+                          ),
                         ),
                       )
                     : const Icon(Icons.sync),

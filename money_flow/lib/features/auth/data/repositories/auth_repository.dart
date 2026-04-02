@@ -181,6 +181,28 @@ class AuthRepository {
     return await StorageService.isLoggedIn();
   }
 
+  static Future<void> requestPasswordReset(String email) async {
+    final response = await ApiService.post('/auth/forgot-password', {
+      'email': email,
+    });
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('No se pudo iniciar la recuperación de contraseña');
+    }
+  }
+
+  static Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    final response = await ApiService.post('/auth/reset-password', {
+      'token': token,
+      'new_password': newPassword,
+    });
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('No se pudo restablecer la contraseña');
+    }
+  }
+
   /// Renueva tokens. No usa [clearAll]: errores temporales no borran biometría ni sesión.
   static Future<TokenRefreshResult> attemptTokenRefresh() async {
     final refreshToken = await StorageService.getRefreshToken();

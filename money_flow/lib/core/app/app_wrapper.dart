@@ -38,21 +38,33 @@ class _AppWrapperState extends State<AppWrapper> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        Widget child;
         switch (authProvider.status) {
           case AuthStatus.authenticated:
-            return const _AuthenticatedHandler();
+            child = const _AuthenticatedHandler();
+            break;
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
-            return AuthWrapper(
+            child = AuthWrapper(
               onAuthSuccess: () {
                 // El estado de autenticación ya se actualiza automáticamente
                 // en el AuthProvider cuando se hace login/register exitoso
               },
             );
+            break;
           case AuthStatus.loading:
           case AuthStatus.initial:
-            return const AppLoadingScreen();
+            child = const AppLoadingScreen();
+            break;
         }
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(
+              MediaQuery.of(context).textScaler.scale(1).clamp(0.9, 1.3),
+            ),
+          ),
+          child: child,
+        );
       },
     );
   }
@@ -153,10 +165,10 @@ class AppErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 48,
-                color: Colors.red,
+                color: Theme.of(context).colorScheme.error,
               ),
               const SizedBox(height: 16),
               Text(
@@ -168,7 +180,7 @@ class AppErrorScreen extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(

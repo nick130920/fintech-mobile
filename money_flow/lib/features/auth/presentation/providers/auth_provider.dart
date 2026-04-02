@@ -133,12 +133,9 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      // Verificar si hay credenciales guardadas
-      final email = await StorageService.getSavedEmail();
-      final password = await StorageService.getSavedPassword();
-
-      if (email == null || password == null) {
-        _setError('No hay credenciales guardadas para login biométrico');
+      final refreshToken = await StorageService.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        _setError('No hay sesión guardada para login biométrico');
         return false;
       }
 
@@ -152,18 +149,21 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      // Si la biometría fue exitosa, hacer login con las credenciales guardadas
-      final request = LoginRequest(
-        email: email,
-        password: password,
-      );
+      final refreshResult = await AuthRepository.attemptTokenRefresh();
+      if (refreshResult == TokenRefreshResult.success) {
+        final user = await AuthRepository.getProfile();
+        _user = user;
+        _setStatus(AuthStatus.authenticated);
+        return true;
+      }
 
-      final response = await AuthRepository.login(request);
+      if (refreshResult == TokenRefreshResult.invalidRefreshToken) {
+        _setError('La sesión biométrica expiró. Inicia sesión de nuevo.');
+        return false;
+      }
 
-      _user = response.user;
-      _setStatus(AuthStatus.authenticated);
-
-      return true;
+      _setError('No se pudo renovar la sesión. Inténtalo de nuevo.');
+      return false;
     } catch (e) {
       _setError(e.toString());
       return false;
@@ -174,10 +174,10 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> isBiometricLoginAvailable() async {
     try {
       final isEnabled = await StorageService.isBiometricEnabled();
-      final hasCredentials = await StorageService.getSavedEmail() != null;
+      final hasRefreshToken = await StorageService.getRefreshToken() != null;
       final isBiometricAvailable = await BiometricService.isBiometricAvailable();
 
-      return isEnabled && hasCredentials && isBiometricAvailable;
+      return isEnabled && hasRefreshToken && isBiometricAvailable;
     } catch (e) {
       return false;
     }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../shared/widgets/skeleton_widgets.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../providers/automatic_transactions_provider.dart';
 
@@ -14,6 +16,7 @@ class TransactionsFlowScreen extends StatefulWidget {
 
 class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _pendingScrollController = ScrollController();
   bool _hasLoaded = false;
 
   @override
@@ -27,12 +30,25 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
         _hasLoaded = true;
       }
     });
+    _pendingScrollController.addListener(_onPendingScroll);
   }
 
   @override
   void dispose() {
+    _pendingScrollController.removeListener(_onPendingScroll);
+    _pendingScrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onPendingScroll() {
+    if (!_pendingScrollController.hasClients) return;
+    final provider = Provider.of<AutomaticTransactionsProvider>(context, listen: false);
+    if (!provider.hasMorePending || provider.isLoading) return;
+    final threshold = _pendingScrollController.position.maxScrollExtent - 200;
+    if (_pendingScrollController.position.pixels >= threshold) {
+      provider.loadMorePendingTransactions();
+    }
   }
 
   void _loadData() {
@@ -49,7 +65,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Flujo de Transacciones'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
@@ -79,7 +95,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
         final stats = provider.stats;
         
         if (stats == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const DashboardSkeletonWidget();
         }
 
         return SingleChildScrollView(
@@ -152,7 +168,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
               title: 'Procesados con IA',
               count: total,
               subtitle: 'Gemini AI',
-              color: Colors.purple,
+              color: Theme.of(context).colorScheme.secondary,
             ),
             
             _buildFlowSplit(context),
@@ -165,7 +181,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
                     icon: Icons.check_circle,
                     title: 'Aprobadas',
                     count: approved,
-                    color: Colors.green[600]!,
+                    color: Theme.of(context).colorScheme.primary,
                     compact: true,
                   ),
                 ),
@@ -176,7 +192,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
                     icon: Icons.pending,
                     title: 'Pendientes',
                     count: pending,
-                    color: Colors.orange[600]!,
+                    color: Theme.of(context).colorScheme.tertiary,
                     compact: true,
                   ),
                 ),
@@ -320,7 +336,9 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
                 icon: Icons.check_circle_outline,
                 title: 'Tasa Aprobación',
                 value: '${approvalRate.toStringAsFixed(1)}%',
-                color: approvalRate > 75 ? Colors.green[600]! : Colors.orange[600]!,
+                color: approvalRate > 75
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.tertiary,
               ),
             ),
           ],
@@ -367,10 +385,10 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
   }
 
   Color _getConfidenceColor(double confidence) {
-    if (confidence >= 0.9) return Colors.green[600]!;
-    if (confidence >= 0.7) return Colors.blue[600]!;
-    if (confidence >= 0.5) return Colors.orange[600]!;
-    return Colors.red[600]!;
+    if (confidence >= 0.9) return Theme.of(context).colorScheme.primary;
+    if (confidence >= 0.7) return Theme.of(context).colorScheme.secondary;
+    if (confidence >= 0.5) return Theme.of(context).colorScheme.tertiary;
+    return Theme.of(context).colorScheme.error;
   }
 
   Widget _buildRecentActivity(BuildContext context, AutomaticTransactionsProvider provider) {
@@ -440,12 +458,12 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     switch (transaction.status.toString().split('.').last) {
       case 'pending':
         statusIcon = Icons.pending;
-        statusColor = Colors.orange[600]!;
+        statusColor = Theme.of(context).colorScheme.tertiary;
         statusText = 'Pendiente';
         break;
       case 'completed':
         statusIcon = Icons.check_circle;
-        statusColor = Colors.green[600]!;
+        statusColor = Theme.of(context).colorScheme.primary;
         statusText = 'Aprobada';
         break;
       case 'cancelled':
@@ -455,7 +473,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
         break;
       default:
         statusIcon = Icons.help;
-        statusColor = Colors.grey;
+        statusColor = Theme.of(context).colorScheme.outline;
         statusText = 'Desconocido';
     }
 
@@ -536,12 +554,11 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     return Consumer<AutomaticTransactionsProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.pendingTransactions.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const TransactionSkeletonWidget();
         }
 
         if (provider.pendingTransactions.isEmpty) {
           return _buildEmptyState(
-            context,
             icon: Icons.check_circle,
             title: 'No hay transacciones pendientes',
             subtitle: 'Todas las transacciones han sido procesadas',
@@ -549,6 +566,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
         }
 
         return ListView.builder(
+          controller: _pendingScrollController,
           padding: const EdgeInsets.all(16),
           itemCount: provider.pendingTransactions.length,
           itemBuilder: (context, index) {
@@ -567,12 +585,11 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     return Consumer<AutomaticTransactionsProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.approvedTransactions.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const TransactionSkeletonWidget(itemCount: 4);
         }
 
         if (provider.approvedTransactions.isEmpty) {
           return _buildEmptyState(
-            context,
             icon: Icons.approval,
             title: 'No hay transacciones aprobadas',
             subtitle: 'Las transacciones aprobadas aparecerán aquí',
@@ -598,12 +615,11 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     return Consumer<AutomaticTransactionsProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.rejectedTransactions.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const TransactionSkeletonWidget(itemCount: 4);
         }
 
         if (provider.rejectedTransactions.isEmpty) {
           return _buildEmptyState(
-            context,
             icon: Icons.info_outline,
             title: 'No hay transacciones rechazadas',
             subtitle: 'Las transacciones rechazadas aparecerán aquí',
@@ -625,45 +641,15 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     );
   }
 
-  Widget _buildEmptyState(
-    BuildContext context, {
+  Widget _buildEmptyState({
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
     );
   }
 
@@ -676,11 +662,11 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
     
     switch (type) {
       case 'pending':
-        cardColor = Colors.orange[600]!;
+        cardColor = Theme.of(context).colorScheme.tertiary;
         cardIcon = Icons.pending_actions;
         break;
       case 'approved':
-        cardColor = Colors.green[600]!;
+        cardColor = Theme.of(context).colorScheme.primary;
         cardIcon = Icons.check_circle;
         break;
       case 'rejected':
@@ -688,11 +674,14 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
         cardIcon = Icons.cancel;
         break;
       default:
-        cardColor = Colors.grey;
+        cardColor = Theme.of(context).colorScheme.outline;
         cardIcon = Icons.help;
     }
 
-    return GlassmorphismCard(
+    return Semantics(
+      button: true,
+      label: 'Transacción ${transaction.description ?? 'sin descripción'} por ${transaction.amount.toStringAsFixed(2)} dólares',
+      child: GlassmorphismCard(
       style: GlassStyles.light,
       enableHoverEffect: true,
       child: Padding(
@@ -771,7 +760,7 @@ class _TransactionsFlowScreenState extends State<TransactionsFlowScreen> with Si
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

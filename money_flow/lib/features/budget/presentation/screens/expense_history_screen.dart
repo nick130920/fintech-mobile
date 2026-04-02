@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../shared/widgets/skeleton_widgets.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/expense_model.dart';
 import '../providers/expense_provider.dart';
@@ -17,12 +19,32 @@ class ExpenseHistoryScreen extends StatefulWidget {
 }
 
 class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ExpenseProvider>().loadExpenses();
     });
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final provider = context.read<ExpenseProvider>();
+    if (provider.isLoading || !provider.hasMoreExpenses) return;
+    final threshold = _scrollController.position.maxScrollExtent - 200;
+    if (_scrollController.position.pixels >= threshold) {
+      provider.loadMoreExpenses();
+    }
   }
 
   @override
@@ -30,9 +52,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     final body = Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.expenses.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const TransactionSkeletonWidget();
           }
 
           if (provider.expenses.isEmpty) {
@@ -49,6 +69,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 // Lista de gastos
                 Expanded(
                   child: ListView.separated(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: provider.expenses.length + (provider.isLoading ? 1 : 0),
                     separatorBuilder: (context, index) => const SizedBox(height: 8),
@@ -78,13 +99,17 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Historial de Gastos'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilters,
+          Semantics(
+            button: true,
+            label: 'Abrir filtros de gastos',
+            child: IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showFilters,
+            ),
           ),
         ],
       ),
@@ -96,13 +121,17 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Historial de Gastos'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilters,
+          Semantics(
+            button: true,
+            label: 'Abrir filtros de gastos',
+            child: IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showFilters,
+            ),
           ),
         ],
       ),
@@ -111,40 +140,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No hay gastos registrados',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Comienza registrando tu primer gasto',
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pushNamed('/add-expense'),
-            icon: const Icon(Icons.add),
-            label: const Text('Registrar Gasto'),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.receipt_long,
+      title: 'No hay gastos registrados',
+      subtitle: 'Comienza registrando tu primer gasto',
+      actionLabel: 'Registrar Gasto',
+      onAction: () => Navigator.of(context).pushNamed('/add-expense'),
     );
   }
 
@@ -175,7 +176,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Icon(Icons.trending_up, color: Colors.green[600]),
+              Icon(Icons.trending_up, color: Theme.of(context).colorScheme.primary),
             ],
           ),
           const SizedBox(height: 16),
@@ -185,7 +186,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 child: _buildSummaryItem(
                   'Total Gastado',
                   provider.getTotalSpent(),
-                  Colors.red,
+                  Theme.of(context).colorScheme.error,
                 ),
               ),
               const SizedBox(width: 16),
@@ -193,7 +194,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 child: _buildSummaryItem(
                   'Transacciones',
                   provider.expenses.length.toDouble(),
-                  Colors.blue,
+                  Theme.of(context).colorScheme.primary,
                   isCount: true,
                 ),
               ),
@@ -240,7 +241,10 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
-        return Card(
+        return Semantics(
+          button: true,
+          label: 'Gasto ${expense.description} por ${currencyProvider.formatAmount(expense.amount)}',
+          child: Card(
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -339,14 +343,14 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.orange[100],
+                            color: Theme.of(context).colorScheme.tertiaryContainer,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             expense.statusDisplayName,
                             style: TextStyle(
                               fontSize: 10,
-                              color: Colors.orange[700],
+                              color: Theme.of(context).colorScheme.onTertiaryContainer,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -357,7 +361,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               ),
             ),
           ),
-        );
+        ));
       },
     );
   }
@@ -366,7 +370,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
@@ -435,10 +439,10 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                           builder: (context, currencyProvider, child) {
                             return Text(
                               currencyProvider.formatAmount(expense.amount),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red,
+                                color: Theme.of(context).colorScheme.error,
                               ),
                             );
                           },
@@ -483,7 +487,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: () => _deleteExpense(expense.id, provider),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: Theme.of(context).colorScheme.error,
                                 ),
                                 icon: const Icon(Icons.delete),
                                 label: const Text('Eliminar'),
@@ -536,7 +540,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
       builder: (context) => _FilterBottomSheet(),
     );
   }
@@ -554,7 +558,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Eliminar'),
           ),
         ],
@@ -567,9 +571,9 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       final success = await provider.deleteExpense(expenseId);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Gasto eliminado exitosamente'),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }

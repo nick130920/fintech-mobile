@@ -29,6 +29,8 @@ class ExpenseProvider with ChangeNotifier {
   // Estado de carga
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _hasMoreExpenses = true;
+  bool get hasMoreExpenses => _hasMoreExpenses;
   bool _hasInitialLoad = false;
   bool get hasCachedData => _hasInitialLoad;
 
@@ -120,6 +122,7 @@ class ExpenseProvider with ChangeNotifier {
     try {
       _currentFilters = filters ?? const ExpenseFilters();
       _expenses = await _expenseRepository.getExpenses(filters: _currentFilters);
+      _hasMoreExpenses = _expenses.length >= _currentFilters.limit;
       _clearError();
     } catch (e) {
       _setError('Error al cargar gastos: $e');
@@ -145,7 +148,10 @@ class ExpenseProvider with ChangeNotifier {
       if (moreExpenses.isNotEmpty) {
         _expenses.addAll(moreExpenses);
         _currentFilters = nextFilters;
+        _hasMoreExpenses = moreExpenses.length >= _currentFilters.limit;
         notifyListeners();
+      } else {
+        _hasMoreExpenses = false;
       }
     } catch (e) {
       _setError('Error al cargar más gastos: $e');

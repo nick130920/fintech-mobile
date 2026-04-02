@@ -68,7 +68,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Configuración de Divisa'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         actions: [
           if (ExchangeRateService.isApiKeyConfigured())
@@ -455,7 +455,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
       builder: (context) => _CurrencySearchBottomSheet(
         onCurrencySelected: (currency) {
           Navigator.pop(context);
@@ -559,7 +559,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Divisa cambiada a ${currency.name}'),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
         
