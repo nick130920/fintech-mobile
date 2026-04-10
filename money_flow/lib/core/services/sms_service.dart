@@ -4,6 +4,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'preferences_service.dart';
 
+enum SmsPermissionResult { granted, denied, permanentlyDenied }
+
 /// Callback that receives both body and date (e.g. for budget suggestions analysis).
 typedef OnSmsWithDateCallback = void Function(String? body, DateTime? date);
 
@@ -39,8 +41,8 @@ class SmsService {
       return;
     }
 
-    final hasPermission = await requestPermissions();
-    if (!hasPermission) {
+    final permissionResult = await requestPermissions();
+    if (permissionResult != SmsPermissionResult.granted) {
       debugPrint("No se tienen permisos de SMS para sincronizar.");
       return;
     }
@@ -131,17 +133,15 @@ class SmsService {
     debugPrint("Timestamp de sincronización reseteado");
   }
 
-  Future<bool> requestPermissions() async {
-    // En web, los permisos SMS no están soportados
+  Future<SmsPermissionResult> requestPermissions() async {
     if (kIsWeb) {
-      return false;
+      return SmsPermissionResult.denied;
     }
-    
+
     final status = await Permission.sms.request();
-    if (status.isGranted) {
-      return true;
-    }
     debugPrint("Permiso de SMS: $status");
-    return false;
+    if (status.isGranted) return SmsPermissionResult.granted;
+    if (status.isPermanentlyDenied) return SmsPermissionResult.permanentlyDenied;
+    return SmsPermissionResult.denied;
   }
 }

@@ -62,8 +62,9 @@ class TransactionModel {
   @JsonKey(name: 'bank_account_alias')
   final String? bankAccountAlias;
   final String currency;
+  @JsonKey(unknownEnumValue: TransactionSource.manual)
   final TransactionSource source;
-  @JsonKey(name: 'validation_status')
+  @JsonKey(name: 'validation_status', unknownEnumValue: ValidationStatus.pendingReview)
   final ValidationStatus validationStatus;
   @JsonKey(name: 'ai_confidence')
   final double aiConfidence;

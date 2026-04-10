@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/services/sms_service.dart';
@@ -206,9 +207,34 @@ class _SmsOption extends StatelessWidget {
     if (!context.mounted) return;
     if (goSetup != true) return;
 
-    final hasPermission = await SmsService().requestPermissions();
+    final permissionResult = await SmsService().requestPermissions();
     if (!context.mounted) return;
-    if (!hasPermission) {
+    if (permissionResult == SmsPermissionResult.permanentlyDenied) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permiso de SMS requerido'),
+          content: const Text(
+            'El permiso de SMS fue denegado. Para habilitarlo, ve a Configuración > Aplicaciones > MoneyFlow > Permisos y activa "SMS".',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Ahora no'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: const Text('Ir a Configuración'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    if (permissionResult != SmsPermissionResult.granted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Sin problema, puedes configurar todo manualmente'),

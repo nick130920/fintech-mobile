@@ -13,6 +13,7 @@ import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../app/app_wrapper.dart';
 import '../exceptions/temporary_auth_failure_exception.dart';
+import 'storage_service.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
@@ -35,11 +36,17 @@ class ApiService {
 
   static http.Client _buildPinnedClient() {
     final securityContext = SecurityContext(withTrustedRoots: false);
-    securityContext.setTrustedCertificatesBytes(
-      Uint8List.fromList(
-        utf8.encode(ApiSecurityConfig.pinnedLeafCertificatePem),
-      ),
-    );
+    // Cargamos el leaf actual + la CA intermedia (R12) como backup.
+    // Así, si Railway rota el leaf antes de que todos actualicen la app,
+    // la conexión sigue siendo válida mientras el emisor sea R12 (vence 2027-03-12).
+    for (final pem in [
+      ApiSecurityConfig.pinnedLeafCertificatePem,
+      ApiSecurityConfig.pinnedIntermediateCaPem,
+    ]) {
+      securityContext.setTrustedCertificatesBytes(
+        Uint8List.fromList(utf8.encode(pem)),
+      );
+    }
 
     final client = HttpClient(context: securityContext);
     return IOClient(client);
@@ -53,21 +60,17 @@ class ApiService {
   }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
-    
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
 
-    Future<http.Response> doGet() {
-      final future = _client.get(url, headers: headers);
-      if (timeout != null) {
-        return future.timeout(timeout);
+    Future<http.Response> doGet(String? effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null) {
+        headers['Authorization'] = 'Bearer $effectiveToken';
       }
-      return future;
+      final future = _client.get(url, headers: headers);
+      return timeout != null ? future.timeout(timeout) : future;
     }
 
-    return await _handleRequest(doGet);
+    return await _handleRequest(doGet, initialToken: token);
   }
 
   /// Timeout por defecto para POST (p. ej. login, crear recurso).
@@ -84,16 +87,14 @@ class ApiService {
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     final effectiveTimeout = timeout ?? defaultPostTimeout;
 
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
-    return await _handleRequest(() => _client.post(
-      url,
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(effectiveTimeout));
+    return await _handleRequest(
+      (effectiveToken) {
+        final headers = Map<String, String>.from(_defaultHeaders);
+        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
+        return _client.post(url, headers: headers, body: jsonEncode(body)).timeout(effectiveTimeout);
+      },
+      initialToken: token,
+    );
   }
 
   // PUT request
@@ -104,30 +105,30 @@ class ApiService {
   }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
-    
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
 
-    return await _handleRequest(() => _client.put(
-      url,
-      headers: headers,
-      body: jsonEncode(body),
-    ));
+    return await _handleRequest(
+      (effectiveToken) {
+        final headers = Map<String, String>.from(_defaultHeaders);
+        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
+        return _client.put(url, headers: headers, body: jsonEncode(body));
+      },
+      initialToken: token,
+    );
   }
 
   // DELETE request
   static Future<http.Response> delete(String endpoint, {String? token}) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
-    
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
 
-    return await _handleRequest(() => _client.delete(url, headers: headers));
+    return await _handleRequest(
+      (effectiveToken) {
+        final headers = Map<String, String>.from(_defaultHeaders);
+        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
+        return _client.delete(url, headers: headers);
+      },
+      initialToken: token,
+    );
   }
 
   /// POST multipart/form-data with a single file by path (e.g. for analyze-statement). Mobile only.
@@ -142,32 +143,40 @@ class ApiService {
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     final effectiveTimeout = timeout ?? defaultPostTimeout;
 
-    return await _handleRequest(() async {
-      final request = http.MultipartRequest('POST', url);
-      request.headers['Accept'] = 'application/json';
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
-      final filename = filePath.split(Platform.pathSeparator).last;
-      request.files.add(
-        await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
-      );
-      final streamed = await _client.send(request);
-      final response = await http.Response.fromStream(streamed).timeout(effectiveTimeout);
-      return response;
-    });
+    return await _handleRequest(
+      (effectiveToken) async {
+        final request = http.MultipartRequest('POST', url);
+        request.headers['Accept'] = 'application/json';
+        if (effectiveToken != null) request.headers['Authorization'] = 'Bearer $effectiveToken';
+        final filename = filePath.split(Platform.pathSeparator).last;
+        request.files.add(
+          await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
+        );
+        final streamed = await _client.send(request);
+        return await http.Response.fromStream(streamed).timeout(effectiveTimeout);
+      },
+      initialToken: token,
+    );
   }
   
-  // Wrapper para manejar todas las peticiones y sus errores
-  static Future<http.Response> _handleRequest(Future<http.Response> Function() request, {bool isRetry = false}) async {
+  // Wrapper para manejar todas las peticiones y sus errores.
+  // [builder] recibe el token efectivo (puede ser null para endpoints públicos).
+  // En el retry, se lee el token fresco desde StorageService para evitar
+  // usar el token expirado que quedó capturado en el closure original.
+  static Future<http.Response> _handleRequest(
+    Future<http.Response> Function(String? token) builder, {
+    String? initialToken,
+    bool isRetry = false,
+  }) async {
     try {
-      final response = await request();
+      final response = await builder(initialToken);
       if (response.statusCode == 401 && !isRetry) {
         debugPrint('🔄 Token expirado, intentando renovar...');
         final outcome = await _tryRefreshToken();
         if (outcome == TokenRefreshResult.success) {
           debugPrint('✅ Token renovado, reintentando petición...');
-          return await _handleRequest(request, isRetry: true);
+          final freshToken = await StorageService.getAccessToken();
+          return await _handleRequest(builder, initialToken: freshToken, isRetry: true);
         }
         if (outcome == TokenRefreshResult.invalidRefreshToken) {
           debugPrint('❌ Refresh inválido, cerrando sesión...');
@@ -274,12 +283,14 @@ class ApiService {
 
   // GET request with URI (for query parameters)
   static Future<http.Response> getUri(Uri uri, {String? token}) async {
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
-    return await _handleRequest(() => _client.get(uri, headers: headers));
+    return await _handleRequest(
+      (effectiveToken) {
+        final headers = Map<String, String>.from(_defaultHeaders);
+        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
+        return _client.get(uri, headers: headers);
+      },
+      initialToken: token,
+    );
   }
 
   // Base URL getter for external use
