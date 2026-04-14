@@ -299,58 +299,64 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   // Obtener gastos del mes actual
-  List<ExpenseModel> get monthlyExpenses {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 1);
-    
+  List<ExpenseModel> get monthlyExpenses => getExpensesForMonth(DateTime.now());
+
+  List<ExpenseModel> getExpensesForMonth(DateTime month) {
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 1);
     return _expenses.where((expense) {
       final expenseDate = expense.dateTime;
-      return expenseDate.isAfter(startOfMonth) && expenseDate.isBefore(endOfMonth);
+      return !expenseDate.isBefore(startOfMonth) && expenseDate.isBefore(endOfMonth);
     }).toList();
   }
 
   // Obtener total de gastos del mes
-  double get monthlyTotal {
-    return monthlyExpenses
+  double get monthlyTotal => getMonthlyTotalForMonth(DateTime.now());
+
+  double getMonthlyTotalForMonth(DateTime month) {
+    return getExpensesForMonth(month)
         .where((expense) => expense.isConfirmed)
         .map((expense) => expense.amount)
         .fold(0.0, (sum, amount) => sum + amount);
   }
 
-  /// Gastos del mes actual repartidos en 10 periodos (para gráfico Tendencia de Gastos).
-  /// Cada índice = un tramo del mes (1º = días 1–3, 2º = 4–6, …); valor = suma de gastos confirmados.
-  List<double> get monthlyExpensesByPeriod {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 1);
+  /// Gastos repartidos en 10 periodos para el mes dado.
+  List<double> get monthlyExpensesByPeriod => getExpensesByPeriodForMonth(DateTime.now());
+
+  List<double> getExpensesByPeriodForMonth(DateTime month) {
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 1);
     final daysInMonth = endOfMonth.difference(startOfMonth).inDays;
     if (daysInMonth <= 0) return List.filled(10, 0.0);
 
     final periods = List<double>.filled(10, 0.0);
-    for (final e in monthlyExpenses.where((x) => x.isConfirmed)) {
-      final dayOfMonth = e.dateTime.day; // 1..31
+    for (final e in getExpensesForMonth(month).where((x) => x.isConfirmed)) {
+      final dayOfMonth = e.dateTime.day;
       final periodIndex = ((dayOfMonth - 1) * 10 / daysInMonth).floor().clamp(0, 9);
       periods[periodIndex] += e.amount;
     }
     return periods;
   }
 
-  /// Rango de días del mes para el periodo [periodIndex] (0..9). Devuelve (dayStart, dayEnd) inclusive.
-  (int startDay, int endDay) getPeriodDayRange(int periodIndex) {
-    final now = DateTime.now();
-    final endOfMonth = DateTime(now.year, now.month + 1, 0);
-    final daysInMonth = endOfMonth.day;
+  /// Rango de días del mes para el periodo [periodIndex] (0..9).
+  (int startDay, int endDay) getPeriodDayRange(int periodIndex) =>
+      getPeriodDayRangeForMonth(DateTime.now(), periodIndex);
+
+  (int startDay, int endDay) getPeriodDayRangeForMonth(DateTime month, int periodIndex) {
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final periodIndexClamped = periodIndex.clamp(0, 9);
     final startDay = (periodIndexClamped * daysInMonth / 10).floor() + 1;
     final endDay = ((periodIndexClamped + 1) * daysInMonth / 10).floor();
     return (startDay, endDay > 0 ? endDay : startDay);
   }
 
-  /// Gastos del mes actual que caen en el periodo [periodIndex] (solo confirmados).
-  List<ExpenseModel> getMonthlyExpensesInPeriod(int periodIndex) {
-    final (startDay, endDay) = getPeriodDayRange(periodIndex);
-    return monthlyExpenses.where((e) {
+  /// Gastos del mes dado en el periodo [periodIndex] (solo confirmados).
+  List<ExpenseModel> getMonthlyExpensesInPeriod(int periodIndex) =>
+      getExpensesInPeriodForMonth(DateTime.now(), periodIndex);
+
+  List<ExpenseModel> getExpensesInPeriodForMonth(DateTime month, int periodIndex) {
+    final (startDay, endDay) = getPeriodDayRangeForMonth(month, periodIndex);
+    return getExpensesForMonth(month).where((e) {
       if (!e.isConfirmed) return false;
       final day = e.dateTime.day;
       return day >= startDay && day <= endDay;
@@ -358,19 +364,21 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   // Obtener categorías principales por gasto
-  List<Map<String, dynamic>> get topCategories {
+  List<Map<String, dynamic>> get topCategories => getTopCategoriesForMonth(DateTime.now());
+
+  List<Map<String, dynamic>> getTopCategoriesForMonth(DateTime month) {
     final Map<String, double> categoryTotals = {};
     final Map<String, CategoryModel> categoryMap = {};
-    
-    for (final expense in monthlyExpenses.where((e) => e.isConfirmed)) {
+
+    for (final expense in getExpensesForMonth(month).where((e) => e.isConfirmed)) {
       final categoryName = expense.category.name;
       categoryTotals[categoryName] = (categoryTotals[categoryName] ?? 0) + expense.amount;
       categoryMap[categoryName] = expense.category;
     }
-    
+
     final sortedCategories = categoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    
+
     return sortedCategories.map((entry) => {
       'name': entry.key,
       'amount': entry.value,

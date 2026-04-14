@@ -43,6 +43,7 @@ import 'features/settings/presentation/screens/email_connection_screen.dart';
 import 'features/settings/presentation/screens/language_settings_screen.dart';
 import 'features/settings/presentation/screens/notification_settings_screen.dart';
 import 'features/settings/presentation/screens/sms_settings_screen.dart';
+import 'features/profile/presentation/screens/profile_screen.dart';
 import 'shared/screens/main_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -245,6 +246,7 @@ class MyApp extends StatelessWidget {
               },
               '/automatic-transactions-settings': (context) => const AutomaticTransactionsSettingsScreen(),
               '/ai-transactions': (context) => const AITransactionsScreen(),
+              '/settings': (context) => const ProfileScreen(),
             },
           );
         },

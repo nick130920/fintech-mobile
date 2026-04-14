@@ -17,10 +17,11 @@ class AppWrapper extends StatefulWidget {
   State<AppWrapper> createState() => _AppWrapperState();
 }
 
-class _AppWrapperState extends State<AppWrapper> {
+class _AppWrapperState extends State<AppWrapper> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Inicializar el listener de notificaciones globalmente al arrancar la app
     // Esto configurará el MethodChannel para escuchar eventos desde Android
     NotificationListenerService().initialize();
@@ -32,6 +33,25 @@ class _AppWrapperState extends State<AppWrapper> {
         // No es necesario llamarlo de nuevo aquí
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Cuando el usuario vuelve la app al primer plano, refrescamos el perfil
+  // en background. Si el access token expiró, ApiService lo renueva solo
+  // antes de que el usuario haga cualquier acción.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.isAuthenticated) {
+        authProvider.refreshProfile();
+      }
+    }
   }
 
   @override

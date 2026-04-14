@@ -176,6 +176,20 @@ class CurrencyService {
       ..sort((a, b) => a.name.compareTo(b.name));
   }
 
+  /// Detecta la moneda según la IP del cliente consultando el backend.
+  /// No requiere ningún permiso. Devuelve null si falla.
+  static Future<String?> detectCurrencyFromIP() async {
+    try {
+      final response = await ApiService.get('/geo/country', timeout: const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final currencyCode = data['currency_code'] as String?;
+        if (currencyCode != null && currencyCode != 'USD') return currencyCode;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<CurrencyInfo> detectCurrencyFromLocation() async {
     try {
       final hasPermission = await _requestLocationPermission();

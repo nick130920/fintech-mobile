@@ -19,10 +19,15 @@ TransactionModel _$TransactionModelFromJson(Map<String, dynamic> json) =>
       toAccountName: json['to_account_name'] as String?,
       bankAccountAlias: json['bank_account_alias'] as String?,
       currency: json['currency'] as String,
-      source: $enumDecode(_$TransactionSourceEnumMap, json['source']),
+      source: $enumDecode(
+        _$TransactionSourceEnumMap,
+        json['source'],
+        unknownValue: TransactionSource.manual,
+      ),
       validationStatus: $enumDecode(
         _$ValidationStatusEnumMap,
         json['validation_status'],
+        unknownValue: ValidationStatus.pendingReview,
       ),
       aiConfidence: (json['ai_confidence'] as num).toDouble(),
       needsReview: json['needs_review'] as bool,

@@ -80,11 +80,16 @@ class AuthRepository {
   static Future<void> logout() async {
     try {
       final accessToken = await StorageService.getAccessToken();
-      
+      final refreshToken = await StorageService.getRefreshToken();
+
       if (accessToken != null) {
-        await ApiService.post('auth/logout', {}, token: accessToken);
+        await ApiService.post(
+          'auth/logout',
+          refreshToken != null ? {'refresh_token': refreshToken} : {},
+          token: accessToken,
+        );
       }
-      
+
       // Clear local storage regardless of API call result
       await StorageService.clearAll();
     } catch (e) {

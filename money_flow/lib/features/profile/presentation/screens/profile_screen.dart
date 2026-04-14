@@ -9,9 +9,14 @@ import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -24,7 +29,7 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + MediaQuery.of(context).padding.bottom + 80),
         children: [
           _buildUserInfo(context, authProvider),
           const Divider(height: 40),
@@ -478,43 +483,38 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _toggleBiometric(BuildContext context, bool enable) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     if (enable) {
-      // Si quiere habilitar, verificar que tenga credenciales guardadas
-      final savedEmail = await StorageService.getSavedEmail();
-      
-      if (savedEmail == null) {
+      // El login biométrico usa el refresh token almacenado en Keychain/Keystore.
+      // Solo necesitamos verificar que existe una sesión activa con refresh token.
+      final refreshToken = await StorageService.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
         if (context.mounted) {
           CustomSnackBar.showWarning(
             context,
-            'Inicia sesión con el checkbox de biometría marcado primero',
+            'No hay sesión activa para asociar con biometría. Cierra sesión e inicia de nuevo.',
           );
         }
         return;
       }
-      
-      // Autenticar para confirmar
+
+      // Pedir autenticación biométrica para confirmar la intención del usuario
       final authenticated = await BiometricService.authenticate(
-        localizedReason: 'Autentica para habilitar inicio con biometría',
+        localizedReason: 'Confirma tu identidad para habilitar el acceso biométrico',
       );
-      
+
       if (authenticated) {
         await authProvider.toggleBiometricLogin(true);
         if (context.mounted) {
-          CustomSnackBar.showSuccess(
-            context,
-            'Inicio con biometría habilitado',
-          );
+          setState(() {});
+          CustomSnackBar.showSuccess(context, 'Acceso biométrico habilitado');
         }
       }
     } else {
-      // Deshabilitar
       await authProvider.toggleBiometricLogin(false);
       if (context.mounted) {
-        CustomSnackBar.showSuccess(
-          context,
-          'Inicio con biometría deshabilitado',
-        );
+        setState(() {});
+        CustomSnackBar.showSuccess(context, 'Acceso biométrico deshabilitado');
       }
     }
   }
