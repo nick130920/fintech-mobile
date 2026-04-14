@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -7,6 +8,8 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/app/app_wrapper.dart';
 import 'core/models/sms_settings.dart';
 import 'core/providers/currency_provider.dart';
+import 'core/providers/locale_provider.dart';
+import 'core/providers/notification_settings_provider.dart';
 import 'core/providers/sms_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/api_service.dart';
@@ -37,6 +40,8 @@ import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
 import 'features/settings/presentation/screens/currency_settings_screen.dart';
 import 'features/settings/presentation/screens/email_connection_screen.dart';
+import 'features/settings/presentation/screens/language_settings_screen.dart';
+import 'features/settings/presentation/screens/notification_settings_screen.dart';
 import 'features/settings/presentation/screens/sms_settings_screen.dart';
 import 'shared/screens/main_screen.dart';
 
@@ -185,6 +190,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BudgetSetupProvider()),
         ChangeNotifierProvider(create: (_) => BudgetSuggestionsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationSettingsProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
@@ -192,8 +199,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AutomaticTransactionsProvider()),
         ChangeNotifierProvider(create: (_) => SmsSettingsProvider()..initialize()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, LocaleProvider>(
+        builder: (context, themeProvider, localeProvider, _) {
           return MaterialApp(
             navigatorKey: navigatorKey,
             title: 'MoneyFlow',
@@ -201,6 +208,16 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
+            locale: localeProvider.locale,
+            supportedLocales: const [
+              Locale('es'),
+              Locale('en'),
+            ],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             home: const AppWrapper(),
             routes: {
               '/budget-setup': (context) => const BudgetSetupScreen(),
@@ -214,6 +231,8 @@ class MyApp extends StatelessWidget {
               '/income-history': (context) => const ReportsScreen(useScaffold: true),
               '/category-management': (context) => const MainScreen(initialTab: 2),
               '/currency-settings': (context) => const CurrencySettingsScreen(),
+              '/notification-settings': (context) => const NotificationSettingsScreen(),
+              '/language-settings': (context) => const LanguageSettingsScreen(),
               '/sms-settings': (context) => const SmsSettingsScreen(),
               '/email-connection': (context) => const EmailConnectionScreen(),
               '/bank-accounts': (context) => const BankAccountsScreen(),

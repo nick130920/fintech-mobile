@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/storage_service.dart';
@@ -14,6 +16,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final localeProvider = Provider.of<LocaleProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
           const Divider(height: 40),
           _buildSectionTitle(context, 'Configuración'),
           const SizedBox(height: 8),
-          _buildSettingsOptions(context),
+          _buildSettingsOptions(context, localeProvider),
           const Divider(height: 40),
           _buildSectionTitle(context, 'Apariencia'),
           const SizedBox(height: 8),
@@ -55,6 +58,9 @@ class ProfileScreen extends StatelessWidget {
     
     if (user == null) return const SizedBox.shrink();
     
+    final avatarUrl =
+        'https://robohash.org/${Uri.encodeComponent(user.email)}.png?set=set4&size=220x220';
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -67,17 +73,30 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 60,
               height: 60,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.person,
-                size: 30,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: avatarUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, _) => Container(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  errorWidget: (context, _, __) => Container(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -229,7 +248,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsOptions(BuildContext context) {
+  Widget _buildSettingsOptions(BuildContext context, LocaleProvider localeProvider) {
+    final localeLabel = localeProvider.locale.languageCode == 'en' ? 'English' : 'Español';
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -257,9 +277,7 @@ class ProfileScreen extends StatelessWidget {
             title: const Text('Notificaciones'),
             subtitle: const Text('Gestionar alertas y avisos'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // TODO: Implementar pantalla de notificaciones
-            },
+            onTap: () => Navigator.pushNamed(context, '/notification-settings'),
           ),
           const Divider(height: 1),
           ListTile(
@@ -277,11 +295,9 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             title: const Text('Idioma'),
-            subtitle: const Text('Español (Colombia)'),
+            subtitle: Text(localeLabel),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // TODO: Implementar cambio de idioma
-            },
+            onTap: () => Navigator.pushNamed(context, '/language-settings'),
           ),
         ],
       ),
