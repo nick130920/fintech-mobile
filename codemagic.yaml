@@ -78,6 +78,13 @@ workflows:
             echo "Build: $CM_BUILD_ID"
             echo "Commit: $CM_COMMIT"
             echo
+            echo "$ES_NOTES"
+          } > release_notes_es-419.txt
+
+          {
+            echo "Build: $CM_BUILD_ID"
+            echo "Commit: $CM_COMMIT"
+            echo
             echo "$EN_NOTES"
           } > release_notes_en-US.txt
       - name: Flutter analyze
