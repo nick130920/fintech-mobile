@@ -38,18 +38,106 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _pickMonth() async {
-    final picked = await showDatePicker(
+    final now = DateTime.now();
+    int tempYear = _selectedMonth.year;
+    int tempMonth = _selectedMonth.month;
+
+    await showDialog<void>(
       context: context,
-      initialDate: _selectedMonth,
-      firstDate: DateTime(DateTime.now().year - 2),
-      lastDate: DateTime(DateTime.now().year, DateTime.now().month + 1),
-      initialDatePickerMode: DatePickerMode.day,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final theme = Theme.of(context);
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Navegación de año
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: tempYear > now.year - 2
+                              ? () => setDialogState(() => tempYear--)
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                        Text(
+                          '$tempYear',
+                          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          onPressed: tempYear < now.year
+                              ? () => setDialogState(() => tempYear++)
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Grid de meses
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        childAspectRatio: 2.2,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, i) {
+                        final month = i + 1;
+                        final isFuture = tempYear == now.year && month > now.month;
+                        final isSelected = tempYear == _selectedMonth.year && month == _selectedMonth.month;
+                        return InkWell(
+                          onTap: isFuture ? null : () {
+                            tempMonth = month;
+                            Navigator.of(context).pop();
+                            setState(() {
+                              _selectedMonth = DateTime(tempYear, tempMonth, 1);
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.outline.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              DateFormat('MMM', 'es').format(DateTime(tempYear, month)),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? theme.colorScheme.onPrimary
+                                    : isFuture
+                                        ? theme.colorScheme.onSurface.withValues(alpha: 0.3)
+                                        : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedMonth = DateTime(picked.year, picked.month, 1);
-      });
-    }
   }
 
   Future<void> _showExportSheet() async {
@@ -186,7 +274,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         children: [
           _buildHeader(),
-          const Expanded(child: OverviewTabWidget()),
+          Expanded(child: OverviewTabWidget(selectedMonth: _selectedMonth)),
         ],
       ),
     );

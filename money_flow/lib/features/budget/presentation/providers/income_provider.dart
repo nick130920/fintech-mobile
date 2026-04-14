@@ -238,11 +238,11 @@ class IncomeProvider with ChangeNotifier {
   }
 
   // Get total income for current month
-  double get currentMonthIncome {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 0);
-    
+  double get currentMonthIncome => getIncomeForMonth(DateTime.now());
+
+  double getIncomeForMonth(DateTime month) {
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 0);
     return getIncomesForDateRange(startOfMonth, endOfMonth)
         .fold(0.0, (sum, income) => sum + income.amount);
   }

@@ -127,7 +127,7 @@ class CurrencySelector extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Detectamos tu ubicación automáticamente',
+                        'Moneda detectada según tu ubicación',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -232,27 +232,27 @@ class CurrencySelector extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (currencyProvider.isDetecting)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Detectando tu ubicación...',
-                            style: TextStyle(
-                              fontSize: 12, 
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  const SizedBox(height: 12),
+                  currencyProvider.isDetecting
+                      ? Row(
+                          children: [
+                            const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Detectando tu ubicación...',
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                             ),
+                          ],
+                        )
+                      : TextButton.icon(
+                          onPressed: () => currencyProvider.retryLocationDetection(),
+                          icon: const Icon(Icons.my_location, size: 16),
+                          label: const Text('Detectar moneda por ubicación'),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
                 ],
               ),
             ),

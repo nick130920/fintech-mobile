@@ -41,7 +41,9 @@ Widget _stitchGlassCard(BuildContext context, {required Widget child, EdgeInsets
 /// Pestaña Resumen alineada con diseño Stitch: Balance Mensual, Tendencia de Gastos,
 /// Categorías (scroll horizontal) y Detalle por categoría.
 class OverviewTabWidget extends StatefulWidget {
-  const OverviewTabWidget({super.key});
+  final DateTime selectedMonth;
+
+  const OverviewTabWidget({super.key, required this.selectedMonth});
 
   @override
   State<OverviewTabWidget> createState() => _OverviewTabWidgetState();
@@ -52,17 +54,26 @@ class _OverviewTabWidgetState extends State<OverviewTabWidget> {
   bool _showGastos = true; // pill activo: GASTOS
 
   @override
+  void didUpdateWidget(OverviewTabWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedMonth != widget.selectedMonth) {
+      setState(() => _selectedCategory = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _StitchBalanceCard(),
+          _StitchBalanceCard(selectedMonth: widget.selectedMonth),
           const SizedBox(height: 24),
-          const _StitchTrendSection(),
+          _StitchTrendSection(selectedMonth: widget.selectedMonth),
           const SizedBox(height: 24),
           _StitchCategorySection(
+            selectedMonth: widget.selectedMonth,
             selectedCategory: _selectedCategory,
             showGastos: _showGastos,
             onCategorySelected: (c) => setState(() => _selectedCategory = c),
@@ -70,6 +81,7 @@ class _OverviewTabWidgetState extends State<OverviewTabWidget> {
           ),
           const SizedBox(height: 24),
           _StitchDetalleSection(
+            selectedMonth: widget.selectedMonth,
             selectedCategory: _selectedCategory,
             onClearDetail: () => setState(() => _selectedCategory = null),
           ),
@@ -81,7 +93,8 @@ class _OverviewTabWidgetState extends State<OverviewTabWidget> {
 
 /// Card "Balance Mensual" estilo Stitch: rounded-2xl, barras h-1.5 (6px), track slate.
 class _StitchBalanceCard extends StatelessWidget {
-  const _StitchBalanceCard();
+  final DateTime selectedMonth;
+  const _StitchBalanceCard({required this.selectedMonth});
 
   @override
   Widget build(BuildContext context) {
@@ -89,8 +102,8 @@ class _StitchBalanceCard extends StatelessWidget {
 
     return Consumer4<ExpenseProvider, CurrencyProvider, DashboardProvider, IncomeProvider>(
       builder: (context, expenseProvider, currencyProvider, dashboardProvider, incomeProvider, _) {
-        final monthlyIncome = incomeProvider.currentMonthIncome;
-        final monthlyExpenses = expenseProvider.monthlyTotal;
+        final monthlyIncome = incomeProvider.getIncomeForMonth(selectedMonth);
+        final monthlyExpenses = expenseProvider.getMonthlyTotalForMonth(selectedMonth);
         final netBalance = monthlyIncome - monthlyExpenses;
         final trend = dashboardProvider.spendingTrend;
         final maxAmount = monthlyIncome > monthlyExpenses ? monthlyIncome : (monthlyExpenses > 0 ? monthlyExpenses : 1.0);
@@ -287,7 +300,8 @@ class _StitchBalanceCard extends StatelessWidget {
 
 /// Sección "Tendencia de Gastos" con 10 barras usando datos reales del mes (ExpenseProvider).
 class _StitchTrendSection extends StatelessWidget {
-  const _StitchTrendSection();
+  final DateTime selectedMonth;
+  const _StitchTrendSection({required this.selectedMonth});
 
   /// Opacidades tipo Stitch (de sutil a fuerte) para cada barra.
   static const List<double> _alphas = [0.1, 0.1, 0.2, 0.1, 0.4, 0.1, 0.3, 0.1, 0.6, 1.0];
@@ -298,11 +312,12 @@ class _StitchTrendSection extends StatelessWidget {
     double amount,
     ExpenseProvider expenseProvider,
     CurrencyProvider currencyProvider,
+    DateTime selectedMonth,
   ) {
     final theme = Theme.of(context);
-    final (startDay, endDay) = expenseProvider.getPeriodDayRange(periodIndex);
-    final expenses = expenseProvider.getMonthlyExpensesInPeriod(periodIndex);
-    final monthName = DateFormat('MMMM', 'es').format(DateTime(DateTime.now().year, DateTime.now().month, 1));
+    final (startDay, endDay) = expenseProvider.getPeriodDayRangeForMonth(selectedMonth, periodIndex);
+    final expenses = expenseProvider.getExpensesInPeriodForMonth(selectedMonth, periodIndex);
+    final monthName = DateFormat('MMMM', 'es').format(selectedMonth);
 
     showModalBottomSheet(
       context: context,
@@ -431,7 +446,7 @@ class _StitchTrendSection extends StatelessWidget {
 
     return Consumer2<ExpenseProvider, CurrencyProvider>(
       builder: (context, expenseProvider, currencyProvider, _) {
-        final amounts = expenseProvider.monthlyExpensesByPeriod;
+        final amounts = expenseProvider.getExpensesByPeriodForMonth(selectedMonth);
         final maxAmount = amounts.isEmpty
             ? 0.0
             : amounts.reduce((a, b) => a > b ? a : b);
@@ -491,6 +506,7 @@ class _StitchTrendSection extends StatelessWidget {
                                       amount,
                                       expenseProvider,
                                       currencyProvider,
+                                      selectedMonth,
                                     ),
                                     behavior: HitTestBehavior.opaque,
                                     child: Container(
@@ -553,12 +569,14 @@ class _StitchTrendSection extends StatelessWidget {
 /// Categorías: título, subtítulo, pills GASTOS/INGRESOS, scroll horizontal de cards.
 class _StitchCategorySection extends StatelessWidget {
   const _StitchCategorySection({
+    required this.selectedMonth,
     required this.selectedCategory,
     required this.showGastos,
     required this.onCategorySelected,
     required this.onPillChanged,
   });
 
+  final DateTime selectedMonth;
   final CategoryModel? selectedCategory;
   final bool showGastos;
   final ValueChanged<CategoryModel?> onCategorySelected;
@@ -570,8 +588,8 @@ class _StitchCategorySection extends StatelessWidget {
 
     return Consumer2<ExpenseProvider, CurrencyProvider>(
       builder: (context, expenseProvider, currencyProvider, _) {
-        final topCategories = expenseProvider.topCategories;
-        final total = expenseProvider.monthlyTotal;
+        final topCategories = expenseProvider.getTopCategoriesForMonth(selectedMonth);
+        final total = expenseProvider.getMonthlyTotalForMonth(selectedMonth);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,10 +813,12 @@ class _CategoryCard extends StatelessWidget {
 /// Detalle: "Detalle: [categoría]" + LIMPIAR + lista con dividers.
 class _StitchDetalleSection extends StatelessWidget {
   const _StitchDetalleSection({
+    required this.selectedMonth,
     this.selectedCategory,
     required this.onClearDetail,
   });
 
+  final DateTime selectedMonth;
   final CategoryModel? selectedCategory;
   final VoidCallback onClearDetail;
 
@@ -808,14 +828,14 @@ class _StitchDetalleSection extends StatelessWidget {
 
     return Consumer2<ExpenseProvider, CurrencyProvider>(
       builder: (context, expenseProvider, currencyProvider, _) {
-        final topCategories = expenseProvider.topCategories;
+        final topCategories = expenseProvider.getTopCategoriesForMonth(selectedMonth);
         final effectiveCategory = selectedCategory ??
             (topCategories.isNotEmpty ? topCategories[0]['category'] as CategoryModel? : null);
         final categoryName = effectiveCategory?.displayName.isNotEmpty == true
             ? effectiveCategory!.displayName
             : effectiveCategory?.name ?? '—';
         final detailExpenses = effectiveCategory != null
-            ? expenseProvider.monthlyExpenses
+            ? expenseProvider.getExpensesForMonth(selectedMonth)
                 .where((e) => e.category.id == effectiveCategory.id && e.isConfirmed)
                 .toList()
             : <ExpenseModel>[];

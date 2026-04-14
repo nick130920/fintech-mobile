@@ -21,14 +21,15 @@ class CurrencyProvider with ChangeNotifier {
     _setDetecting(true);
 
     try {
-      // Cargar catalogo del backend (con cache)
       await CurrencyService.fetchCatalogFromBackend();
 
       final savedCurrency = await CurrencyService.getSavedCurrency();
       _selectedCurrency = savedCurrency;
 
+      // Si el usuario no tiene moneda guardada, detectar por IP automáticamente
+      // (sin pedir ningún permiso al usuario).
       if (_selectedCurrency.code == CurrencyService.defaultCurrency.code) {
-        await _detectCurrencyFromLocation();
+        await _detectCurrencyFromIP();
       }
 
       _clearError();
@@ -39,6 +40,24 @@ class CurrencyProvider with ChangeNotifier {
     _setDetecting(false);
   }
 
+  Future<void> _detectCurrencyFromIP() async {
+    try {
+      final currencyCode = await CurrencyService.detectCurrencyFromIP();
+      if (currencyCode != null) {
+        final currency = CurrencyService.getCurrencyByCode(currencyCode);
+        if (currency != null && currency.code != CurrencyService.defaultCurrency.code) {
+          _selectedCurrency = currency;
+          _hasDetectedLocation = true;
+          await CurrencyService.saveCurrency(currency);
+          notifyListeners();
+        }
+      }
+    } catch (_) {
+      // Silencioso: si falla la detección por IP, el usuario elige manualmente.
+    }
+  }
+
+  // Llamado explícitamente desde el selector cuando el usuario toca "Detectar por ubicación GPS"
   Future<void> _detectCurrencyFromLocation() async {
     try {
       final detectedCurrency = await CurrencyService.detectCurrencyFromLocation();
