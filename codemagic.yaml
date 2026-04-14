@@ -14,6 +14,7 @@ workflows:
         - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS)
         # Opcional: grupo con SENTRY_DSN (secure) si no lo defines a nivel de app/equipo
       vars:
+        CM_CLONE_DEPTH: 100
         # GlitchTip/Sentry: crea SENTRY_DSN en Codemagic (App settings → Environment variables,
         # Secure: sí). No commitees el DSN en este archivo.
         SENTRY_ENVIRONMENT: production
@@ -33,6 +34,52 @@ workflows:
         script: |
           cd money_flow
           flutter packages pub get
+      - name: Generate release notes
+        script: |
+          git fetch --all --tags
+
+          PREV_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | sed -n 2p)
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..HEAD"
+          else
+            RANGE="HEAD~20..HEAD"
+          fi
+
+          ES_TRAILERS=$(git log "$RANGE" --format=%B | sed -n 's/^RN-es:[[:space:]]*//p')
+          EN_TRAILERS=$(git log "$RANGE" --format=%B | sed -n 's/^RN-en:[[:space:]]*//p')
+
+          if [ -n "$ES_TRAILERS" ]; then
+            ES_NOTES=$(echo "$ES_TRAILERS" | sed 's/^/- /')
+          else
+            ES_NOTES=$(git log "$RANGE" --pretty=format:"- %s")
+          fi
+
+          if [ -n "$EN_TRAILERS" ]; then
+            EN_NOTES=$(echo "$EN_TRAILERS" | sed 's/^/- /')
+          else
+            EN_NOTES=$(git log "$RANGE" --pretty=format:"- %s")
+          fi
+
+          if [ -z "$ES_NOTES" ]; then
+            ES_NOTES="- Mejoras internas y correcciones menores."
+          fi
+          if [ -z "$EN_NOTES" ]; then
+            EN_NOTES="- Internal improvements and minor bug fixes."
+          fi
+
+          {
+            echo "Build: $CM_BUILD_ID"
+            echo "Commit: $CM_COMMIT"
+            echo
+            echo "$ES_NOTES"
+          } > release_notes_es-ES.txt
+
+          {
+            echo "Build: $CM_BUILD_ID"
+            echo "Commit: $CM_COMMIT"
+            echo
+            echo "$EN_NOTES"
+          } > release_notes_en-US.txt
       - name: Flutter analyze
         script: |
           cd money_flow
@@ -65,11 +112,11 @@ workflows:
           - namc1309@gmail.com
         notify:
           success: true # To not receive a notification when a build succeeds
-          failure: false # To not receive a notification when a build fails
+          failure: true # To not receive a notification when a build fails
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: $GOOGLE_PLAY_TRACK
-        submit_as_draft: true
+        submit_as_draft: false
 
   ios-workflow:
     name: iOS Workflow
@@ -132,7 +179,7 @@ workflows:
           - namc1309@gmail.com
         notify:
           success: true
-          failure: false
+          failure: true
       app_store_connect:
         auth: integration
         
