@@ -1,50 +1,86 @@
+/// Configuración de pinning TLS para la API de producción.
+///
+/// Estrategia de pinning en capas (de más específico a más amplio):
+///
+/// 1. [pinnedLeafCertificatePem] — Cert leaf actual del servidor.
+///    Vence cada ~90 días. Hay que rotarlo aquí cuando Railway lo renueva.
+///    Cuando se actualice, idealmente mantener el leaf anterior unas semanas
+///    para usuarios que aún no actualizaron la app.
+///
+/// 2. [letsEncryptE7IntermediatePem] / [letsEncryptR12IntermediatePem] —
+///    Intermedios actuales de Let's Encrypt (ECDSA y RSA respectivamente).
+///    Railway puede rotar entre ambos sin avisar; pinear los dos garantiza
+///    que la app siga funcionando aunque cambien la criptografía del leaf.
+///
+/// 3. [isrgRootX1Pem] — Root de Let's Encrypt (vence 2035-06-04).
+///    Pin de último recurso: si Let's Encrypt introduce un nuevo intermedio
+///    (R13, R14, E8, E9...) firmado por X1, la conexión sigue siendo válida
+///    sin necesidad de publicar una nueva versión de la app.
+///
+/// Estos certificados se cargan en un [SecurityContext] sin roots del sistema
+/// para forzar pinning estricto contra Let's Encrypt.
 class ApiSecurityConfig {
-  // Certificado leaf actual de fintech-production-5841.up.railway.app.
-  // Emitido: 2026-04-05 | Vence: 2026-07-04 (Let's Encrypt, emisor R12)
-  // Cuando Railway rote el cert, agregar el nuevo aquí y mantener este
-  // hasta que todos los usuarios hayan actualizado la app.
+  /// Certificado leaf actual de `*.up.railway.app`.
+  /// Emitido: 2026-05-04 | Vence: 2026-08-02 | Emisor: Let's Encrypt E7 (ECDSA).
   static const String pinnedLeafCertificatePem = '''
 -----BEGIN CERTIFICATE-----
-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
+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
 -----END CERTIFICATE-----
 ''';
 
-  // CA intermedia Let's Encrypt R12.
-  // Vence: 2027-03-12 — solo cambia si Let's Encrypt rota su propia CA.
-  // Actúa como pin de backup: si el leaf rota y la app no fue actualizada aún,
-  // la conexión sigue siendo válida porque el emisor (R12) está en la cadena.
-  static const String pinnedIntermediateCaPem = '''
+  /// Intermedio Let's Encrypt **E7** (ECDSA), cross-signed por ISRG Root X1.
+  /// Vence: 2027-03-12. Activo en la cadena actual del servidor.
+  static const String letsEncryptE7IntermediatePem = '''
+-----BEGIN CERTIFICATE-----
+MIIEVzCCAj+gAwIBAgIRAKp18eYrjwoiCWbTi7/UuqEwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjQwMzEzMDAwMDAw
+WhcNMjcwMzEyMjM1OTU5WjAyMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg
+RW5jcnlwdDELMAkGA1UEAxMCRTcwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARB6AST
+CFh/vjcwDMCgQer+VtqEkz7JANurZxLP+U9TCeioL6sp5Z8VRvRbYk4P1INBmbef
+QHJFHCxcSjKmwtvGBWpl/9ra8HW0QDsUaJW2qOJqceJ0ZVFT3hbUHifBM/2jgfgw
+gfUwDgYDVR0PAQH/BAQDAgGGMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+ATASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBSuSJ7chx1EoG/aouVgdAR4
+wpwAgDAfBgNVHSMEGDAWgBR5tFnme7bl5AFzgAiIyBpY9umbbjAyBggrBgEFBQcB
+AQQmMCQwIgYIKwYBBQUHMAKGFmh0dHA6Ly94MS5pLmxlbmNyLm9yZy8wEwYDVR0g
+BAwwCjAIBgZngQwBAgEwJwYDVR0fBCAwHjAcoBqgGIYWaHR0cDovL3gxLmMubGVu
+Y3Iub3JnLzANBgkqhkiG9w0BAQsFAAOCAgEAjx66fDdLk5ywFn3CzA1w1qfylHUD
+aEf0QZpXcJseddJGSfbUUOvbNR9N/QQ16K1lXl4VFyhmGXDT5Kdfcr0RvIIVrNxF
+h4lqHtRRCP6RBRstqbZ2zURgqakn/Xip0iaQL0IdfHBZr396FgknniRYFckKORPG
+yM3QKnd66gtMst8I5nkRQlAg/Jb+Gc3egIvuGKWboE1G89NTsN9LTDD3PLj0dUMr
+OIuqVjLB8pEC6yk9enrlrqjXQgkLEYhXzq7dLafv5Vkig6Gl0nuuqjqfp0Q1bi1o
+yVNAlXe6aUXw92CcghC9bNsKEO1+M52YY5+ofIXlS/SEQbvVYYBLZ5yeiglV6t3S
+M6H+vTG0aP9YHzLn/KVOHzGQfXDP7qM5tkf+7diZe7o2fw6O7IvN6fsQXEQQj8TJ
+UXJxv2/uJhcuy/tSDgXwHM8Uk34WNbRT7zGTGkQRX0gsbjAea/jYAoWv0ZvQRwpq
+Pe79D/i7Cep8qWnA+7AE/3B3S/3dEEYmc0lpe1366A/6GEgk3ktr9PEoQrLChs6I
+tu3wnNLB2euC8IKGLQFpGtOO/2/hiAKjyajaBP25w1jF0Wl8Bbqne3uZ2q1GyPFJ
+YRmT7/OXpmOH/FVLtwS+8ng1cAmpCujPwteJZNcDG0sF2n/sc0+SQf49fdyUK0ty
++VUwFj9tmWxyR/M=
+-----END CERTIFICATE-----
+''';
+
+  /// Intermedio Let's Encrypt **R12** (RSA), firmado por ISRG Root X1.
+  /// Vence: 2027-03-12. Sigue pineado como respaldo por si Railway vuelve a
+  /// emitir certificados firmados por R12 en una rotación futura.
+  static const String letsEncryptR12IntermediatePem = '''
 -----BEGIN CERTIFICATE-----
 MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
 TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
@@ -75,4 +111,52 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
 0zrLnOrAj/dfrlEWRhCvAgbuwLZX1A2sjNjXoPOHbsPiy+lO1KF8/XY7
 -----END CERTIFICATE-----
 ''';
+
+  /// Root de Let's Encrypt **ISRG Root X1** (RSA, vence 2035-06-04).
+  /// Cualquier certificado emitido por Let's Encrypt encadena hasta este root,
+  /// por lo que pinear X1 absorbe rotaciones futuras de intermedios sin
+  /// requerir nueva versión de la app.
+  static const String isrgRootX1Pem = '''
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----
+''';
+
+  /// Lista ordenada de certificados que se cargan en el [SecurityContext].
+  /// El orden no afecta a la validación; cualquier match anclado al chain
+  /// presentado por el servidor habilita la conexión.
+  static const List<String> trustedCertificates = [
+    pinnedLeafCertificatePem,
+    letsEncryptE7IntermediatePem,
+    letsEncryptR12IntermediatePem,
+    isrgRootX1Pem,
+  ];
 }

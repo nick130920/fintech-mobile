@@ -36,13 +36,11 @@ class ApiService {
 
   static http.Client _buildPinnedClient() {
     final securityContext = SecurityContext(withTrustedRoots: false);
-    // Cargamos el leaf actual + la CA intermedia (R12) como backup.
-    // Así, si Railway rota el leaf antes de que todos actualicen la app,
-    // la conexión sigue siendo válida mientras el emisor sea R12 (vence 2027-03-12).
-    for (final pem in [
-      ApiSecurityConfig.pinnedLeafCertificatePem,
-      ApiSecurityConfig.pinnedIntermediateCaPem,
-    ]) {
+    // Cargamos en capas: leaf actual + intermedios E7/R12 + root ISRG X1.
+    // Cualquier coincidencia con el chain presentado por el servidor permite
+    // validar la conexión, así sobrevivimos a rotaciones del leaf y de los
+    // intermedios de Let's Encrypt sin necesidad de publicar nueva versión.
+    for (final pem in ApiSecurityConfig.trustedCertificates) {
       securityContext.setTrustedCertificatesBytes(
         Uint8List.fromList(utf8.encode(pem)),
       );
