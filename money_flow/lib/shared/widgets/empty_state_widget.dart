@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -18,38 +21,37 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: AppSpacing.screen,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+              color: scheme.onSurface.withValues(alpha: 0.35),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
+              style: AppTypography.titleMd.copyWith(
                 fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: scheme.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.step2),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+              style: AppTypography.bodyMd.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.65),
               ),
             ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               ElevatedButton(
                 onPressed: onAction,
                 child: Text(actionLabel!),

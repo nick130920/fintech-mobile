@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -21,25 +24,30 @@ class CustomButton extends StatelessWidget {
     this.backgroundColor,
     this.textColor,
     this.height = 48,
-    this.fontSize = 16,
-    this.fontWeight = FontWeight.w700,
+    this.fontSize,
+    this.fontWeight,
     this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final baseStyle = AppTypography.titleSm;
+    final resolvedStyle = baseStyle.copyWith(
+      fontSize: fontSize ?? baseStyle.fontSize,
+      fontWeight: fontWeight ?? FontWeight.w700,
+    );
+
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       height: height,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
-          foregroundColor: textColor ?? Theme.of(context).colorScheme.onPrimary,
-          textStyle: TextStyle(
-            fontSize: fontSize,
-            fontWeight: fontWeight,
-          ),
+          backgroundColor: backgroundColor ?? scheme.primary,
+          foregroundColor: textColor ?? scheme.onPrimary,
+          textStyle: resolvedStyle,
+          padding: padding,
         ),
         child: isLoading
             ? const SizedBox(
@@ -47,7 +55,7 @@ class CustomButton extends StatelessWidget {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                 ),
               )
             : Text(text),

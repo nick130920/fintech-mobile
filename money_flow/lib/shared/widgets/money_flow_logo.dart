@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_gradients.dart';
 
 /// Widget personalizable para el logo de MoneyFlow
 /// 
@@ -31,8 +32,8 @@ import '../../core/theme/app_colors.dart';
 /// MoneyFlowLogo(
 ///   size: 100,
 ///   showText: false,
-///   textColor: Colors.white,
-///   logoColor: Colors.blue,
+///   textColor: AppColors.white,
+///   logoColor: AppColors.primary,
 /// )
 /// ```
 class MoneyFlowLogo extends StatelessWidget {
@@ -153,25 +154,13 @@ class MoneyFlowLogoPainter extends CustomPainter {
     late final Paint paint;
     
     if (customColor != null) {
-      // Usar color sólido personalizado
       paint = Paint()
         ..color = customColor!
         ..style = PaintingStyle.fill;
     } else {
-      // Usar el gradiente exacto del SVG original
-      final gradient = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [
-          const Color(0xFF00D4FF), // #00D4FF - Cian
-          const Color(0xFF007BFF), // #007BFF - Azul medio  
-          const Color(0xFF001D6C), // #001D6C - Azul oscuro
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      );
-
       paint = Paint()
-        ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+        ..shader = AppGradients.brandWave
+            .createShader(Rect.fromLTWH(0, 0, size.width, size.height))
         ..style = PaintingStyle.fill;
     }
 
@@ -421,13 +410,13 @@ class MoneyFlowLogoPainter extends CustomPainter {
 /// 
 /// // 5. Logo en tema oscuro (texto blanco)
 /// MoneyFlowLogo.full(
-///   textColor: Colors.white,
+///   textColor: AppColors.white,
 /// )
 /// 
 /// // 6. Logo monocromático
 /// MoneyFlowLogo.iconOnly(
 ///   size: 40,
-///   logoColor: Colors.white,
+///   logoColor: AppColors.white,
 /// )
 /// ```
 /// 

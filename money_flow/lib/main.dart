@@ -14,6 +14,7 @@ import 'core/providers/sms_settings_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/api_service.dart';
 import 'core/services/notification_listener_service.dart';
+import 'core/services/platform_capabilities.dart';
 import 'core/services/sms_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -55,6 +56,10 @@ Future<ProcessSMSBatchWithAIResult?> smsBatchSyncHandler(
   List<SmsInboxItem> items, {
   bool bulkSilent = true,
 }) async {
+  if (!PlatformCapabilities.supportsSmsInbox) {
+    return null;
+  }
+
   final messages = items
       .where((e) => e.body != null && e.body!.trim().isNotEmpty)
       .map(

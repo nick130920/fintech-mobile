@@ -41,6 +41,15 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>MoneyFlow necesita usar Face ID para iniciar sesión de forma segura y rápida.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MoneyFlow usa tu ubicación para sugerir la moneda correcta en tu presupuesto.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MoneyFlow necesita acceso a tus archivos para analizar extractos bancarios en imagen.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

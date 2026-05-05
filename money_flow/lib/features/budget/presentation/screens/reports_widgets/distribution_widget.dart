@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/income_provider.dart';
@@ -21,7 +22,7 @@ class DistributionWidget extends StatelessWidget {
               'Distribución de Ingresos',
               _getIncomeDistribution(incomeProvider),
               currencyProvider,
-              Colors.green[600]!,
+              AppColors.success,
             ),
             const SizedBox(height: 16),
             

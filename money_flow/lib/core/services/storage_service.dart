@@ -42,11 +42,17 @@ class StorageService {
   }
 
   static Future<String?> getAccessToken() async {
-    return await _storage.read(key: _accessTokenKey);
+    final raw = await _storage.read(key: _accessTokenKey);
+    if (raw == null) return null;
+    final t = raw.trim();
+    return t.isEmpty ? null : t;
   }
 
   static Future<String?> getRefreshToken() async {
-    return await _storage.read(key: _refreshTokenKey);
+    final raw = await _storage.read(key: _refreshTokenKey);
+    if (raw == null) return null;
+    final t = raw.trim();
+    return t.isEmpty ? null : t;
   }
 
   static Future<void> clearTokens() async {
@@ -67,6 +73,14 @@ class StorageService {
 
   static Future<void> clearUserData() async {
     await _storage.delete(key: _userDataKey);
+  }
+
+  /// Quita access token y caché de usuario; conserva refresh y preferencias (p. ej. biometría).
+  static Future<void> clearAccessAndUserCache() async {
+    await Future.wait([
+      _storage.delete(key: _accessTokenKey),
+      _storage.delete(key: _userDataKey),
+    ]);
   }
 
   // Clear all data

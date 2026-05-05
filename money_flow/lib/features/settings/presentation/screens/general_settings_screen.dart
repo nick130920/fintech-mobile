@@ -5,6 +5,7 @@ import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/settings_widgets.dart';
@@ -190,12 +191,12 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
+            ? AppColors.white.withValues(alpha: 0.03)
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
+              ? AppColors.white.withValues(alpha: 0.08)
               : theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),
@@ -280,12 +281,12 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
+            ? AppColors.white.withValues(alpha: 0.03)
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
+              ? AppColors.white.withValues(alpha: 0.08)
               : theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),

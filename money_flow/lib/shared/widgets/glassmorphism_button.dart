@@ -2,6 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+
 enum GlassButtonStyle {
   primary,
   secondary,
@@ -27,14 +33,17 @@ class GlassmorphismButton extends StatefulWidget {
     required this.child,
     this.onPressed,
     this.style = GlassButtonStyle.primary,
-    this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacing.step5,
+      vertical: AppSpacing.step4,
+    ),
     this.borderRadius,
     this.width,
     this.height,
     this.color,
     this.enablePulseEffect = true,
     this.enableRippleEffect = true,
-    this.animationDuration = const Duration(milliseconds: 200),
+    this.animationDuration = AppMotion.base,
   });
 
   @override
@@ -70,29 +79,29 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
     );
 
     _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: AppMotion.pulseCycle,
       vsync: this,
     );
 
     _rippleController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: AppMotion.ripple,
       vsync: this,
     );
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.95,
+      end: AppMotion.pressScaleAmount,
     ).animate(CurvedAnimation(
       parent: _pressController,
-      curve: Curves.easeInOut,
+      curve: AppMotion.easeInOut,
     ));
 
     _pulseAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.05,
+      end: AppMotion.pulseMaxScale,
     ).animate(CurvedAnimation(
       parent: _pulseController,
-      curve: Curves.easeInOut,
+      curve: AppMotion.easeInOut,
     ));
 
     _rippleAnimation = Tween<double>(
@@ -100,7 +109,7 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _rippleController,
-      curve: Curves.easeOut,
+      curve: AppMotion.easeOut,
     ));
   }
 
@@ -153,24 +162,24 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
   List<Color> _getGradientColors() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final buttonColor = _getButtonColor();
-    
+
     return switch (widget.style) {
       GlassButtonStyle.primary => [
-        buttonColor.withValues(alpha: isDark ? 0.8 : 0.9),
-        buttonColor.withValues(alpha: isDark ? 0.6 : 0.7),
-      ],
+          buttonColor.withValues(alpha: isDark ? 0.8 : 0.9),
+          buttonColor.withValues(alpha: isDark ? 0.6 : 0.7),
+        ],
       GlassButtonStyle.secondary => [
-        Colors.white.withValues(alpha: isDark ? 0.2 : 0.8),
-        Colors.white.withValues(alpha: isDark ? 0.1 : 0.6),
-      ],
+          AppColors.white.withValues(alpha: isDark ? 0.2 : 0.8),
+          AppColors.white.withValues(alpha: isDark ? 0.1 : 0.6),
+        ],
       GlassButtonStyle.outline => [
-        Colors.white.withValues(alpha: isDark ? 0.1 : 0.3),
-        Colors.white.withValues(alpha: isDark ? 0.05 : 0.2),
-      ],
+          AppColors.white.withValues(alpha: isDark ? 0.1 : 0.3),
+          AppColors.white.withValues(alpha: isDark ? 0.05 : 0.2),
+        ],
       GlassButtonStyle.floating => [
-        buttonColor.withValues(alpha: isDark ? 0.9 : 0.95),
-        buttonColor.withValues(alpha: isDark ? 0.7 : 0.8),
-      ],
+          buttonColor.withValues(alpha: isDark ? 0.9 : 0.95),
+          buttonColor.withValues(alpha: isDark ? 0.7 : 0.8),
+        ],
     };
   }
 
@@ -193,9 +202,11 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     final isEnabled = widget.onPressed != null;
-    
+    final radius = widget.borderRadius ?? AppRadius.allBase;
+
     return AnimatedBuilder(
       animation: Listenable.merge([
         _pressController,
@@ -212,14 +223,14 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
             onTapCancel: isEnabled ? _onTapCancel : null,
             onTap: widget.onPressed,
             child: Transform.scale(
-              scale: _scaleAnimation.value * 
-                     (widget.enablePulseEffect ? _pulseAnimation.value : 1.0),
+              scale: _scaleAnimation.value *
+                  (widget.enablePulseEffect ? _pulseAnimation.value : 1.0),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: AppMotion.base,
                 width: widget.width,
                 height: widget.height,
                 child: ClipRRect(
-                  borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                  borderRadius: radius,
                   child: BackdropFilter(
                     filter: ImageFilter.blur(
                       sigmaX: _getBlurIntensity(),
@@ -227,7 +238,6 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
                     ),
                     child: Stack(
                       children: [
-                        // Main button container
                         Container(
                           padding: widget.padding,
                           decoration: BoxDecoration(
@@ -236,31 +246,31 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
                               end: Alignment.bottomRight,
                               colors: _getGradientColors(),
                             ),
-                            borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                            borderRadius: radius,
                             border: widget.style == GlassButtonStyle.outline
                                 ? Border.all(
-                                    color: (widget.color ?? Theme.of(context).colorScheme.primary)
+                                    color: (widget.color ?? scheme.primary)
                                         .withValues(alpha: 0.8),
                                     width: 2,
                                   )
                                 : Border.all(
-                                    color: isDark 
-                                      ? Colors.white.withValues(alpha: 0.3)
-                                      : Colors.white.withValues(alpha: 0.6),
+                                    color: isDark
+                                        ? AppColors.glassShine
+                                        : AppColors.white.withValues(alpha: 0.6),
                                     width: 1,
                                   ),
                             boxShadow: [
                               if (widget.style == GlassButtonStyle.floating) ...[
-                                BoxShadow(
-                                  color: (widget.color ?? Theme.of(context).colorScheme.primary)
-                                      .withValues(alpha: 0.3),
+                                const BoxShadow(
+                                  color: AppColors.ctaGlow,
                                   blurRadius: 15,
-                                  offset: const Offset(0, 8),
+                                  offset: Offset(0, 8),
                                   spreadRadius: -3,
                                 ),
                               ],
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                                color: AppColors.shadow
+                                    .withValues(alpha: isDark ? 0.3 : 0.1),
                                 blurRadius: _isHovered ? 15 : 10,
                                 offset: Offset(0, _isHovered ? 6 : 4),
                                 spreadRadius: -2,
@@ -269,45 +279,39 @@ class _GlassmorphismButtonState extends State<GlassmorphismButton>
                           ),
                           child: Center(
                             child: DefaultTextStyle(
-                              style: TextStyle(
+                              style: AppTypography.titleSm.copyWith(
                                 color: widget.style == GlassButtonStyle.outline
-                                    ? (widget.color ?? Theme.of(context).colorScheme.primary)
-                                    : Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                                    ? (widget.color ?? scheme.primary)
+                                    : AppColors.white,
                               ),
                               child: widget.child,
                             ),
                           ),
                         ),
-                        
-                        // Ripple effect
                         if (widget.enableRippleEffect && _rippleOffset != null)
                           Positioned.fill(
                             child: ClipRRect(
-                              borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                              borderRadius: radius,
                               child: CustomPaint(
                                 painter: RipplePainter(
                                   offset: _rippleOffset!,
                                   animation: _rippleAnimation,
-                                  color: Colors.white.withValues(alpha: 0.3),
+                                  color: AppColors.glassShine,
                                 ),
                               ),
                             ),
                           ),
-                        
-                        // Hover glow effect
                         if (_isHovered)
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                                borderRadius: radius,
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Colors.white.withValues(alpha: 0.1),
-                                    Colors.white.withValues(alpha: 0.05),
+                                    AppColors.white.withValues(alpha: 0.1),
+                                    AppColors.white.withValues(alpha: 0.05),
                                   ],
                                 ),
                               ),
@@ -352,11 +356,10 @@ class RipplePainter extends CustomPainter {
   @override
   bool shouldRepaint(RipplePainter oldDelegate) {
     return oldDelegate.animation.value != animation.value ||
-           oldDelegate.offset != offset;
+        oldDelegate.offset != offset;
   }
 }
 
-// Helper class for easy button style access
 class GlassButtonStyles {
   static const primary = GlassButtonStyle.primary;
   static const secondary = GlassButtonStyle.secondary;

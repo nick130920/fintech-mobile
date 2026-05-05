@@ -149,16 +149,21 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      final refreshResult = await AuthRepository.attemptTokenRefresh();
-      if (refreshResult == TokenRefreshResult.success) {
+      final refreshOutcome = await AuthRepository.attemptTokenRefresh();
+      if (refreshOutcome.result == TokenRefreshResult.success) {
         final user = await AuthRepository.getProfile();
         _user = user;
         _setStatus(AuthStatus.authenticated);
         return true;
       }
 
-      if (refreshResult == TokenRefreshResult.invalidRefreshToken) {
-        _setError('La sesión biométrica expiró. Inicia sesión de nuevo.');
+      if (refreshOutcome.result == TokenRefreshResult.invalidRefreshToken) {
+        final detail = refreshOutcome.serverMessage;
+        _setError(
+          detail != null && detail.isNotEmpty
+              ? '$detail Inicia sesión con correo y contraseña.'
+              : 'La sesión en el servidor ya no es válida. Inicia sesión con correo y contraseña.',
+        );
         return false;
       }
 
@@ -202,9 +207,8 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setStatus(AuthStatus.loading);
       
-      await AuthRepository.logout();
-      
-      // Si el usuario no quiere mantener las credenciales biométricas, eliminarlas
+      await AuthRepository.logout(keepQuickLogin: keepBiometricCredentials);
+
       if (!keepBiometricCredentials) {
         await StorageService.disableBiometric();
       }
@@ -237,7 +241,10 @@ class AuthProvider extends ChangeNotifier {
       // Red / servidor al renovar: mantener sesión y usuario en caché si existe.
       debugPrint('refreshProfile: sin red o servidor al renovar token, se usa caché');
     } catch (e) {
-      _setError('Error al actualizar perfil: $e');
+      debugPrint('refreshProfile: error sin cerrar sesión local ($e)');
+      if (_user == null) {
+        _setError('Error al actualizar perfil: $e');
+      }
     }
   }
 

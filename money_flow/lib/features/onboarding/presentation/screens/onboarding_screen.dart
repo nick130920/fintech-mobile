@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/services/preferences_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_motion.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/money_flow_logo.dart';
 import '../../data/models/onboarding_page.dart';
 
@@ -37,8 +41,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: AppMotion.medium,
+        curve: AppMotion.easeInOut,
       );
     } else {
       widget.onComplete();
@@ -48,8 +52,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _previousPage() {
     if (_currentPage > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: AppMotion.medium,
+        curve: AppMotion.easeInOut,
       );
     }
   }
@@ -65,10 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             _buildHeader(),
-            
-            // Page Content
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -83,8 +84,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-            
-            // Footer
             _buildFooter(),
           ],
         ),
@@ -93,35 +92,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.cardPadding,
+        vertical: AppSpacing.inlineGap,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Botón de atrás
           IconButton(
             onPressed: _currentPage > 0 ? _previousPage : null,
             icon: const Icon(Icons.arrow_back),
             style: IconButton.styleFrom(
-              backgroundColor: _currentPage > 0 
-                  ? AppColors.slate100 
+              backgroundColor: _currentPage > 0
+                  ? AppColors.slate100
                   : Colors.transparent,
-              foregroundColor: _currentPage > 0 
-                  ? AppColors.slate800 
+              foregroundColor: _currentPage > 0
+                  ? AppColors.slate800
                   : AppColors.slate300,
               disabledForegroundColor: AppColors.slate300,
             ),
           ),
-          
-          // Logo pequeño
           const MoneyFlowLogo(size: 40, showText: false),
-          
-          // Botón de saltar
           TextButton(
             onPressed: _skipToEnd,
             child: Text(
               'Saltar',
-              style: TextStyle(
+              style: AppTypography.labelLg.copyWith(
                 color: AppColors.slate600,
                 fontWeight: FontWeight.w500,
               ),
@@ -134,45 +131,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildPage(OnboardingPageModel page) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: AppSpacing.horizontalScreen,
       child: Column(
         children: [
-          const SizedBox(height: 40),
-          
-          // Illustration
+          const SizedBox(height: AppSpacing.step7),
           page.illustration,
-          
-          const SizedBox(height: 40),
-          
-          // Title
+          const SizedBox(height: AppSpacing.step7),
           Text(
             page.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: AppTypography.displaySm.copyWith(
               color: AppColors.slate900,
               fontWeight: FontWeight.w700,
-              fontSize: 32,
               height: 1.2,
               letterSpacing: -0.5,
             ),
             textAlign: TextAlign.center,
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Description
+          const SizedBox(height: AppSpacing.step4),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 320),
             child: Text(
               page.description,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: AppTypography.bodyLg.copyWith(
                 color: AppColors.slate600,
-                fontSize: 16,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          
           const SizedBox(height: 60),
         ],
       ),
@@ -180,16 +166,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.all(24),
+    return Padding(
+      padding: AppSpacing.screen,
       child: Column(
         children: [
-          // Page indicators
           _buildPageIndicator(),
-          
-          const SizedBox(height: 24),
-          
-          // Action button
+          const SizedBox(height: AppSpacing.step5),
           SizedBox(
             width: double.infinity,
             height: 56,
@@ -200,11 +182,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 foregroundColor: AppColors.white,
                 elevation: 8,
                 shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.allBase,
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 18,
+                textStyle: AppTypography.titleMd.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
@@ -223,15 +204,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: List.generate(
         _pages.length,
         (index) => AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          duration: AppMotion.medium,
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.step1),
           width: _currentPage == index ? 32 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: _currentPage == index 
-                ? AppColors.primary 
+            color: _currentPage == index
+                ? AppColors.primary
                 : AppColors.slate300,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: AppRadius.allXs,
           ),
         ),
       ),
@@ -239,7 +220,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// Widget para mostrar el onboarding o ir directo a auth
 class OnboardingWrapper extends StatefulWidget {
   final VoidCallback onComplete;
 
@@ -266,8 +246,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
     setState(() {
       _showOnboarding = !isCompleted;
     });
-    
-    // Si ya completó el onboarding, ir directo a auth
+
     if (isCompleted) {
       widget.onComplete();
     }
@@ -287,7 +266,6 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
     if (_showOnboarding) {
       return OnboardingScreen(onComplete: _completeOnboarding);
     } else {
-      // Si ya vio el onboarding, ir directo a auth
       widget.onComplete();
       return const SizedBox.shrink();
     }

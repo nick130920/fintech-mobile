@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:money_flow/features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'preferences_service.dart';
+import 'platform_capabilities.dart';
 
 /// Servicio para escuchar notificaciones en tiempo real
 /// Este servicio captura notificaciones de bancos y las procesa automáticamente
@@ -54,16 +55,18 @@ class NotificationListenerService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Configurar MethodCallHandler para recibir eventos de Android
-    _platform.setMethodCallHandler(_handleMethodCall);
+    // Configurar MethodCallHandler solo en Android (canal nativo).
+    if (PlatformCapabilities.isAndroid) {
+      _platform.setMethodCallHandler(_handleMethodCall);
+    }
 
-    // Crear canal de notificaciones para Android
-    await _createNotificationChannel();
+    if (PlatformCapabilities.isAndroid) {
+      await _createNotificationChannel();
     
-    // Inicializar Workmanager para tareas en background
-    await Workmanager().initialize(
-      callbackDispatcher,
-    );
+      await Workmanager().initialize(
+        callbackDispatcher,
+      );
+    }
 
     _isInitialized = true;
     debugPrint('✅ NotificationListenerService inicializado');
@@ -125,6 +128,11 @@ class NotificationListenerService {
       await initialize();
     }
 
+    if (!PlatformCapabilities.supportsBankNotificationListener) {
+      debugPrint('Listener de notificaciones bancarias no soportado en esta plataforma.');
+      return false;
+    }
+
     final hasPermission = await requestPermissions();
     if (!hasPermission) {
       return false;
@@ -143,7 +151,9 @@ class NotificationListenerService {
   /// Desactiva el listener de notificaciones
   Future<void> disableListener() async {
     await PreferencesService.setBool(_listenerEnabledKey, false);
-    await Workmanager().cancelAll();
+    if (PlatformCapabilities.isAndroid) {
+      await Workmanager().cancelAll();
+    }
     debugPrint('⏹️ Listener de notificaciones desactivado');
   }
 
@@ -154,6 +164,10 @@ class NotificationListenerService {
 
   /// Registra la tarea de background para procesar notificaciones
   Future<void> _registerBackgroundTask() async {
+    if (!PlatformCapabilities.isAndroid) {
+      return;
+    }
+
     await Workmanager().registerPeriodicTask(
       _backgroundTaskName,
       _backgroundTaskName,
@@ -284,11 +298,18 @@ class NotificationListenerService {
       icon: '@mipmap/ic_launcher',
     );
 
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.active,
+    );
+
     await _flutterLocalNotificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
-      const NotificationDetails(android: androidDetails),
+      const NotificationDetails(android: androidDetails, iOS: iosDetails),
     );
   }
 
@@ -309,6 +330,8 @@ class NotificationListenerService {
     await _notificationStreamController?.close();
     _notificationStreamController = null;
   }
+
+  bool get supportsAutomaticCapture => PlatformCapabilities.supportsAutomaticBankCapture;
 }
 
 /// Callback dispatcher para tareas en background

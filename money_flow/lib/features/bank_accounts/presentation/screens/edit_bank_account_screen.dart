@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 import '../providers/bank_account_provider.dart';
@@ -31,7 +36,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   late bool _isNotificationEnabled;
   bool _isLoading = false;
 
-  final List<String> _availableCurrencies = [
+  static const List<String> _availableCurrencies = [
     'MXN',
     'USD',
     'EUR',
@@ -42,7 +47,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     'BRL',
   ];
 
-  final Map<String, String> _currencyNames = {
+  static const Map<String, String> _currencyNames = {
     'MXN': 'Peso Mexicano (MXN)',
     'USD': 'Dólar Estadounidense (USD)',
     'EUR': 'Euro (EUR)',
@@ -53,29 +58,21 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     'BRL': 'Real Brasileño (BRL)',
   };
 
-  final List<Color> _availableColors = [
-    const Color(0xFF007bff), // Azul
-    const Color(0xFF28a745), // Verde
-    const Color(0xFFdc3545), // Rojo
-    const Color(0xFFffc107), // Amarillo
-    const Color(0xFF6f42c1), // Púrpura
-    const Color(0xFF20c997), // Turquesa
-    const Color(0xFFfd7e14), // Naranja
-    const Color(0xFFe83e8c), // Rosa
-  ];
+  /// Paleta fija de colores de marca para diferenciar cuentas en la UI.
+  /// Centralizada en `AppColors.bankAccountColorPalette`.
+  static const List<Color> _availableColors = AppColors.bankAccountColorPalette;
 
   @override
   void initState() {
     super.initState();
-    
-    // Inicializar controllers con los valores actuales de la cuenta
+
     _bankNameController = TextEditingController(text: widget.account.bankName);
     _accountAliasController = TextEditingController(text: widget.account.accountAlias);
     _notificationPhoneController = TextEditingController(text: widget.account.notificationPhone);
     _notificationEmailController = TextEditingController(text: widget.account.notificationEmail);
     _minAmountController = TextEditingController(text: widget.account.minAmountToNotify.toString());
     _notesController = TextEditingController(text: widget.account.notes);
-    
+
     _selectedColor = widget.account.color;
     _selectedCurrency = widget.account.currency;
     _isNotificationEnabled = widget.account.isNotificationEnabled;
@@ -109,35 +106,32 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
+                : Text(
                     'Guardar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTypography.titleSm.copyWith(fontWeight: FontWeight.w600),
                   ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: AppSpacing.screen,
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 32),
-               _buildBasicInfoSection(),
-               const SizedBox(height: 24),
-               _buildCurrencySection(),
-               const SizedBox(height: 24),
-               _buildColorSection(),
-               const SizedBox(height: 24),
-               _buildNotificationSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.sectionGap),
+              _buildBasicInfoSection(),
+              const SizedBox(height: AppSpacing.step5),
+              _buildCurrencySection(),
+              const SizedBox(height: AppSpacing.step5),
+              _buildColorSection(),
+              const SizedBox(height: AppSpacing.step5),
+              _buildNotificationSection(),
+              const SizedBox(height: AppSpacing.step5),
               _buildOptionalSection(),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.sectionGap),
               _buildSaveButton(),
             ],
           ),
@@ -147,6 +141,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildHeader() {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Container(
@@ -154,32 +149,30 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
           height: 48,
           decoration: BoxDecoration(
             color: Color(int.parse(_selectedColor.replaceFirst('#', '0xFF'))),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.allBase,
           ),
           child: Icon(
             _getAccountIcon(widget.account.type),
-            color: Colors.white,
+            color: AppColors.white,
             size: 24,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.step4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Editar Cuenta',
-                style: TextStyle(
-                  fontSize: 20,
+                style: AppTypography.titleLg.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: scheme.onSurface,
                 ),
               ),
               Text(
                 widget.account.accountNumberMask,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                style: AppTypography.bodyMd.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -190,23 +183,23 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildBasicInfoSection() {
+    final scheme = Theme.of(context).colorScheme;
     return GlassmorphismCard(
       style: GlassStyles.medium,
       enableEntryAnimation: true,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.glass,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Información Básica',
-              style: TextStyle(
-                fontSize: 18,
+              style: AppTypography.titleMd.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: scheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             _buildFormField(
               'Nombre del Banco',
               'Ej: BBVA',
@@ -218,7 +211,7 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             _buildFormField(
               'Alias de la Cuenta',
               'Ej: Mi Cuenta Principal',
@@ -230,10 +223,9 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-            // Campo de solo lectura para el tipo de cuenta
+            const SizedBox(height: AppSpacing.step4),
             _buildReadOnlyField('Tipo de Cuenta', widget.account.typeDisplayName),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             _buildReadOnlyField('Número de Cuenta', widget.account.accountNumberMask),
           ],
         ),
@@ -242,31 +234,30 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildReadOnlyField(String label, String value) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 16,
+          style: AppTypography.titleSm.copyWith(
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: scheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.step2),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.step4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: AppRadius.allBase,
+            border: Border.all(color: scheme.outline.withValues(alpha: 0.3)),
           ),
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            style: AppTypography.bodyLg.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -275,54 +266,37 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildCurrencySection() {
+    final scheme = Theme.of(context).colorScheme;
     return GlassmorphismCard(
       style: GlassStyles.medium,
       enableEntryAnimation: true,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.glass,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Moneda',
-              style: TextStyle(
-                fontSize: 18,
+              style: AppTypography.titleMd.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: scheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             DropdownButtonFormField<String>(
               initialValue: _selectedCurrency,
               decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-                ),
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                border: const OutlineInputBorder(borderRadius: AppRadius.allBase),
+                fillColor: scheme.surfaceContainerHighest,
                 filled: true,
-                prefixIcon: Icon(
-                  Icons.attach_money,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                prefixIcon: Icon(Icons.attach_money, color: scheme.primary),
               ),
               items: _availableCurrencies.map((currency) {
                 return DropdownMenuItem(
                   value: currency,
                   child: Text(
                     _currencyNames[currency] ?? currency,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    style: AppTypography.bodyLg.copyWith(color: scheme.onSurface),
                   ),
                 );
               }).toList(),
@@ -339,26 +313,26 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildColorSection() {
+    final scheme = Theme.of(context).colorScheme;
     return GlassmorphismCard(
       style: GlassStyles.medium,
       enableEntryAnimation: true,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.glass,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Color de Identificación',
-              style: TextStyle(
-                fontSize: 18,
+              style: AppTypography.titleMd.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: scheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.step4),
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: AppSpacing.step3,
+              runSpacing: AppSpacing.step3,
               children: _availableColors.map((color) {
                 final colorHex = '#${color.toARGB32().toRadixString(16).substring(2)}';
                 final isSelected = _selectedColor == colorHex;
@@ -369,20 +343,13 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.allBase,
                       border: isSelected
-                          ? Border.all(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              width: 3,
-                            )
+                          ? Border.all(color: scheme.onSurface, width: 3)
                           : null,
                     ),
                     child: isSelected
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 24,
-                          )
+                        ? const Icon(Icons.check, color: AppColors.white, size: 24)
                         : null,
                   ),
                 );
@@ -395,11 +362,12 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
   }
 
   Widget _buildNotificationSection() {
+    final scheme = Theme.of(context).colorScheme;
     return GlassmorphismCard(
       style: GlassStyles.medium,
       enableEntryAnimation: true,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.glass,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -408,10 +376,9 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                 Expanded(
                   child: Text(
                     'Configuración de Notificaciones',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: AppTypography.titleMd.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: scheme.onSurface,
                     ),
                   ),
                 ),
@@ -422,21 +389,21 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
               ],
             ),
             if (_isNotificationEnabled) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               _buildFormField(
                 'Teléfono para SMS (opcional)',
                 'Ej: +52 55 1234 5678',
                 _notificationPhoneController,
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               _buildFormField(
                 'Email para Notificaciones (opcional)',
                 'Ej: mi@email.com',
                 _notificationEmailController,
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               _buildFormField(
                 'Monto Mínimo para Notificar',
                 'Ej: 100.00',
@@ -464,15 +431,14 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     return ExpansionTile(
       title: Text(
         'Información adicional (opcional)',
-        style: TextStyle(
-          fontSize: 16,
+        style: AppTypography.titleSm.copyWith(
           fontWeight: FontWeight.w600,
           color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.card,
           child: _buildFormField(
             'Notas',
             'Información adicional sobre la cuenta...',
@@ -492,18 +458,18 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
   }) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 16,
+          style: AppTypography.titleSm.copyWith(
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: scheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.step2),
         TextFormField(
           controller: controller,
           validator: validator,
@@ -511,19 +477,8 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-            ),
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            border: const OutlineInputBorder(borderRadius: AppRadius.allBase),
+            fillColor: scheme.surfaceContainerHighest,
             filled: true,
           ),
         ),
@@ -544,15 +499,12 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                 ),
               )
-            : const Text(
+            : Text(
                 'Guardar Cambios',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTypography.titleSm.copyWith(fontWeight: FontWeight.w600),
               ),
       ),
     );
@@ -566,8 +518,8 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     setState(() => _isLoading = true);
 
     final request = UpdateBankAccountRequest(
-      bankName: _bankNameController.text != widget.account.bankName 
-          ? _bankNameController.text 
+      bankName: _bankNameController.text != widget.account.bankName
+          ? _bankNameController.text
           : null,
       accountAlias: _accountAliasController.text != widget.account.accountAlias
           ? _accountAliasController.text
@@ -599,20 +551,10 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Cuenta actualizada exitosamente'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
-      Navigator.of(context).pop(true); // Retornar true para indicar que se actualizó
+      CustomSnackBar.showSuccess(context, 'Cuenta actualizada exitosamente');
+      Navigator.of(context).pop(true);
     } else if (provider.error != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.error!),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      CustomSnackBar.showError(context, provider.error!);
     }
   }
 
@@ -631,4 +573,3 @@ class _EditBankAccountScreenState extends State<EditBankAccountScreen> {
     }
   }
 }
-

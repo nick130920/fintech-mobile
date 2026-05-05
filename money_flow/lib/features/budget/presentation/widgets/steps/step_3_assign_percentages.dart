@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../data/models/category_model.dart';
 import '../../providers/budget_setup_provider.dart';
 
@@ -137,7 +138,7 @@ class Step3AssignPercentages extends StatelessWidget {
         String message;
         
         if (isComplete) {
-          indicatorColor = Colors.green;
+          indicatorColor = AppColors.success;
           message = '¡Perfecto! Suman exactamente 100%';
         } else if (isOver) {
           indicatorColor = Theme.of(context).colorScheme.error;

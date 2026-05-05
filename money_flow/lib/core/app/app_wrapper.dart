@@ -9,6 +9,7 @@ import '../../main.dart';
 import '../../shared/screens/main_screen.dart';
 import '../providers/currency_provider.dart';
 import '../services/notification_listener_service.dart';
+import '../services/platform_capabilities.dart';
 
 class AppWrapper extends StatefulWidget {
   const AppWrapper({super.key});
@@ -116,6 +117,11 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
   }
 
   Future<void> _syncSmsInbox() async {
+    if (!PlatformCapabilities.supportsSmsInbox) {
+      debugPrint('Sincronización SMS omitida: plataforma no soportada.');
+      return;
+    }
+
     // No necesitamos el contexto aquí porque el handler lo obtiene del navigatorKey
     await smsService.syncInbox(
       onInboxBatch: (items) async {

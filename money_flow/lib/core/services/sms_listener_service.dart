@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:telephony/telephony.dart';
 
+import 'platform_capabilities.dart';
 /// Callback para cuando se recibe un SMS en tiempo real
 typedef OnSmsReceivedCallback = void Function(SmsMessage message);
 
@@ -29,14 +29,8 @@ class SmsListenerService {
   /// Returns true if listening started successfully
   Future<bool> startListening(OnSmsReceivedCallback onSmsReceived) async {
     // Only supported on Android
-    if (!Platform.isAndroid) {
+    if (!PlatformCapabilities.supportsRealtimeSmsListener) {
       debugPrint('SMS listening is only supported on Android');
-      return false;
-    }
-
-    // Skip on web
-    if (kIsWeb) {
-      debugPrint('SMS listening is not supported on web');
       return false;
     }
 
@@ -88,7 +82,7 @@ class SmsListenerService {
 
   /// Request necessary permissions for SMS
   Future<bool> requestPermissions() async {
-    if (kIsWeb || !Platform.isAndroid) {
+    if (!PlatformCapabilities.supportsRealtimeSmsListener) {
       return false;
     }
 
@@ -108,7 +102,7 @@ class SmsListenerService {
 
   /// Check if we have SMS permissions
   Future<bool> hasPermissions() async {
-    if (kIsWeb || !Platform.isAndroid) {
+    if (!PlatformCapabilities.supportsRealtimeSmsListener) {
       return false;
     }
 
@@ -118,7 +112,7 @@ class SmsListenerService {
 
   /// Get all SMS messages from inbox
   Future<List<SmsMessage>> getInboxMessages({int? limit}) async {
-    if (kIsWeb || !Platform.isAndroid) {
+    if (!PlatformCapabilities.supportsRealtimeSmsListener) {
       return [];
     }
 

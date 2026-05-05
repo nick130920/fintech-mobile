@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:money_flow/core/theme/app_colors.dart';
+import 'package:money_flow/core/theme/app_radius.dart';
+import 'package:money_flow/core/theme/app_spacing.dart';
+import 'package:money_flow/core/theme/app_typography.dart';
 import 'package:money_flow/features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'package:money_flow/features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'package:money_flow/shared/widgets/glassmorphism_widgets.dart';
@@ -8,10 +12,12 @@ class AutomaticTransactionsStatsWidget extends StatefulWidget {
   const AutomaticTransactionsStatsWidget({super.key});
 
   @override
-  State<AutomaticTransactionsStatsWidget> createState() => _AutomaticTransactionsStatsWidgetState();
+  State<AutomaticTransactionsStatsWidget> createState() =>
+      _AutomaticTransactionsStatsWidgetState();
 }
 
-class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactionsStatsWidget> {
+class _AutomaticTransactionsStatsWidgetState
+    extends State<AutomaticTransactionsStatsWidget> {
   bool _hasLoaded = false;
 
   @override
@@ -35,7 +41,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
     return Consumer<AutomaticTransactionsProvider>(
       builder: (context, provider, child) {
         final stats = provider.stats;
-        
+
         if (stats == null) {
           return _buildLoadingState();
         }
@@ -45,15 +51,15 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
           enableHoverEffect: true,
           enableEntryAnimation: true,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: AppSpacing.glass,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, stats),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.glassPadding),
                 _buildStatsGrid(context, stats),
                 if (provider.pendingCount > 0) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.step4),
                   _buildPendingAlert(context, provider.pendingCount),
                 ],
               ],
@@ -65,51 +71,48 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   }
 
   Widget _buildLoadingState() {
-    return GlassmorphismCard(
+    return const GlassmorphismCard(
       style: GlassStyles.medium,
       child: SizedBox(
         height: 160,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, AutomaticTransactionStats stats) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: scheme.primaryContainer,
+            borderRadius: AppRadius.allBase,
           ),
           child: Icon(
             Icons.auto_awesome,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
+            color: scheme.onPrimaryContainer,
             size: 24,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.step4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Transacciones Automáticas',
-                style: TextStyle(
-                  fontSize: 18,
+                style: AppTypography.titleMd.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: scheme.onSurface,
                 ),
               ),
               Text(
                 'Últimos 30 días',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                style: AppTypography.bodyMd.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -119,7 +122,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
           onPressed: _loadStats,
           icon: Icon(
             Icons.refresh,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            color: scheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -127,6 +130,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   }
 
   Widget _buildStatsGrid(BuildContext context, AutomaticTransactionStats stats) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Column(
       children: [
         Row(
@@ -137,22 +141,22 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
                 'Total',
                 stats.totalAutomatic.toString(),
                 Icons.receipt_long,
-                Theme.of(context).colorScheme.primary,
+                primary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.step3),
             Expanded(
               child: _buildStatCard(
                 context,
                 'Aprobadas',
                 stats.totalApproved.toString(),
                 Icons.check_circle,
-                Colors.green,
+                AppColors.success,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.step3),
         Row(
           children: [
             Expanded(
@@ -161,10 +165,10 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
                 'Pendientes',
                 stats.totalPending.toString(),
                 Icons.pending,
-                Colors.orange,
+                AppColors.warning,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.step3),
             Expanded(
               child: _buildStatCard(
                 context,
@@ -176,7 +180,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.step3),
         _buildApprovalRateCard(context, stats),
       ],
     );
@@ -189,39 +193,34 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
     IconData icon,
     Color color,
   ) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.card,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        color: scheme.surfaceContainerHigh,
+        borderRadius: AppRadius.allBase,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: color,
-              ),
+              Icon(icon, size: 20, color: color),
               const Spacer(),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 20,
+                style: AppTypography.titleLg.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: scheme.onSurface,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.step2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            style: AppTypography.bodySm.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -232,13 +231,14 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   Widget _buildApprovalRateCard(BuildContext context, AutomaticTransactionStats stats) {
     final approvalRate = stats.approvalRate;
     final percentage = (approvalRate * 100).round();
-    
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.card,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        color: scheme.surfaceContainerHigh,
+        borderRadius: AppRadius.allBase,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,31 +250,31 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
                 size: 20,
                 color: _getApprovalRateColor(approvalRate),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.step2),
               Text(
                 'Tasa de Aprobación',
-                style: TextStyle(
-                  fontSize: 14,
+                style: AppTypography.labelLg.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: scheme.onSurface,
                 ),
               ),
               const Spacer(),
               Text(
                 '$percentage%',
-                style: TextStyle(
-                  fontSize: 18,
+                style: AppTypography.titleMd.copyWith(
                   fontWeight: FontWeight.bold,
                   color: _getApprovalRateColor(approvalRate),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.step3),
           LinearProgressIndicator(
             value: approvalRate,
-            backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(_getApprovalRateColor(approvalRate)),
+            backgroundColor: scheme.outline.withValues(alpha: 0.2),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              _getApprovalRateColor(approvalRate),
+            ),
           ),
         ],
       ),
@@ -282,6 +282,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   }
 
   Widget _buildPendingAlert(BuildContext context, int pendingCount) {
+    final scheme = Theme.of(context).colorScheme;
     return GlassmorphismButton(
       style: GlassButtonStyles.outline,
       onPressed: () {
@@ -289,40 +290,38 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.card,
         child: Row(
           children: [
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.warning.withValues(alpha: 0.2),
+                borderRadius: AppRadius.allPill,
               ),
               child: const Icon(
                 Icons.notification_important,
-                color: Colors.orange,
+                color: AppColors.warning,
                 size: 20,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.step4),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '$pendingCount transacciones pendientes',
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: AppTypography.titleSm.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: scheme.onSurface,
                     ),
                   ),
                   Text(
                     'Toca para revisar y aprobar',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    style: AppTypography.bodySm.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -331,7 +330,7 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              color: scheme.onSurface.withValues(alpha: 0.6),
             ),
           ],
         ),
@@ -340,14 +339,14 @@ class _AutomaticTransactionsStatsWidgetState extends State<AutomaticTransactions
   }
 
   Color _getConfidenceColor(double confidence) {
-    if (confidence >= 0.8) return Colors.green;
-    if (confidence >= 0.6) return Colors.orange;
-    return Colors.red;
+    if (confidence >= 0.8) return AppColors.success;
+    if (confidence >= 0.6) return AppColors.warning;
+    return AppColors.error;
   }
 
   Color _getApprovalRateColor(double rate) {
-    if (rate >= 0.8) return Colors.green;
-    if (rate >= 0.6) return Colors.orange;
-    return Colors.red;
+    if (rate >= 0.8) return AppColors.success;
+    if (rate >= 0.6) return AppColors.warning;
+    return AppColors.error;
   }
 }

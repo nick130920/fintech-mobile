@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:money_flow/core/providers/currency_provider.dart';
+import 'package:money_flow/core/theme/app_colors.dart';
 import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
 import 'package:money_flow/features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'package:money_flow/features/budget/data/models/category_model.dart';
 import 'package:money_flow/features/budget/presentation/providers/expense_provider.dart';
+import 'package:money_flow/shared/widgets/custom_snackbar.dart';
 import 'package:money_flow/shared/widgets/glassmorphism_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -451,7 +453,7 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                   ),
                 )
               : const Text(
@@ -459,7 +461,7 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                 ),
           ),
@@ -606,20 +608,10 @@ class _EditPendingTransactionScreenState extends State<EditPendingTransactionScr
       );
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Transacción editada y aprobada exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        CustomSnackBar.showSuccess(context, 'Transacción editada y aprobada exitosamente');
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(provider.error ?? 'Error al procesar la transacción'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        CustomSnackBar.showError(context, provider.error ?? 'Error al procesar la transacción');
       }
     } catch (e) {
       if (mounted) {

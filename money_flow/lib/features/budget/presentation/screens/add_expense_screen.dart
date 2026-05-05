@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/expense_model.dart';
 import '../providers/expense_provider.dart';
@@ -124,12 +127,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
           if (provider.errorMessage != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(provider.errorMessage!),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              CustomSnackBar.showError(context, provider.errorMessage!);
             });
           }
 
@@ -228,7 +226,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                               ),
                             )
                           : Text(
@@ -275,9 +273,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 children: [
                   Text(
                     currencyProvider.currencySymbol,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    style: AppTypography.customAmountHero.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
@@ -289,17 +285,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                       ],
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                      style: AppTypography.customAmountHero.copyWith(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
                         hintText: '0.00',
                         border: InputBorder.none,
-                        hintStyle: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        hintStyle: AppTypography.customAmountHero.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
@@ -408,7 +400,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             hintText: 'Ej: Almuerzo en restaurante',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -416,7 +408,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
             ),
             fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             filled: true,
@@ -678,12 +670,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona una categoría'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      CustomSnackBar.showWarning(context, 'Selecciona una categoría');
       return;
     }
 
@@ -710,12 +697,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       success = await provider.updateExpense(widget.expense!.id, updates);
       
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Gasto actualizado exitosamente!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        CustomSnackBar.showSuccess(context, '¡Gasto actualizado exitosamente!');
         Navigator.of(context).pop();
       }
     } else {
@@ -731,12 +713,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       );
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Gasto registrado exitosamente!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        CustomSnackBar.showSuccess(context, '¡Gasto registrado exitosamente!');
         Navigator.of(context).pop();
       }
     }

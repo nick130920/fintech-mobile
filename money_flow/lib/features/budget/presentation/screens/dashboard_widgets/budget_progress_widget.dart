@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_motion.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../../../../core/providers/currency_provider.dart';
@@ -33,8 +37,7 @@ class BudgetProgressWidget extends StatelessWidget {
           'Es el presupuesto que te queda para el mes dividido entre los días que faltan. '
           'Indica cuánto podrías gastar por día de media para no pasarte del presupuesto mensual.\n\n'
           'Por ejemplo: si te quedan \$300 y faltan 10 días, tu rollover diario sería \$30.',
-          style: TextStyle(
-            fontSize: 14,
+          style: AppTypography.bodyMd.copyWith(
             height: 1.4,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -44,7 +47,7 @@ class BudgetProgressWidget extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Entendido',
-              style: TextStyle(
+              style: AppTypography.labelLg.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -64,8 +67,8 @@ class BudgetProgressWidget extends StatelessWidget {
           style: GlassStyles.medium,
           enableEntryAnimation: true,
           enableHoverEffect: true,
-          animationDuration: const Duration(milliseconds: 1200),
-          padding: const EdgeInsets.all(24),
+          animationDuration: AppMotion.entryCardCinematic,
+          padding: AppSpacing.cardLg,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -83,68 +86,57 @@ class BudgetProgressWidget extends StatelessWidget {
                 children: [
                   Text(
                     'PRESUPUESTO MENSUAL',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    style: AppTypography.customEyebrow,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.step1),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
                         currencyProvider.formatAmount(dashboardProvider.budgetSpent),
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                        style: AppTypography.customAmountHero.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.step2),
                       Text(
                         '/ ${currencyProvider.formatAmount(dashboardProvider.budgetTotal)}',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: AppTypography.bodyMd.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.step4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Gastado vs Total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        style: AppTypography.labelMd.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
                         '$progressPercent%',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: AppTypography.labelMd.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.step2),
                   Container(
                     height: 10,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.progressBackground,
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(AppRadius.xs + 1),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(AppRadius.xs + 1),
                       child: LinearProgressIndicator(
                         value: dashboardProvider.budgetProgressValue.clamp(0.0, 1.0),
                         backgroundColor: Colors.transparent,
@@ -153,14 +145,17 @@ class BudgetProgressWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.step4),
                   GestureDetector(
                     onTap: () => _showRolloverInfo(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.step3,
+                        vertical: AppSpacing.step1 + 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: AppRadius.allXl,
                         border: Border.all(
                           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                         ),
@@ -173,16 +168,15 @@ class BudgetProgressWidget extends StatelessWidget {
                             size: 16,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.step2),
                           Text(
                             'Rollover diario: ${currencyProvider.formatAmount(dashboardProvider.dailyRollover)}',
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: AppTypography.labelMd.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppSpacing.step1 + 2),
                           Icon(
                             Icons.info_outline,
                             size: 14,

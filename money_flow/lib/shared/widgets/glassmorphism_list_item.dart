@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+
 class GlassmorphismListItem extends StatefulWidget {
   final Widget? leading;
   final Widget title;
@@ -20,11 +26,11 @@ class GlassmorphismListItem extends StatefulWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
-    this.padding = const EdgeInsets.all(16),
-    this.margin = const EdgeInsets.only(bottom: 12),
+    this.padding = AppSpacing.card,
+    this.margin = const EdgeInsets.only(bottom: AppSpacing.step3),
     this.enableSlideAnimation = false,
     this.enableHoverEffect = false,
-    this.animationDelay = const Duration(milliseconds: 50),
+    this.animationDelay = AppMotion.listItemStagger,
     this.index = 0,
   });
 
@@ -50,16 +56,16 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
 
   void _setupAnimations() {
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: AppMotion.listItemSlideIn,
       vsync: this,
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.2, 0),
+      begin: AppMotion.listItemStartOffset,
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController!,
-      curve: Curves.easeOutCubic,
+      curve: AppMotion.easeOutCubic,
     ));
 
     _fadeAnimation = Tween<double>(
@@ -67,14 +73,14 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _slideController!,
-      curve: Curves.easeIn,
+      curve: AppMotion.easeIn,
     ));
   }
 
   void _startAnimation() {
     if (_animationStarted || _slideController == null) return;
     _animationStarted = true;
-    
+
     final delay = widget.animationDelay.inMilliseconds * widget.index;
     Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) {
@@ -91,15 +97,14 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
 
   @override
   Widget build(BuildContext context) {
-    // Start animation on first build
     if (widget.enableSlideAnimation && !_animationStarted) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _startAnimation());
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final primary = scheme.primary;
 
-    // Mismo estilo que GlassmorphismCard (medium) para que coincida con Saldo, Gastos, Cuentas
     final decoration = isDark
         ? BoxDecoration(
             gradient: LinearGradient(
@@ -110,30 +115,30 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
                 primary.withValues(alpha: 0.08),
               ],
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppRadius.allLg,
             border: Border.all(
-              color: Colors.white.withValues(alpha: _isHovered ? 0.25 : 0.15),
+              color: AppColors.white.withValues(alpha: _isHovered ? 0.25 : 0.15),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 8,
+                color: AppColors.shadow.withValues(alpha: 0.2),
+                blurRadius: AppSpacing.step2,
                 offset: const Offset(0, 2),
               ),
             ],
           )
         : BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
+            color: scheme.surfaceContainerHighest,
+            borderRadius: AppRadius.allLg,
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: _isHovered ? 0.3 : 0.2),
+              color: scheme.outline.withValues(alpha: _isHovered ? 0.3 : 0.2),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
+                color: AppColors.shadow.withValues(alpha: 0.05),
+                blurRadius: AppSpacing.step2,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -147,7 +152,7 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
         children: [
           if (widget.leading != null) ...[
             widget.leading!,
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.step4),
           ],
           Expanded(
             child: Column(
@@ -155,19 +160,14 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
               mainAxisSize: MainAxisSize.min,
               children: [
                 DefaultTextStyle(
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  style: AppTypography.titleSm.copyWith(color: scheme.onSurface),
                   child: widget.title,
                 ),
                 if (widget.subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.step1),
                   DefaultTextStyle(
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    style: AppTypography.bodyMd.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.7),
                     ),
                     child: widget.subtitle!,
                   ),
@@ -176,14 +176,13 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
             ),
           ),
           if (widget.trailing != null) ...[
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.step4),
             widget.trailing!,
           ],
         ],
       ),
     );
 
-    // Wrap with gesture detector if onTap provided
     if (widget.onTap != null) {
       content = GestureDetector(
         onTap: widget.onTap,
@@ -191,20 +190,18 @@ class _GlassmorphismListItemState extends State<GlassmorphismListItem>
       );
     }
 
-    // Wrap with hover effects on desktop
     if (widget.enableHoverEffect) {
       content = MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: AnimatedScale(
-          scale: _isHovered ? 1.01 : 1.0,
-          duration: const Duration(milliseconds: 150),
+          scale: _isHovered ? AppMotion.hoverLiftListScale : 1.0,
+          duration: AppMotion.hoverLiftList,
           child: content,
         ),
       );
     }
 
-    // Wrap with slide animation if enabled
     if (widget.enableSlideAnimation && _slideController != null) {
       return AnimatedBuilder(
         animation: _slideController!,
@@ -235,7 +232,7 @@ class GlassmorphismListView extends StatelessWidget {
   const GlassmorphismListView({
     super.key,
     required this.children,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = AppSpacing.card,
     this.controller,
     this.shrinkWrap = false,
     this.physics,

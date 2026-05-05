@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/expense_provider.dart';
@@ -49,7 +50,8 @@ class SavingsProgressWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: (isOnTrack ? Colors.green : Colors.orange).withValues(alpha: 0.2),
+                        color: (isOnTrack ? AppColors.success : AppColors.warning)
+                            .withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -58,7 +60,7 @@ class SavingsProgressWidget extends StatelessWidget {
                           Icon(
                             isOnTrack ? Icons.trending_up : Icons.schedule,
                             size: 14,
-                            color: isOnTrack ? Colors.green[600] : Colors.orange[600],
+                            color: isOnTrack ? AppColors.success : AppColors.warning,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -66,7 +68,7 @@ class SavingsProgressWidget extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isOnTrack ? Colors.green[600] : Colors.orange[600],
+                              color: isOnTrack ? AppColors.success : AppColors.warning,
                             ),
                           ),
                         ],
@@ -114,7 +116,7 @@ class SavingsProgressWidget extends StatelessWidget {
                       value: progress.clamp(0.0, 1.0),
                       backgroundColor: Colors.transparent,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        isOnTrack ? Colors.green[600]! : Theme.of(context).colorScheme.primary,
+                        isOnTrack ? AppColors.success : Theme.of(context).colorScheme.primary,
                       ),
                       minHeight: 8,
                     ),

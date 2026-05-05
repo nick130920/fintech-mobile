@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'platform_capabilities.dart';
 import 'preferences_service.dart';
 
 enum SmsPermissionResult { granted, denied, permanentlyDenied }
@@ -35,9 +36,8 @@ class SmsService {
     DateTime? minDate,
     bool autoMode = true,
   }) async {
-    // SMS no está soportado en web
-    if (kIsWeb) {
-      debugPrint("SMS no está soportado en la plataforma web.");
+    if (!PlatformCapabilities.supportsSmsInbox) {
+      debugPrint("SMS no está soportado en esta plataforma.");
       return;
     }
 
@@ -134,7 +134,7 @@ class SmsService {
   }
 
   Future<SmsPermissionResult> requestPermissions() async {
-    if (kIsWeb) {
+    if (!PlatformCapabilities.supportsSmsInbox) {
       return SmsPermissionResult.denied;
     }
 
@@ -144,4 +144,6 @@ class SmsService {
     if (status.isPermanentlyDenied) return SmsPermissionResult.permanentlyDenied;
     return SmsPermissionResult.denied;
   }
+
+  bool get isSupported => PlatformCapabilities.supportsSmsInbox;
 }

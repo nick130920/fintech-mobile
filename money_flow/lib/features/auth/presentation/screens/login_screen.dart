@@ -23,15 +23,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _isBiometricAvailable = false;
-  bool _enableBiometric = false;
+  bool _biometricLoginAvailable = false;
   String _biometricType = 'Huella dactilar';
 
   @override
   void initState() {
     super.initState();
-    _checkBiometricAvailability();
     _loadSavedEmail();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBiometricLoginState();
+    });
   }
 
   @override
@@ -41,26 +42,27 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _checkBiometricAvailability() async {
-    final isAvailable = await BiometricService.isBiometricAvailable();
-    final biometricType = await BiometricService.getBiometricTypeDescription();
-    
-    if (mounted) {
-      setState(() {
-        _isBiometricAvailable = isAvailable;
-        _biometricType = biometricType;
-      });
+  Future<void> _loadBiometricLoginState() async {
+    if (!mounted) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final ready = await authProvider.isBiometricLoginAvailable();
+    var biometricType = 'Huella dactilar';
+    if (ready) {
+      biometricType = await BiometricService.getBiometricTypeDescription();
     }
+    if (!mounted) return;
+    setState(() {
+      _biometricLoginAvailable = ready;
+      _biometricType = biometricType;
+    });
   }
 
   Future<void> _loadSavedEmail() async {
     final savedEmail = await StorageService.getSavedEmail();
-    final isBiometricEnabled = await StorageService.isBiometricEnabled();
-    
+
     if (mounted && savedEmail != null) {
       setState(() {
         _emailController.text = savedEmail;
-        _enableBiometric = isBiometricEnabled;
       });
     }
   }
@@ -98,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final success = await authProvider.login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          saveBiometricCredentials: _enableBiometric,
         );
 
         setState(() {
@@ -106,9 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
         });
 
         if (success && mounted) {
-          // Si hay un callback, ejecutarlo y navegar de vuelta
+          await _maybeOfferBiometricEnrollmentAfterLogin();
+          if (!mounted) return;
           widget.onLoginSuccess?.call();
-          Navigator.of(context).pop(); // Cerrar pantalla de login
+          Navigator.of(context).pop();
         } else if (mounted) {
           // Mostrar error
           CustomSnackBar.showError(
@@ -129,6 +131,70 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     }
+  }
+
+  /// Tras un login con contraseña correcto, ofrece activar acceso biométrico (mismo flujo que Ajustes).
+  Future<void> _maybeOfferBiometricEnrollmentAfterLogin() async {
+    final hardwareOk = await BiometricService.isBiometricAvailable();
+    final alreadyEnabled = await StorageService.isBiometricEnabled();
+    if (!hardwareOk || alreadyEnabled || !mounted) return;
+
+    final wantEnable = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(
+            '¿Activar huella para la próxima vez?',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          content: Text(
+            'Podrás ingresar con huella o biometría de este dispositivo sin escribir tu contraseña.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.35,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'Ahora no',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Activar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (wantEnable != true || !mounted) return;
+
+    final refreshToken = await StorageService.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return;
+
+    final authenticated = await BiometricService.authenticate(
+      localizedReason:
+          'Confirma tu identidad para habilitar el acceso biométrico',
+    );
+    if (!authenticated || !mounted) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.toggleBiometricLogin(true);
   }
 
   void _handleBiometricLogin() async {
@@ -286,12 +352,7 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Password field
             _buildPasswordField(),
-            
-            const SizedBox(height: 8),
-            
-            // Biometric checkbox (si está disponible)
-            if (_isBiometricAvailable) _buildBiometricCheckbox(),
-            
+
             const SizedBox(height: 8),
             
             // Forgot password link
@@ -301,28 +362,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBiometricCheckbox() {
-    return CheckboxListTile(
-      value: _enableBiometric,
-      onChanged: (value) {
-        setState(() {
-          _enableBiometric = value ?? false;
-        });
-      },
-      title: Text(
-        'Habilitar inicio con $_biometricType',
-        style: TextStyle(
-          fontSize: 14,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
-      contentPadding: EdgeInsets.zero,
-      controlAffinity: ListTileControlAffinity.leading,
-      dense: true,
-      activeColor: Theme.of(context).colorScheme.primary,
     );
   }
 
@@ -395,9 +434,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),),
           
-          // Biometric login button (si está disponible y habilitado)
-          if (_isBiometricAvailable && _enableBiometric) ...[
-            const SizedBox(height: 16),
+          if (_biometricLoginAvailable) ...[
+            const SizedBox(height: 24),
             _buildBiometricButton(),
           ],
           
@@ -436,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildBiometricButton() {
     return Semantics(
       button: true,
-      label: 'Iniciar con $_biometricType',
+      label: 'Ingresa con huella o biometría ($_biometricType)',
       child: SizedBox(
       width: double.infinity,
       height: 56,
@@ -448,9 +486,11 @@ class _LoginScreenState extends State<LoginScreen> {
           color: Theme.of(context).colorScheme.primary,
         ),
         label: Text(
-          'Iniciar con $_biometricType',
+          'Ingresa con huella o biometría',
+          textAlign: TextAlign.center,
+          maxLines: 2,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.primary,
           ),

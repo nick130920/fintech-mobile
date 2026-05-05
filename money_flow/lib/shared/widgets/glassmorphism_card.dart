@@ -3,6 +3,11 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+
 enum GlassmorphismStyle {
   light,
   medium,
@@ -35,13 +40,13 @@ class GlassmorphismCard extends StatefulWidget {
   const GlassmorphismCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = AppSpacing.glass,
     this.borderRadius,
     this.style = GlassmorphismStyle.light,
     this.performanceMode = GlassmorphismPerformanceMode.reduced,
     this.enableHoverEffect = false,
     this.enableEntryAnimation = false,
-    this.animationDuration = const Duration(milliseconds: 400),
+    this.animationDuration = AppMotion.slow,
     this.onTap,
     this.onHover,
     this.width,
@@ -85,15 +90,17 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
         vsync: this,
       );
 
-      _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-        CurvedAnimation(parent: _entryController!, curve: Curves.easeOut),
+      _scaleAnimation = Tween<double>(
+        begin: AppMotion.cardEntryStartScale,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(parent: _entryController!, curve: AppMotion.easeOut),
       );
 
       _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _entryController!, curve: Curves.easeIn),
+        CurvedAnimation(parent: _entryController!, curve: AppMotion.easeIn),
       );
 
-      // Start animation after build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _entryController?.forward();
       });
@@ -116,21 +123,21 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
 
   double _getBlurIntensity() {
     if (widget.customBlur != null) return widget.customBlur!;
-    
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final baseBlur = switch (widget.style) {
       GlassmorphismStyle.light => isDark ? 8.0 : 2.0,
       GlassmorphismStyle.medium => isDark ? 15.0 : 4.0,
       GlassmorphismStyle.heavy => isDark ? 25.0 : 8.0,
     };
-    
+
     return baseBlur * _performanceScale;
   }
 
   double _getOpacity() {
     if (widget.customOpacity != null) return widget.customOpacity!;
-    
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return switch (widget.style) {
       GlassmorphismStyle.light => isDark ? 0.05 : 0.95,
@@ -140,19 +147,20 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
   }
 
   List<Color> _getGradientColors() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     final opacity = _getOpacity();
-    
+
     if (isDark) {
-      final tint = widget.tintColor ?? Theme.of(context).colorScheme.primary;
+      final tint = widget.tintColor ?? scheme.primary;
       return [
         tint.withValues(alpha: opacity + 0.05),
         tint.withValues(alpha: opacity - 0.02),
       ];
     } else {
       return [
-        Theme.of(context).colorScheme.surfaceContainerHighest,
-        Theme.of(context).colorScheme.surfaceContainerHigh,
+        scheme.surfaceContainerHighest,
+        scheme.surfaceContainerHigh,
       ];
     }
   }
@@ -198,18 +206,19 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderRadius = widget.borderRadius ?? BorderRadius.circular(16);
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final borderRadius = widget.borderRadius ?? AppRadius.allLg;
     final blurValue = _getBlurIntensity();
     final gradientColors = _getGradientColors();
-    
+
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: _isHovered ? 0.4 : 0.3)
-        : Theme.of(context).colorScheme.outline.withValues(alpha: _isHovered ? 0.3 : 0.2);
-    
+        ? (_isHovered ? AppColors.glassShineStrong : AppColors.glassShine)
+        : scheme.outline.withValues(alpha: _isHovered ? 0.3 : 0.2);
+
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.3)
-        : Colors.black.withValues(alpha: 0.05);
+        ? AppColors.shadow.withValues(alpha: 0.3)
+        : AppColors.shadow.withValues(alpha: 0.05);
 
     Widget card = Container(
       width: widget.width,
@@ -250,7 +259,6 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
       ),
     );
 
-    // Wrap with GestureDetector if onTap is provided
     if (widget.onTap != null) {
       card = GestureDetector(
         onTap: widget.onTap,
@@ -258,20 +266,18 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
       );
     }
 
-    // Wrap with MouseRegion for hover effects on desktop
     if (_canUseHover) {
       card = MouseRegion(
         onEnter: (_) => _onHoverEnter(),
         onExit: (_) => _onHoverExit(),
         child: AnimatedScale(
-          scale: _isHovered ? 1.02 : 1.0,
-          duration: const Duration(milliseconds: 200),
+          scale: _isHovered ? AppMotion.hoverLiftCardScale : 1.0,
+          duration: AppMotion.hoverLiftCard,
           child: card,
         ),
       );
     }
 
-    // Wrap with entry animation if enabled
     if (widget.enableEntryAnimation && _entryController != null) {
       return AnimatedBuilder(
         animation: _entryController!,
@@ -292,7 +298,6 @@ class _GlassmorphismCardState extends State<GlassmorphismCard>
   }
 }
 
-// Helper class for easy creation of different glass styles
 class GlassStyles {
   static const light = GlassmorphismStyle.light;
   static const medium = GlassmorphismStyle.medium;

@@ -519,84 +519,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Cerrar Sesión'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('¿Estás seguro que deseas cerrar sesión?'),
-              const SizedBox(height: 16),
-              FutureBuilder<bool>(
-                future: StorageService.isBiometricEnabled(),
-                builder: (context, snapshot) {
-                  final isEnabled = snapshot.data ?? false;
-                  
-                  if (!isEnabled) return const SizedBox.shrink();
-                  
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.fingerprint,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Mantener inicio con biometría habilitado',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final biometricOn = await StorageService.isBiometricEnabled();
+    if (!context.mounted) return;
+
+    final keepQuickLogin = ValueNotifier<bool>(biometricOn);
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return ValueListenableBuilder<bool>(
+            valueListenable: keepQuickLogin,
+            builder: (context, keep, _) {
+              final theme = Theme.of(context);
+              return AlertDialog(
+                title: const Text('Cerrar Sesión'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('¿Estás seguro que deseas cerrar sesión?'),
+                    if (biometricOn) ...[
+                      const SizedBox(height: 16),
+                      CheckboxListTile(
+                        value: keep,
+                        onChanged: (v) =>
+                            keepQuickLogin.value = v ?? false,
+                        title: Text(
+                          'Mantener inicio con huella o biometría',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FutureBuilder<bool>(
-              future: StorageService.isBiometricEnabled(),
-              builder: (context, snapshot) {
-                final isEnabled = snapshot.data ?? false;
-                
-                return FilledButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    _handleLogout(context, keepBiometric: isEnabled);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                        subtitle: Text(
+                          'Si lo desactivas, la sesión en el servidor se cierra por completo y tendrás que usar correo y contraseña.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.72),
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancelar'),
                   ),
-                  child: const Text('Cerrar Sesión'),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      _handleLogout(
+                        context,
+                        keepBiometric: biometricOn && keep,
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+                    child: const Text('Cerrar Sesión'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      keepQuickLogin.dispose();
+    }
   }
 
   Future<void> _handleLogout(BuildContext context, {bool keepBiometric = false}) async {

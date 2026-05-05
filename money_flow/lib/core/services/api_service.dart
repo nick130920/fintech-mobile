@@ -23,7 +23,7 @@ class ApiService {
   static GlobalKey<NavigatorState>? _navigatorKey;
 
   /// Una sola renovación en vuelo para no invalidar tokens con carreras.
-  static Future<TokenRefreshResult>? _refreshInFlight;
+  static Future<TokenRefreshOutcome>? _refreshInFlight;
   
   static void initialize(GlobalKey<NavigatorState> navigatorKey) {
     _navigatorKey = navigatorKey;
@@ -173,12 +173,12 @@ class ApiService {
       if (response.statusCode == 401 && !isRetry) {
         debugPrint('🔄 Token expirado, intentando renovar...');
         final outcome = await _tryRefreshToken();
-        if (outcome == TokenRefreshResult.success) {
+        if (outcome.result == TokenRefreshResult.success) {
           debugPrint('✅ Token renovado, reintentando petición...');
           final freshToken = await StorageService.getAccessToken();
           return await _handleRequest(builder, initialToken: freshToken, isRetry: true);
         }
-        if (outcome == TokenRefreshResult.invalidRefreshToken) {
+        if (outcome.result == TokenRefreshResult.invalidRefreshToken) {
           debugPrint('❌ Refresh inválido, cerrando sesión...');
           await _handleUnauthorized();
           throw Exception('Sesión expirada');
@@ -212,7 +212,7 @@ class ApiService {
     }
   }
 
-  static Future<TokenRefreshResult> _tryRefreshToken() {
+  static Future<TokenRefreshOutcome> _tryRefreshToken() {
     _refreshInFlight ??=
         AuthRepository.attemptTokenRefresh().whenComplete(() {
       _refreshInFlight = null;

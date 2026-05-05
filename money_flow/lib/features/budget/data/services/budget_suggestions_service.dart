@@ -1,4 +1,5 @@
 import 'package:money_flow/core/services/sms_service.dart';
+import 'package:money_flow/core/services/platform_capabilities.dart';
 import 'package:money_flow/features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'package:money_flow/features/budget/data/models/sms_budget_suggestion.dart';
 
@@ -11,6 +12,12 @@ class BudgetSuggestionsService {
 
   /// Analiza los SMS de los últimos 3 meses y devuelve sugerencias (solo en este dispositivo, no crea transacciones).
   Future<SmsBudgetSuggestion> analyzeLast3Months() async {
+    if (!PlatformCapabilities.supportsSmsInbox) {
+      throw Exception(
+        'La lectura de SMS no está disponible en iPhone. Usa extracto bancario o conexión por email.',
+      );
+    }
+
     final minDate = DateTime.now().subtract(const Duration(days: 90));
     final messages = <Map<String, dynamic>>[];
 

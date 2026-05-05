@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/income_provider.dart';
 
@@ -70,12 +73,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
 
           if (provider.error != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(provider.error!),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              CustomSnackBar.showError(context, provider.error!);
             });
           }
 
@@ -226,9 +224,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                 children: [
                   Text(
                     currencyProvider.currencySymbol,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    style: AppTypography.customAmountHero.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
@@ -238,17 +234,13 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                       controller: _amountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       autofocus: true,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                      style: AppTypography.customAmountHero.copyWith(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
                         hintText: '0.00',
                         border: InputBorder.none,
-                        hintStyle: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        hintStyle: AppTypography.customAmountHero.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
@@ -436,12 +428,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Fecha del ingreso',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280), // text-gray-500
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 8),
@@ -477,7 +469,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                     '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF1F2937), // text-gray-800
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -536,12 +528,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Notas (opcional)',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280), // text-gray-500
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 8),
@@ -724,9 +716,9 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                                 : 'Seleccionar fecha',
                             style: TextStyle(
                               fontSize: 16,
-                              color: _endDate != null 
-                                  ? const Color(0xFF1F2937) // text-gray-800
-                                  : const Color(0xFF9CA3AF), // text-gray-400
+                              color: _endDate != null
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -785,7 +777,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                 ),
               )
             : const Text(
@@ -835,12 +827,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
     }
 
     if (_selectedSource == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona una categoría'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      CustomSnackBar.showWarning(context, 'Selecciona una categoría');
       return;
     }
 
@@ -866,37 +853,18 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       );
 
       if (success && mounted) {
-        // Update dashboard data
         context.read<DashboardProvider>().updateAvailableBalance();
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ingreso registrado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Go back
+
+        CustomSnackBar.showSuccess(context, 'Ingreso registrado exitosamente');
+
         Navigator.of(context).pop();
       } else if (mounted) {
-        // Show error message
         final error = context.read<IncomeProvider>().error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error ?? 'Error al registrar el ingreso'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBar.showError(context, error ?? 'Error al registrar el ingreso');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBar.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:money_flow/core/theme/app_colors.dart';
 import 'package:money_flow/features/bank_accounts/data/models/transaction_model.dart';
 import 'package:money_flow/features/bank_accounts/data/repositories/automatic_transactions_repository.dart';
 import 'package:money_flow/features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'package:money_flow/features/bank_accounts/presentation/widgets/pending_transaction_card.dart';
+import 'package:money_flow/shared/widgets/custom_snackbar.dart';
 import 'package:money_flow/shared/widgets/glassmorphism_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -168,11 +170,11 @@ class _PendingTransactionsScreenState extends State<PendingTransactionsScreen> {
           ),
           if (_isSelectionMode && _selectedTransactions.isNotEmpty) ...[
             IconButton(
-              icon: const Icon(Icons.check, color: Colors.green),
+              icon: const Icon(Icons.check, color: AppColors.success),
               onPressed: () => _processBatchTransactions('approve'),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.red),
+              icon: const Icon(Icons.close, color: AppColors.error),
               onPressed: () => _processBatchTransactions('reject'),
             ),
           ],
@@ -374,12 +376,7 @@ class _PendingTransactionsScreenState extends State<PendingTransactionsScreen> {
     final success = await provider.approveTransaction(transaction.id);
     
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Transacción aprobada exitosamente'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      CustomSnackBar.showSuccess(context, 'Transacción aprobada exitosamente');
     }
   }
 
@@ -388,17 +385,12 @@ class _PendingTransactionsScreenState extends State<PendingTransactionsScreen> {
     if (reason == null) return;
 
     if (!mounted) return;
-    
+
     final provider = Provider.of<AutomaticTransactionsProvider>(context, listen: false);
     final success = await provider.rejectTransaction(transaction.id, reason: reason);
-    
+
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Transacción rechazada'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      CustomSnackBar.showWarning(context, 'Transacción rechazada');
     }
   }
 

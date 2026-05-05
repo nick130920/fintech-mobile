@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../../../bank_accounts/data/models/bank_account_model.dart';
 import '../../../../bank_accounts/presentation/providers/bank_account_provider.dart';
@@ -54,7 +57,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
       enableEntryAnimation: true,
       child: Container(
         height: 120,
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.glass,
         child: const Center(
           child: CircularProgressIndicator(),
         ),
@@ -66,8 +69,8 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
     return GlassmorphismCard(
       style: GlassStyles.medium,
       enableEntryAnimation: true,
-      child: Container(
-        padding: const EdgeInsets.all(20),
+      child: Padding(
+        padding: AppSpacing.glass,
         child: Row(
           children: [
             Icon(
@@ -75,23 +78,20 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
               color: Theme.of(context).colorScheme.error,
               size: 24,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.inlineGap),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Error al cargar cuentas',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.titleSm.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     'Toca para reintentar',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: AppTypography.bodyMd.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
@@ -114,9 +114,9 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
       enableEntryAnimation: true,
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, '/add-bank-account'),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(20),
+        borderRadius: AppRadius.allBase,
+        child: Padding(
+          padding: AppSpacing.glass,
           child: Row(
             children: [
               Container(
@@ -124,7 +124,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
                 height: 48,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppRadius.allBase,
                 ),
                 child: Icon(
                   Icons.add_card,
@@ -132,23 +132,21 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.cardGap),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Agregar Cuenta Bancaria',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: AppTypography.titleSm.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       'Conecta tus cuentas para un mejor control',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: AppTypography.bodyMd.copyWith(
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
@@ -172,7 +170,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(provider),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.cardGap),
         _buildAccountsList(provider),
       ],
     );
@@ -183,8 +181,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
       children: [
         Text(
           'Cuentas Bancarias',
-          style: TextStyle(
-            fontSize: 18,
+          style: AppTypography.titleMd.copyWith(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -194,8 +191,7 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
           onPressed: () => Navigator.pushNamed(context, '/bank-accounts'),
           child: Text(
             'Ver todas',
-            style: TextStyle(
-              fontSize: 14,
+            style: AppTypography.labelLg.copyWith(
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -211,9 +207,9 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
       height: 160,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: AppSpacing.step2),
         itemCount: accounts.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.cardGap),
         itemBuilder: (context, index) {
           return SizedBox(
             width: 200,
@@ -233,15 +229,15 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
           enableHoverEffect: true,
           child: InkWell(
             onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.allBase,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.allBase,
                 border: Border(
                   left: BorderSide(color: borderColor, width: 4),
                 ),
               ),
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.card,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -253,26 +249,24 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
                         height: 32,
                         decoration: BoxDecoration(
                           color: borderColor,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppRadius.allLg,
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           account.shortBankName.length >= 2
                               ? account.shortBankName.substring(0, 2).toUpperCase()
                               : '??',
-                          style: TextStyle(
-                            fontSize: 10,
+                          style: AppTypography.labelSm.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.inlineGap),
                       Expanded(
                         child: Text(
                           account.accountAlias,
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: AppTypography.labelLg.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -287,16 +281,13 @@ class _BankAccountsOverviewWidgetState extends State<BankAccountsOverviewWidget>
                     children: [
                       Text(
                         'Balance Actual',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: AppTypography.labelMd.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
                         currencyProvider.formatAmountWithCode(account.lastBalance, account.currency),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        style: AppTypography.customAmountCard.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),

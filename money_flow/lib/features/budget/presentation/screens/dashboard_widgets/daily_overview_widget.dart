@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/expense_provider.dart';
@@ -28,7 +31,7 @@ class DailyOverviewWidget extends StatelessWidget {
                 iconBgColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.cardGap),
             Expanded(
               child: _OverviewCard(
                 title: 'Gastos de Hoy',
@@ -66,7 +69,7 @@ class _OverviewCard extends StatelessWidget {
       style: GlassStyles.medium,
       enableEntryAnimation: true,
       enableHoverEffect: true,
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.card,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -76,25 +79,21 @@ class _OverviewCard extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: iconBgColor,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.allSm,
             ),
             child: Icon(icon, size: 20, color: iconColor),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.inlineGap),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+            style: AppTypography.labelMd.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.step1),
           Text(
             amount,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+            style: AppTypography.customAmountCard.copyWith(
               color: Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,

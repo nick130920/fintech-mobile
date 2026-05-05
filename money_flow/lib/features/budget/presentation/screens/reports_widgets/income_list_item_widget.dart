@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../../data/models/income_model.dart';
 import '../../../data/repositories/income_repository.dart';
@@ -210,7 +212,7 @@ class IncomeListItemWidget extends StatelessWidget {
                                   child: ElevatedButton.icon(
                                     onPressed: () => _deleteIncome(context, income.id, provider),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.error,
                                     ),
                                     icon: const Icon(Icons.delete),
                                     label: const Text('Eliminar'),
@@ -274,7 +276,7 @@ class IncomeListItemWidget extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Eliminar'),
           ),
         ],
@@ -282,16 +284,11 @@ class IncomeListItemWidget extends StatelessWidget {
     );
 
     if (confirm == true && context.mounted) {
-      Navigator.of(context).pop(); // Close details
-      
+      Navigator.of(context).pop();
+
       final success = await provider.deleteIncome(incomeId);
       if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ingreso eliminado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        CustomSnackBar.showSuccess(context, 'Ingreso eliminado exitosamente');
       }
     }
   }

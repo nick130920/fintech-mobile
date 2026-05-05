@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../data/models/budget_model.dart';
 import '../../data/repositories/budget_repository.dart';
@@ -564,7 +565,7 @@ class _EditCategoryDialogState extends State<_EditCategoryDialog> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                     ),
                   )
                 : const Text('Guardar'),

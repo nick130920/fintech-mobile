@@ -96,8 +96,13 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^10.0.2
 
+  # Inter font (DESIGN.md typography spine)
+  google_fonts: ^6.2.1
+
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to

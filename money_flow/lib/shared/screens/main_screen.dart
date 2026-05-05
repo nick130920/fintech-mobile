@@ -2,6 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
+import 'package:money_flow/core/theme/app_colors.dart';
+import 'package:money_flow/core/theme/app_motion.dart';
+import 'package:money_flow/core/theme/app_radius.dart';
+import 'package:money_flow/core/theme/app_spacing.dart';
 import 'package:money_flow/features/bank_accounts/presentation/widgets/pending_transactions_fab.dart';
 import 'package:money_flow/features/budget/presentation/screens/category_management_screen.dart';
 import 'package:money_flow/features/budget/presentation/screens/dashboard_screen.dart';
@@ -61,26 +65,26 @@ class _MainScreenState extends State<MainScreen> {
         openButtonBuilder: RotateFloatingActionButtonBuilder(
           child: const Icon(Icons.add),
           fabSize: ExpandableFabSize.regular,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onPrimary,
           backgroundColor: Theme.of(context).colorScheme.primary,
           shape: const CircleBorder(),
         ),
         closeButtonBuilder: DefaultFloatingActionButtonBuilder(
           child: const Icon(Icons.close),
           fabSize: ExpandableFabSize.regular,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onPrimary,
           backgroundColor: Theme.of(context).colorScheme.primary,
           shape: const CircleBorder(),
         ),
-        overlayStyle: ExpandableFabOverlayStyle(
-          color: Colors.black.withValues(alpha: 0.3),
+        overlayStyle: const ExpandableFabOverlayStyle(
+          color: AppColors.scrim,
           blur: 5,
         ),
         children: [
           FloatingActionButton.small(
             heroTag: "income",
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.onPrimary,
             child: const Icon(Icons.trending_up),
             onPressed: () {
               debugPrint('DEBUG: Income button pressed - navigating to /add-income');
@@ -88,9 +92,9 @@ class _MainScreenState extends State<MainScreen> {
             },
           ),
           FloatingActionButton.small(
-            heroTag: "expense", 
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
+            heroTag: "expense",
+            backgroundColor: AppColors.expense,
+            foregroundColor: AppColors.onPrimary,
             child: const Icon(Icons.trending_down),
             onPressed: () {
               debugPrint('DEBUG: Expense button pressed - navigating to /add-expense');
@@ -99,8 +103,8 @@ class _MainScreenState extends State<MainScreen> {
           ),
           FloatingActionButton.small(
             heroTag: "bank_account",
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.onPrimary,
             child: const Icon(Icons.account_balance),
             onPressed: () {
               Navigator.pushNamed(context, '/add-bank-account');
@@ -127,17 +131,13 @@ class _MainScreenState extends State<MainScreen> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: isDark 
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.15),
+              color: AppColors.shadow.withValues(alpha: isDark ? 0.4 : 0.15),
               blurRadius: 25,
               offset: const Offset(0, 8),
               spreadRadius: -5,
             ),
             BoxShadow(
-              color: isDark 
-                ? Colors.black.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.08),
+              color: AppColors.shadow.withValues(alpha: isDark ? 0.2 : 0.08),
               blurRadius: 50,
               offset: const Offset(0, 20),
               spreadRadius: -10,
@@ -153,13 +153,15 @@ class _MainScreenState extends State<MainScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: isDark ? [
-                    const Color(0xFF1E3A8A).withValues(alpha: 0.3), // Blue-900 with transparency
-                    const Color(0xFF1E40AF).withValues(alpha: 0.2), // Blue-800 with transparency
-                  ] : [
-                    const Color(0xFF3B82F6).withValues(alpha: 0.15), // Blue-500 with transparency
-                    const Color(0xFF2563EB).withValues(alpha: 0.1), // Blue-600 with transparency
-                  ],
+                  colors: isDark
+                      ? [
+                          AppColors.primary.withValues(alpha: 0.30),
+                          AppColors.primary.withValues(alpha: 0.20),
+                        ]
+                      : [
+                          AppColors.primary.withValues(alpha: 0.15),
+                          AppColors.primary.withValues(alpha: 0.10),
+                        ],
                 ),
               ),
               child: Row(
@@ -189,19 +191,21 @@ class _MainScreenState extends State<MainScreen> {
           alignment: Alignment.center, // Centrado perfecto
           child: AnimatedScale(
             scale: isSelected ? 1.2 : 1.0,
-            duration: const Duration(milliseconds: 200),
+            duration: AppMotion.base,
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: isSelected ? BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ) : null,
+              padding: const EdgeInsets.all(AppSpacing.step2),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      borderRadius: AppRadius.allBase,
+                    )
+                  : null,
               child: Icon(
                 icon,
                 size: 24,
-                color: isSelected 
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -216,8 +220,8 @@ class _MainScreenState extends State<MainScreen> {
     });
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: AppMotion.medium,
+      curve: AppMotion.easeInOut,
     );
   }
 }

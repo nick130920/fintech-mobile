@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 
@@ -31,11 +35,11 @@ class BankAccountCard extends StatelessWidget {
       enableEntryAnimation: true,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.allBase,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: AppSpacing.glass,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.allBase,
             border: isSelected
                 ? Border.all(
                     color: Theme.of(context).colorScheme.primary,
@@ -47,12 +51,12 @@ class BankAccountCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               _buildAccountInfo(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.step4),
               _buildBalance(context),
               if (showActions) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.step4),
                 _buildActions(context),
               ],
             ],
@@ -63,6 +67,7 @@ class BankAccountCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Container(
@@ -70,32 +75,30 @@ class BankAccountCard extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: Color(int.parse(account.color.replaceFirst('#', '0xFF'))),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.allBase,
           ),
           child: Icon(
             _getAccountIcon(account.type),
-            color: Colors.white,
+            color: AppColors.white,
             size: 24,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.step4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 account.accountAlias,
-                style: TextStyle(
-                  fontSize: 18,
+                style: AppTypography.titleMd.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: scheme.onSurface,
                 ),
               ),
               Text(
                 account.shortBankName,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                style: AppTypography.bodyMd.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -103,17 +106,19 @@ class BankAccountCard extends StatelessWidget {
         ),
         if (!account.isActive)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.step2,
+              vertical: AppSpacing.step1,
+            ),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
-              borderRadius: BorderRadius.circular(8),
+              color: scheme.errorContainer,
+              borderRadius: AppRadius.allSm,
             ),
             child: Text(
               'Inactiva',
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTypography.labelMd.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onErrorContainer,
+                color: scheme.onErrorContainer,
               ),
             ),
           ),
@@ -132,7 +137,7 @@ class BankAccountCard extends StatelessWidget {
             Icons.credit_card,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.step4),
         Expanded(
           child: _buildInfoItem(
             context,
@@ -146,37 +151,32 @@ class BankAccountCard extends StatelessWidget {
   }
 
   Widget _buildInfoItem(BuildContext context, String label, String value, IconData icon) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.step3),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
+        color: scheme.surfaceContainerHigh,
+        borderRadius: AppRadius.allSm,
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: scheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(width: AppSpacing.step2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  style: AppTypography.bodySm.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: AppTypography.labelLg.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: scheme.onSurface,
                   ),
                 ),
               ],
@@ -196,14 +196,14 @@ class BankAccountCard extends StatelessWidget {
           account.currency,
         );
 
+        final scheme = Theme.of(context).colorScheme;
+        final fgColor = isPositive ? scheme.onPrimaryContainer : scheme.onErrorContainer;
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.card,
           decoration: BoxDecoration(
-            color: isPositive
-                ? Theme.of(context).colorScheme.primaryContainer
-                : Theme.of(context).colorScheme.errorContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: isPositive ? scheme.primaryContainer : scheme.errorContainer,
+            borderRadius: AppRadius.allBase,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,43 +213,29 @@ class BankAccountCard extends StatelessWidget {
                   Icon(
                     isPositive ? Icons.trending_up : Icons.trending_down,
                     size: 20,
-                    color: isPositive
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
-                        : Theme.of(context).colorScheme.onErrorContainer,
+                    color: fgColor,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.step2),
                   Text(
                     'Balance Actual',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isPositive
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.onErrorContainer,
-                    ),
+                    style: AppTypography.bodyMd.copyWith(color: fgColor),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.step2),
               Text(
                 formattedBalance,
-                style: TextStyle(
-                  fontSize: 24,
+                style: AppTypography.headlineMd.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isPositive
-                      ? Theme.of(context).colorScheme.onPrimaryContainer
-                      : Theme.of(context).colorScheme.onErrorContainer,
+                  color: fgColor,
                 ),
               ),
               if (account.hasMeaningfulLastBalanceUpdate) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.step1),
                 Text(
                   'Actualizado: ${_formatDate(account.lastBalanceUpdate)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: (isPositive
-                            ? Theme.of(context).colorScheme.onPrimaryContainer
-                            : Theme.of(context).colorScheme.onErrorContainer)
-                        .withValues(alpha: 0.8),
+                  style: AppTypography.bodySm.copyWith(
+                    color: fgColor.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -261,6 +247,7 @@ class BankAccountCard extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context) {
+    final error = Theme.of(context).colorScheme.error;
     return Row(
       children: [
         Expanded(
@@ -271,13 +258,13 @@ class BankAccountCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.edit, size: 16),
-                SizedBox(width: 8),
+                SizedBox(width: AppSpacing.step2),
                 Text('Editar'),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.step3),
         Expanded(
           child: GlassmorphismButton(
             style: GlassButtonStyles.outline,
@@ -285,18 +272,9 @@ class BankAccountCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.delete_outline,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Eliminar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
+                Icon(Icons.delete_outline, size: 16, color: error),
+                const SizedBox(width: AppSpacing.step2),
+                Text('Eliminar', style: TextStyle(color: error)),
               ],
             ),
           ),

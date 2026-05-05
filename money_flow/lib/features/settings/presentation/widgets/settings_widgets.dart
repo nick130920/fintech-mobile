@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 /// Botón circular con ícono, usado en headers de pantallas de configuración.
 class SettingsCircleButton extends StatelessWidget {
   final IconData icon;
@@ -58,12 +60,12 @@ class SettingsToggleTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
+            ? AppColors.white.withValues(alpha: 0.03)
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
+              ? AppColors.white.withValues(alpha: 0.08)
               : theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),

@@ -19,6 +19,12 @@ enum TokenRefreshResult {
   transientFailure,
 }
 
+/// Resultado de [attemptTokenRefresh] con mensaje opcional del API (p. ej. 401).
+typedef TokenRefreshOutcome = ({
+  TokenRefreshResult result,
+  String? serverMessage,
+});
+
 class AuthRepository {
   // Register user
   static Future<AuthResponse> register(RegisterRequest request) async {
@@ -76,11 +82,20 @@ class AuthRepository {
     }
   }
 
-  // Logout user
-  static Future<void> logout() async {
+  /// Cierra sesión en el servidor y borra almacenamiento local.
+  ///
+  /// Si [keepQuickLogin] es true, **no** se llama a `auth/logout` (el backend revocaría
+  /// el refresh y el inicio con huella dejaría de funcionar). Solo se borran access token
+  /// y datos de usuario en caché; se conservan refresh token y la preferencia biométrica.
+  static Future<void> logout({bool keepQuickLogin = false}) async {
     try {
       final accessToken = await StorageService.getAccessToken();
       final refreshToken = await StorageService.getRefreshToken();
+
+      if (keepQuickLogin) {
+        await StorageService.clearAccessAndUserCache();
+        return;
+      }
 
       if (accessToken != null) {
         await ApiService.post(
@@ -90,11 +105,13 @@ class AuthRepository {
         );
       }
 
-      // Clear local storage regardless of API call result
       await StorageService.clearAll();
     } catch (e) {
-      // Even if API call fails, clear local storage
-      await StorageService.clearAll();
+      if (keepQuickLogin) {
+        await StorageService.clearAccessAndUserCache();
+      } else {
+        await StorageService.clearAll();
+      }
       throw Exception('Error en el logout: $e');
     }
   }
@@ -209,13 +226,18 @@ class AuthRepository {
   }
 
   /// Renueva tokens. No usa [clearAll]: errores temporales no borran biometría ni sesión.
-  static Future<TokenRefreshResult> attemptTokenRefresh() async {
-    final refreshToken = await StorageService.getRefreshToken();
+  static Future<TokenRefreshOutcome> attemptTokenRefresh() async {
+    final rawRefresh = await StorageService.getRefreshToken();
+    final refreshToken = rawRefresh?.trim();
 
     if (refreshToken == null || refreshToken.isEmpty) {
       await StorageService.clearTokens();
       await StorageService.clearUserData();
-      return TokenRefreshResult.invalidRefreshToken;
+      await StorageService.disableBiometric();
+      return (
+        result: TokenRefreshResult.invalidRefreshToken,
+        serverMessage: null,
+      );
     }
 
     try {
@@ -224,35 +246,91 @@ class AuthRepository {
       });
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final access = data['access_token'];
-        final refresh = data['refresh_token'];
-        if (access is! String ||
-            refresh is! String ||
-            access.isEmpty ||
-            refresh.isEmpty) {
-          return TokenRefreshResult.transientFailure;
+        final parsed = _decodeJsonObject(response.body);
+        if (parsed == null) {
+          return (
+            result: TokenRefreshResult.transientFailure,
+            serverMessage: null,
+          );
+        }
+        final tokens = _readAccessRefreshFromJson(parsed);
+        if (tokens == null) {
+          return (
+            result: TokenRefreshResult.transientFailure,
+            serverMessage: null,
+          );
         }
         await StorageService.saveTokens(
-          accessToken: access,
-          refreshToken: refresh,
+          accessToken: tokens.$1,
+          refreshToken: tokens.$2,
         );
-        return TokenRefreshResult.success;
+        return (result: TokenRefreshResult.success, serverMessage: null);
       }
 
       if (response.statusCode == 401 || response.statusCode == 403) {
+        final serverMessage = _parseErrorMessage(response.body);
         await StorageService.clearTokens();
         await StorageService.clearUserData();
-        return TokenRefreshResult.invalidRefreshToken;
+        await StorageService.disableBiometric();
+        return (
+          result: TokenRefreshResult.invalidRefreshToken,
+          serverMessage: serverMessage,
+        );
       }
 
-      return TokenRefreshResult.transientFailure;
+      return (
+        result: TokenRefreshResult.transientFailure,
+        serverMessage: null,
+      );
     } on SocketException {
-      return TokenRefreshResult.transientFailure;
+      return (
+        result: TokenRefreshResult.transientFailure,
+        serverMessage: null,
+      );
     } on TimeoutException {
-      return TokenRefreshResult.transientFailure;
+      return (
+        result: TokenRefreshResult.transientFailure,
+        serverMessage: null,
+      );
     } catch (_) {
-      return TokenRefreshResult.transientFailure;
+      return (
+        result: TokenRefreshResult.transientFailure,
+        serverMessage: null,
+      );
     }
+  }
+
+  static Map<String, dynamic>? _decodeJsonObject(String body) {
+    if (body.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Lee access/refresh desde raíz o desde `data`, aceptando snake_case y camelCase.
+  static (String, String)? _readAccessRefreshFromJson(Map<String, dynamic> root) {
+    Map<String, dynamic> map = root;
+    final nested = root['data'];
+    if (nested is Map<String, dynamic>) {
+      map = nested;
+    }
+    final access = map['access_token'] ?? map['accessToken'];
+    final refresh = map['refresh_token'] ?? map['refreshToken'];
+    if (access is! String || refresh is! String) return null;
+    final a = access.trim();
+    final r = refresh.trim();
+    if (a.isEmpty || r.isEmpty) return null;
+    return (a, r);
+  }
+
+  static String? _parseErrorMessage(String body) {
+    final map = _decodeJsonObject(body);
+    if (map == null) return null;
+    final msg = map['message'] ?? map['Message'] ?? map['error'];
+    if (msg is String && msg.trim().isNotEmpty) return msg.trim();
+    return null;
   }
 }

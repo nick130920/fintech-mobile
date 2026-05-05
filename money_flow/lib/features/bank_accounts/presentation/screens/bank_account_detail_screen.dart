@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../data/models/bank_account_model.dart';
 import '../providers/bank_account_provider.dart';
@@ -71,7 +73,7 @@ class BankAccountDetailScreen extends StatelessWidget {
                   ),
                   child: Icon(
                     _getAccountIcon(account.type),
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 40,
                   ),
                 ),
@@ -616,23 +618,17 @@ class BankAccountDetailScreen extends StatelessWidget {
               
               if (context.mounted) {
                 if (success) {
-                  Navigator.pop(context); // Volver a la lista de cuentas
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        account.isActive
-                            ? 'Cuenta desactivada exitosamente'
-                            : 'Cuenta activada exitosamente',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
+                  Navigator.pop(context);
+                  CustomSnackBar.showSuccess(
+                    context,
+                    account.isActive
+                        ? 'Cuenta desactivada exitosamente'
+                        : 'Cuenta activada exitosamente',
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error al ${account.isActive ? "desactivar" : "activar"} la cuenta'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
+                  CustomSnackBar.showError(
+                    context,
+                    'Error al ${account.isActive ? "desactivar" : "activar"} la cuenta',
                   );
                 }
               }
@@ -668,20 +664,10 @@ class BankAccountDetailScreen extends StatelessWidget {
               
               if (context.mounted) {
                 if (success) {
-                  Navigator.pop(context); // Volver a la lista de cuentas
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Cuenta eliminada exitosamente'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  Navigator.pop(context);
+                  CustomSnackBar.showSuccess(context, 'Cuenta eliminada exitosamente');
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Error al eliminar la cuenta'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
+                  CustomSnackBar.showError(context, 'Error al eliminar la cuenta');
                 }
               }
             },

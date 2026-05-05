@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_gradients.dart';
+import '../../../../core/theme/app_radius.dart';
+
 class OnboardingPageModel {
   final String title;
   final String description;
@@ -26,7 +30,7 @@ class OnboardingData {
         description: 'Configurar un presupuesto es el primer paso hacia la libertad financiera. Vamos a crear uno que funcione para ti.',
         illustration: const BudgetIllustration(),
         buttonText: 'Empecemos',
-        onButtonPressed: null, // Se manejará en el PageView
+        onButtonPressed: null,
       ),
       OnboardingPageModel(
         title: 'Rastrea tus Gastos',
@@ -53,29 +57,21 @@ class OnboardingData {
   }
 }
 
-// Ilustraciones personalizadas
 class BudgetIllustration extends StatelessWidget {
   const BudgetIllustration({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       height: 300,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF137FEC).withValues(alpha: 0.1),
-            const Color(0xFF60A5FA).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.onboardingBudget,
+        borderRadius: AppRadius.allXl,
       ),
       child: Stack(
         children: [
-          // Gráfico de barras
           Positioned(
             bottom: 40,
             left: 40,
@@ -84,15 +80,14 @@ class BudgetIllustration extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildBar(height: 60, color: const Color(0xFF137FEC)),
-                _buildBar(height: 90, color: const Color(0xFF60A5FA)),
-                _buildBar(height: 45, color: const Color(0xFF3B82F6)),
-                _buildBar(height: 75, color: const Color(0xFF1D4ED8)),
-                _buildBar(height: 55, color: const Color(0xFF137FEC)),
+                _buildBar(height: 60, color: scheme.primary),
+                _buildBar(height: 90, color: scheme.primary.withValues(alpha: 0.7)),
+                _buildBar(height: 45, color: AppColors.info),
+                _buildBar(height: 75, color: scheme.primary.withValues(alpha: 0.85)),
+                _buildBar(height: 55, color: scheme.primary),
               ],
             ),
           ),
-          // Monedas flotantes
           const Positioned(
             top: 30,
             right: 30,
@@ -133,29 +128,18 @@ class ExpenseIllustration extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 300,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF10B981).withValues(alpha: 0.1),
-            const Color(0xFF34D399).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.onboardingExpense,
+        borderRadius: AppRadius.allXl,
       ),
       child: const Stack(
         children: [
-          // Teléfono
           Positioned(
             top: 40,
             left: 0,
             right: 0,
-            child: Center(
-              child: Text('📱', style: TextStyle(fontSize: 80)),
-            ),
+            child: Center(child: Text('📱', style: TextStyle(fontSize: 80))),
           ),
-          // Iconos de gastos
           Positioned(
             bottom: 80,
             left: 30,
@@ -190,29 +174,18 @@ class ProgressIllustration extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 300,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-            const Color(0xFFA78BFA).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.onboardingProgress,
+        borderRadius: AppRadius.allXl,
       ),
       child: const Stack(
         children: [
-          // Gráfico circular
           Positioned(
             top: 60,
             left: 0,
             right: 0,
-            child: Center(
-              child: Text('📈', style: TextStyle(fontSize: 100)),
-            ),
+            child: Center(child: Text('📈', style: TextStyle(fontSize: 100))),
           ),
-          // Estadísticas
           Positioned(
             bottom: 60,
             left: 40,
@@ -242,29 +215,18 @@ class AlertsIllustration extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 300,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFF59E0B).withValues(alpha: 0.1),
-            const Color(0xFFFBBF24).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.onboardingAlerts,
+        borderRadius: AppRadius.allXl,
       ),
       child: const Stack(
         children: [
-          // Campana de notificación
           Positioned(
             top: 50,
             left: 0,
             right: 0,
-            child: Center(
-              child: Text('🔔', style: TextStyle(fontSize: 80)),
-            ),
+            child: Center(child: Text('🔔', style: TextStyle(fontSize: 80))),
           ),
-          // Alertas
           Positioned(
             bottom: 100,
             left: 50,

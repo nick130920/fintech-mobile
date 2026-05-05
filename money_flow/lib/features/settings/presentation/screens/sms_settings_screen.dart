@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/models/sms_settings.dart';
+import '../../../../core/services/platform_capabilities.dart';
 import '../../../../core/providers/sms_settings_provider.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
@@ -23,6 +24,7 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
   bool _isProcessing = false;
   int _processedCount = 0;
   int? _selectedAccountId;
+  bool get _isSmsSupported => PlatformCapabilities.supportsSmsInbox;
 
   @override
   void initState() {
@@ -64,27 +66,34 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
               children: [
                 _buildHeader(context, hasActiveBankAccounts),
                 const SizedBox(height: 24),
-                
-                _buildAutoProcessSection(context, smsProvider),
-                const SizedBox(height: 16),
 
-                _buildDefaultAccountSection(context, bankProvider),
-                const SizedBox(height: 16),
+                if (!_isSmsSupported) ...[
+                  _buildIosAlternativeCard(context),
+                  const SizedBox(height: 16),
+                ],
                 
-                _buildProcessModeSection(context, smsProvider),
-                const SizedBox(height: 16),
+                if (_isSmsSupported) ...[
+                  _buildAutoProcessSection(context, smsProvider),
+                  const SizedBox(height: 16),
+
+                  _buildDefaultAccountSection(context, bankProvider),
+                  const SizedBox(height: 16),
                 
-                if (smsProvider.processMode == SmsProcessMode.customDate)
-                  _buildCustomDateSection(context, smsProvider),
+                  _buildProcessModeSection(context, smsProvider),
+                  const SizedBox(height: 16),
                 
-                const SizedBox(height: 24),
-                _buildConfigSummary(context, smsProvider),
-                const SizedBox(height: 24),
+                  if (smsProvider.processMode == SmsProcessMode.customDate)
+                    _buildCustomDateSection(context, smsProvider),
+                
+                  const SizedBox(height: 24),
+                  _buildConfigSummary(context, smsProvider),
+                  const SizedBox(height: 24),
+                ],
                 
                 _buildManualProcessSection(context, hasActiveBankAccounts),
                 
                 const SizedBox(height: 16),
-                _buildResetButton(context, smsProvider),
+                if (_isSmsSupported) _buildResetButton(context, smsProvider),
               ],
             ),
           );
@@ -231,15 +240,68 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    hasActiveBankAccounts
-                        ? 'Cuentas bancarias activas encontradas'
-                        : 'No hay cuentas bancarias con SMS activo',
+                    !_isSmsSupported
+                        ? 'Esta función está disponible solo en Android'
+                        : hasActiveBankAccounts
+                            ? 'Cuentas bancarias activas encontradas'
+                            : 'No hay cuentas bancarias con SMS activo',
                     style: TextStyle(
                       fontSize: 14,
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIosAlternativeCard(BuildContext context) {
+    return GlassmorphismCard(
+      style: GlassStyles.medium,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Alternativa en iPhone',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'iOS no permite leer SMS de la bandeja de entrada. Para automatizar sugerencias '
+              'usa la conexión de email o sube extractos (PDF/imagen) desde la configuración.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed('/email-connection'),
+                icon: const Icon(Icons.alternate_email),
+                label: const Text('Configurar conexión por email'),
               ),
             ),
           ],
@@ -542,7 +604,9 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
             const SizedBox(height: 12),
             
             Text(
-              'Procesar manualmente todos los SMS según la configuración actual.',
+              _isSmsSupported
+                  ? 'Procesar manualmente todos los SMS según la configuración actual.'
+                  : 'En iOS no se puede leer SMS automáticamente. Usa email o extracto para obtener sugerencias.',
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
@@ -584,7 +648,7 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _isProcessing || !hasActiveBankAccounts
+                onPressed: !_isSmsSupported || _isProcessing || !hasActiveBankAccounts
                     ? null
                     : () => _processMessagesManually(context),
                 style: ElevatedButton.styleFrom(
@@ -606,7 +670,9 @@ class _SmsSettingsScreenState extends State<SmsSettingsScreen> {
                       )
                     : const Icon(Icons.sync),
                 label: Text(
-                  _isProcessing ? 'Procesando...' : 'Procesar SMS Ahora',
+                  _isSmsSupported
+                      ? (_isProcessing ? 'Procesando...' : 'Procesar SMS Ahora')
+                      : 'No disponible en iPhone',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

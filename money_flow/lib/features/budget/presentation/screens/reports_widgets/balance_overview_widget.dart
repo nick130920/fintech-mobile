@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/providers/currency_provider.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/expense_provider.dart';
@@ -25,45 +28,32 @@ class BalanceOverviewWidget extends StatelessWidget {
           enableHoverEffect: true,
           enableEntryAnimation: true,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: AppSpacing.cardLg,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Este Mes',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
+                  'ESTE MES',
+                  style: AppTypography.customEyebrow,
                 ),
-                const SizedBox(height: 16),
-                
-                // Balance Neto Principal
+                const SizedBox(height: AppSpacing.cardGap),
                 Text(
                   currencyProvider.formatAmount(netBalance.abs()),
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: isPositive 
-                      ? Colors.green[600] 
-                      : Theme.of(context).colorScheme.error,
+                  style: AppTypography.customAmountHero.copyWith(
+                    color: isPositive
+                        ? AppColors.success
+                        : Theme.of(context).colorScheme.error,
                   ),
                 ),
                 Text(
                   isPositive ? 'Superávit' : 'Déficit',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: isPositive 
-                      ? Colors.green[600] 
-                      : Theme.of(context).colorScheme.error,
+                  style: AppTypography.labelLg.copyWith(
+                    color: isPositive
+                        ? AppColors.success
+                        : Theme.of(context).colorScheme.error,
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-                
-                // Desglose Ingresos vs Gastos
+                const SizedBox(height: AppSpacing.step5),
                 Row(
                   children: [
                     Expanded(
@@ -71,11 +61,11 @@ class BalanceOverviewWidget extends StatelessWidget {
                         context,
                         'Ingresos',
                         monthlyIncome,
-                        Colors.green[600]!,
+                        AppColors.success,
                         currencyProvider,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: AppSpacing.cardGap),
                     Expanded(
                       child: _buildBalanceItem(
                         context,
@@ -101,18 +91,15 @@ class BalanceOverviewWidget extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+          style: AppTypography.labelLg.copyWith(
             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.step1),
         Text(
           currencyProvider.formatAmount(amount),
-          style: TextStyle(
+          style: AppTypography.customAmountCard.copyWith(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
             color: color,
           ),
         ),

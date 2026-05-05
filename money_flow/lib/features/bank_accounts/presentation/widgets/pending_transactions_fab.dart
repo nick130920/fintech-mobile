@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:money_flow/core/theme/app_colors.dart';
+import 'package:money_flow/core/theme/app_motion.dart';
+import 'package:money_flow/core/theme/app_radius.dart';
+import 'package:money_flow/core/theme/app_spacing.dart';
+import 'package:money_flow/core/theme/app_typography.dart';
 import 'package:money_flow/features/bank_accounts/presentation/providers/automatic_transactions_provider.dart';
 import 'package:money_flow/shared/widgets/glassmorphism_widgets.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +43,7 @@ class _PendingTransactionsFabState extends State<PendingTransactionsFab>
       end: 1.1,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: AppMotion.easeInOut,
     ));
 
     // Inicializar datos si es necesario
@@ -73,8 +78,8 @@ class _PendingTransactionsFabState extends State<PendingTransactionsFab>
         }
 
         return Positioned(
-          bottom: 100, // Encima del BottomNavigationBar
-          right: 16,
+          bottom: 100,
+          right: AppSpacing.step4,
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: AnimatedBuilder(
@@ -95,16 +100,16 @@ class _PendingTransactionsFabState extends State<PendingTransactionsFab>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.orange.withValues(alpha: 0.8),
-                            Colors.deepOrange.withValues(alpha: 0.9),
+                            AppColors.warning.withValues(alpha: 0.8),
+                            AppColors.expenseToday.withValues(alpha: 0.9),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: AppRadius.allPill,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.orange.withValues(alpha: 0.3),
+                            color: AppColors.warning.withValues(alpha: 0.3),
                             blurRadius: 12,
                             spreadRadius: 2,
                             offset: const Offset(0, 4),
@@ -113,33 +118,32 @@ class _PendingTransactionsFabState extends State<PendingTransactionsFab>
                       ),
                       child: Stack(
                         children: [
-                          Center(
+                          const Center(
                             child: Icon(
                               Icons.pending_actions,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 28,
                             ),
                           ),
                           Positioned(
-                            top: 8,
-                            right: 8,
+                            top: AppSpacing.step2,
+                            right: AppSpacing.step2,
                             child: Container(
                               constraints: const BoxConstraints(minWidth: 18),
                               height: 18,
                               padding: const EdgeInsets.symmetric(horizontal: 6),
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: AppColors.error,
                                 borderRadius: BorderRadius.circular(9),
-                                border: Border.all(color: Colors.white, width: 1),
+                                border: Border.all(color: AppColors.white, width: 1),
                               ),
                               child: Center(
                                 child: Text(
-                                  provider.pendingCount > 99 
-                                    ? '99+' 
-                                    : provider.pendingCount.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
+                                  provider.pendingCount > 99
+                                      ? '99+'
+                                      : provider.pendingCount.toString(),
+                                  style: AppTypography.labelSm.copyWith(
+                                    color: AppColors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

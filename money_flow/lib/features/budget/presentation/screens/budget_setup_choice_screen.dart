@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/services/sms_service.dart';
+import '../../../../core/services/platform_capabilities.dart';
 import '../providers/budget_setup_provider.dart';
 import '../providers/budget_suggestions_provider.dart';
 import 'budget_setup_wrapper.dart';
@@ -97,11 +98,13 @@ class _SmsOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final smsSupported = PlatformCapabilities.supportsSmsInbox;
+
     return Consumer<BudgetSuggestionsProvider>(
       builder: (context, suggestionsProvider, _) {
         final isAnalyzing = suggestionsProvider.isAnalyzing;
         return InkWell(
-          onTap: isAnalyzing
+          onTap: !smsSupported || isAnalyzing
               ? null
               : () => _onTapSms(context, suggestionsProvider),
           borderRadius: BorderRadius.circular(12),
@@ -135,7 +138,9 @@ class _SmsOption extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Usar mis SMS (últimos 3 meses)',
+                        smsSupported
+                            ? 'Usar mis SMS (últimos 3 meses)'
+                            : 'SMS no disponible en iPhone',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -146,7 +151,9 @@ class _SmsOption extends StatelessWidget {
                       Text(
                         isAnalyzing
                             ? 'Analizando hasta 100 SMS recientes (suele tardar poco)…'
-                            : 'Usamos hasta 100 SMS más recientes (rápido). Solo sugerencias, no se crean transacciones.',
+                            : smsSupported
+                                ? 'Usamos hasta 100 SMS más recientes (rápido). Solo sugerencias, no se crean transacciones.'
+                                : 'Usa la opción de extracto o conecta email para sugerencias automáticas.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -160,6 +167,11 @@ class _SmsOption extends StatelessWidget {
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else if (!smsSupported)
+                  Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   )
                 else
                   Icon(

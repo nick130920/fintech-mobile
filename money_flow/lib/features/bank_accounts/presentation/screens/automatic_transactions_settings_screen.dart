@@ -20,6 +20,7 @@ class _AutomaticTransactionsSettingsScreenState
   bool _isListenerEnabled = false;
   bool _isLoading = true;
   bool _isProcessing = false;
+  bool get _supportsAutomaticCapture => _notificationService.supportsAutomaticCapture;
 
   @override
   void initState() {
@@ -28,6 +29,14 @@ class _AutomaticTransactionsSettingsScreenState
   }
 
   Future<void> _initializeService() async {
+    if (!_supportsAutomaticCapture) {
+      setState(() {
+        _isLoading = false;
+        _isListenerEnabled = false;
+      });
+      return;
+    }
+
     // El servicio ya se inicializa globalmente, pero nos aseguramos
     await _notificationService.initialize();
     await _checkListenerStatus();
@@ -48,6 +57,13 @@ class _AutomaticTransactionsSettingsScreenState
   }
 
   Future<void> _toggleListener(bool value) async {
+    if (!_supportsAutomaticCapture) {
+      _showErrorSnackBar(
+        'Esta automatización funciona solo en Android. En iPhone usa extracto o conexión por email.',
+      );
+      return;
+    }
+
     setState(() => _isProcessing = true);
     
     try {
@@ -103,7 +119,7 @@ class _AutomaticTransactionsSettingsScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -112,7 +128,7 @@ class _AutomaticTransactionsSettingsScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -142,6 +158,11 @@ class _AutomaticTransactionsSettingsScreenState
                   // Header
                   _buildHeader(colorScheme),
                   const SizedBox(height: 24),
+
+                  if (!_supportsAutomaticCapture) ...[
+                    _buildIosAlternativeSection(colorScheme),
+                    const SizedBox(height: 24),
+                  ],
                   
                   // Switch principal
                   _buildMainSwitch(colorScheme),
@@ -230,7 +251,9 @@ class _AutomaticTransactionsSettingsScreenState
                 Text(
                   _isListenerEnabled
                       ? 'Las notificaciones se procesan automáticamente'
-                      : 'Activa para procesar notificaciones en tiempo real',
+                      : _supportsAutomaticCapture
+                          ? 'Activa para procesar notificaciones en tiempo real'
+                          : 'No disponible en iOS. Usa extracto bancario o conexión por email',
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
@@ -248,9 +271,45 @@ class _AutomaticTransactionsSettingsScreenState
                 )
               : Switch(
                   value: _isListenerEnabled,
-                  onChanged: _toggleListener,
+                  onChanged: _supportsAutomaticCapture ? _toggleListener : null,
                   activeTrackColor: colorScheme.primary,
                 ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIosAlternativeSection(ColorScheme colorScheme) {
+    return GlassmorphismCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Alternativa en iPhone',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'iOS no permite leer notificaciones de otras apps bancarias en segundo plano. '
+            'Para mantener la automatización, usa conexión por email o carga de extractos '
+            'desde Configuración > Conexión de Email.',
+            style: TextStyle(
+              fontSize: 13,
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );

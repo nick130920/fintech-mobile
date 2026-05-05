@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/glassmorphism_widgets.dart';
 
 class MonthlyTrendsWidget extends StatelessWidget {
@@ -69,7 +70,7 @@ class MonthlyTrendsWidget extends StatelessWidget {
             // Leyenda
             Row(
               children: [
-                _buildTrendLegend(context, 'Ingresos', Colors.green[600]!),
+                _buildTrendLegend(context, 'Ingresos', AppColors.success),
                 const SizedBox(width: 16),
                 _buildTrendLegend(context, 'Gastos', Theme.of(context).colorScheme.error),
               ],

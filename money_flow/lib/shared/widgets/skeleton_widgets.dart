@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+
 class CardSkeletonWidget extends StatelessWidget {
   final double height;
 
@@ -15,7 +18,7 @@ class CardSkeletonWidget extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.allBase,
         ),
       ),
     );
@@ -29,34 +32,35 @@ class TransactionSkeletonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Skeletonizer(
       enabled: true,
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.card,
         itemCount: itemCount,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.step3),
         itemBuilder: (context, index) => Row(
           children: [
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
+                color: scheme.surfaceContainerHighest,
+                borderRadius: AppRadius.allSm,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.step3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 14, width: 180, color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                  const SizedBox(height: 8),
-                  Container(height: 12, width: 120, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                  Container(height: 14, width: 180, color: scheme.surfaceContainerHighest),
+                  const SizedBox(height: AppSpacing.step2),
+                  Container(height: 12, width: 120, color: scheme.surfaceContainerHighest),
                 ],
               ),
             ),
-            Container(height: 14, width: 70, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+            Container(height: 14, width: 70, color: scheme.surfaceContainerHighest),
           ],
         ),
       ),
@@ -72,15 +76,15 @@ class DashboardSkeletonWidget extends StatelessWidget {
     return Skeletonizer(
       enabled: true,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.card,
         child: const Column(
           children: [
             CardSkeletonWidget(height: 120),
-            SizedBox(height: 16),
+            SizedBox(height: AppSpacing.step4),
             CardSkeletonWidget(height: 120),
-            SizedBox(height: 16),
+            SizedBox(height: AppSpacing.step4),
             CardSkeletonWidget(height: 140),
-            SizedBox(height: 16),
+            SizedBox(height: AppSpacing.step4),
             CardSkeletonWidget(height: 220),
           ],
         ),
