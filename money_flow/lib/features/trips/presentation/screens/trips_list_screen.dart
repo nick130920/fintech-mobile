@@ -8,9 +8,17 @@ import '../providers/trips_provider.dart';
 import 'create_trip_screen.dart';
 import 'trip_detail_screen.dart';
 
-/// Pantalla principal del módulo de viajes: lista los viajes del usuario
+/// Pantalla principal del módulo de viajes: lista los viajes del usuario.
+///
+/// Cuando se usa como ruta independiente (`useScaffold: true`) muestra
+/// `Scaffold` con `AppBar` y `FloatingActionButton`. Cuando se embebe en
+/// la `MainScreen` (bottom bar) se muestra sin `Scaffold` para reutilizar
+/// el `ExpandableFab` global y respetar el espacio reservado para la
+/// barra inferior.
 class TripsListScreen extends StatefulWidget {
-  const TripsListScreen({super.key});
+  final bool useScaffold;
+
+  const TripsListScreen({super.key, this.useScaffold = true});
 
   @override
   State<TripsListScreen> createState() => _TripsListScreenState();
@@ -35,6 +43,44 @@ class _TripsListScreenState extends State<TripsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final body = SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: Consumer<TripsProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading && provider.trips.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final trips = provider.filterByStatus(_statusFilter);
+            final bottomReserved = widget.useScaffold ? 96.0 : 120.0;
+            return ListView(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, bottomReserved),
+              children: [
+                if (!widget.useScaffold) _buildEmbeddedHeader(),
+                _buildStatusFilters(),
+                if (provider.error != null) ...[
+                  const SizedBox(height: 12),
+                  _buildErrorBanner(provider.error!),
+                ],
+                const SizedBox(height: 16),
+                if (trips.isEmpty)
+                  _buildEmptyState()
+                else
+                  ...trips.map(_buildTripCard),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+
+    if (!widget.useScaffold) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: body,
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -47,33 +93,63 @@ class _TripsListScreenState extends State<TripsListScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Nuevo viaje'),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refresh,
-          child: Consumer<TripsProvider>(
-            builder: (context, provider, _) {
-              if (provider.isLoading && provider.trips.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final trips = provider.filterByStatus(_statusFilter);
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                children: [
-                  _buildStatusFilters(),
-                  if (provider.error != null) ...[
-                    const SizedBox(height: 12),
-                    _buildErrorBanner(provider.error!),
-                  ],
-                  const SizedBox(height: 16),
-                  if (trips.isEmpty)
-                    _buildEmptyState()
-                  else
-                    ...trips.map(_buildTripCard),
-                ],
-              );
-            },
+      body: body,
+    );
+  }
+
+  Widget _buildEmbeddedHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.flight_takeoff,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mis viajes',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  'Planifica, comparte y organiza tus aventuras',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Nuevo viaje',
+            onPressed: _openCreateTrip,
+            icon: Icon(
+              Icons.add_circle,
+              size: 32,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

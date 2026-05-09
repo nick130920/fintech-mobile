@@ -33,6 +33,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _buildUserInfo(context, authProvider),
           const Divider(height: 40),
+          _buildSectionTitle(context, 'Presupuesto y Categorías'),
+          const SizedBox(height: 8),
+          _buildBudgetOptions(context),
+          const Divider(height: 40),
           _buildSectionTitle(context, 'Gestión Bancaria'),
           const SizedBox(height: 8),
           _buildBankingOptions(context),
@@ -137,6 +141,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
+    );
+  }
+
+  Widget _buildBudgetOptions(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.category_rounded,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                size: 20,
+              ),
+            ),
+            title: const Text('Categorías y límites de gasto'),
+            subtitle: const Text(
+              'Administra categorías y define un presupuesto mensual',
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.pushNamed(context, '/category-management'),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.attach_money,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                size: 20,
+              ),
+            ),
+            title: const Text('Moneda predeterminada'),
+            subtitle: const Text('Configura la moneda principal de la app'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.pushNamed(context, '/currency-settings'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -7,10 +7,10 @@ import 'package:money_flow/core/theme/app_motion.dart';
 import 'package:money_flow/core/theme/app_radius.dart';
 import 'package:money_flow/core/theme/app_spacing.dart';
 import 'package:money_flow/features/bank_accounts/presentation/widgets/pending_transactions_fab.dart';
-import 'package:money_flow/features/budget/presentation/screens/category_management_screen.dart';
 import 'package:money_flow/features/budget/presentation/screens/dashboard_screen.dart';
 import 'package:money_flow/features/budget/presentation/screens/reports_screen.dart';
 import 'package:money_flow/features/profile/presentation/screens/profile_screen.dart';
+import 'package:money_flow/features/trips/presentation/screens/trips_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialTab;
@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
             children: const [
               DashboardScreenContent(), // Sin Scaffold
               ReportsScreenContent(), // Sin Scaffold
-              CategoryManagementScreenContent(), // Sin Scaffold
+              TripsScreenContent(), // Sin Scaffold
               ProfileScreenContent(),
             ],
           ),
@@ -169,7 +169,7 @@ class _MainScreenState extends State<MainScreen> {
                   _buildNavItem(0, Icons.home_rounded, 'Inicio'),
                   _buildNavItem(1, Icons.bar_chart_rounded, 'Reportes'),
                   const SizedBox(width: 55), // Espacio para el FAB
-                  _buildNavItem(2, Icons.category_rounded, 'Categorías'),
+                  _buildNavItem(2, Icons.flight_takeoff_rounded, 'Viajes'),
                   _buildNavItem(3, Icons.person_rounded, 'Perfil'),
                 ],
               ),
@@ -247,13 +247,13 @@ class ReportsScreenContent extends StatelessWidget {
 }
 
 
-// Contenido de Category Management sin Scaffold
-class CategoryManagementScreenContent extends StatelessWidget {
-  const CategoryManagementScreenContent({super.key});
+// Contenido de Trips sin Scaffold con AppBar (header embebido)
+class TripsScreenContent extends StatelessWidget {
+  const TripsScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const CategoryManagementScreen();
+    return const TripsListScreen(useScaffold: false);
   }
 }
 

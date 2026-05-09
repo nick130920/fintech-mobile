@@ -38,6 +38,7 @@ import 'features/budget/presentation/screens/add_expense_screen.dart';
 import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/ai_transactions_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
+import 'features/budget/presentation/screens/category_management_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
 import 'features/trips/presentation/providers/active_trip_provider.dart';
 import 'features/trips/presentation/providers/trip_balance_provider.dart';
@@ -274,7 +275,7 @@ class _MyAppState extends State<MyApp> {
               '/add-income': (context) => const AddIncomeScreen(),
               '/expense-history': (context) => const MainScreen(initialTab: 1),
               '/income-history': (context) => const ReportsScreen(useScaffold: true),
-              '/category-management': (context) => const MainScreen(initialTab: 2),
+              '/category-management': (context) => const CategoryManagementScreen(),
               '/currency-settings': (context) => const CurrencySettingsScreen(),
               '/notification-settings': (context) => const NotificationSettingsScreen(),
               '/language-settings': (context) => const LanguageSettingsScreen(),
