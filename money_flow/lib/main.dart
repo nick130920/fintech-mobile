@@ -39,6 +39,14 @@ import 'features/budget/presentation/screens/add_income_screen.dart';
 import 'features/budget/presentation/screens/ai_transactions_screen.dart';
 import 'features/budget/presentation/screens/budget_setup_screen.dart';
 import 'features/budget/presentation/screens/reports_screen.dart';
+import 'features/trips/presentation/providers/active_trip_provider.dart';
+import 'features/trips/presentation/providers/trip_balance_provider.dart';
+import 'features/trips/presentation/providers/trip_invitation_provider.dart';
+import 'features/trips/presentation/providers/trips_provider.dart';
+import 'features/trips/presentation/screens/accept_invitation_screen.dart';
+import 'features/trips/presentation/screens/trip_detail_screen.dart';
+import 'features/trips/presentation/screens/trips_list_screen.dart';
+import 'features/trips/presentation/services/trip_deep_link_service.dart';
 import 'features/settings/presentation/screens/currency_settings_screen.dart';
 import 'features/settings/presentation/screens/email_connection_screen.dart';
 import 'features/settings/presentation/screens/language_settings_screen.dart';
@@ -184,8 +192,35 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final TripInvitationProvider _tripInvitationProvider = TripInvitationProvider();
+  TripDeepLinkService? _deepLinkService;
+
+  @override
+  void initState() {
+    super.initState();
+    _deepLinkService = TripDeepLinkService(
+      navigatorKey: navigatorKey,
+      invitationProvider: _tripInvitationProvider,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _deepLinkService?.initialize();
+    });
+  }
+
+  @override
+  void dispose() {
+    _deepLinkService?.dispose();
+    _tripInvitationProvider.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,6 +239,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BankAccountProvider()),
         ChangeNotifierProvider(create: (_) => AutomaticTransactionsProvider()),
         ChangeNotifierProvider(create: (_) => SmsSettingsProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => TripsProvider()),
+        ChangeNotifierProvider(create: (_) => ActiveTripProvider()),
+        ChangeNotifierProvider(create: (_) => TripBalanceProvider()),
+        ChangeNotifierProvider.value(value: _tripInvitationProvider),
       ],
       child: Consumer2<ThemeProvider, LocaleProvider>(
         builder: (context, themeProvider, localeProvider, _) {
@@ -252,6 +291,17 @@ class MyApp extends StatelessWidget {
               '/automatic-transactions-settings': (context) => const AutomaticTransactionsSettingsScreen(),
               '/ai-transactions': (context) => const AITransactionsScreen(),
               '/settings': (context) => const ProfileScreen(),
+              '/trips': (context) => const TripsListScreen(),
+              '/trip-detail': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                final tripId = args is int ? args : (args as Map?)?['tripId'] as int? ?? 0;
+                return TripDetailScreen(tripId: tripId);
+              },
+              '/accept-invitation': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                final token = args is String ? args : (args as Map?)?['token'] as String?;
+                return AcceptInvitationScreen(initialToken: token);
+              },
             },
           );
         },

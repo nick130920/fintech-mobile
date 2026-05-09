@@ -70,6 +70,28 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="moneyflow" android:host="email-error" />
             </intent-filter>
+            <!-- Deep link para invitaciones de viajes (moneyflow://invitations/{token}) -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="moneyflow" android:host="invitations" />
+            </intent-filter>
+            <!-- Deep link para detalle de viajes (moneyflow://trips/{id}) -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="moneyflow" android:host="trips" />
+            </intent-filter>
+            <!-- Universal links para invitaciones y viajes en https://moneyflow.app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="moneyflow.app" android:pathPrefix="/invitations" />
+                <data android:scheme="https" android:host="moneyflow.app" android:pathPrefix="/trips" />
+            </intent-filter>
         </activity>
         
         <!-- Don't delete the meta-data below.
