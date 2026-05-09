@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: money-flow-mobile
+  description: Money Flow mobile app - Flutter with Provider state management
+  tags:
+    - flutter
+    - dart
+    - mobile
+    - fintech
+  annotations:
+    github.com/project-slug: nick130920/fintech-mobile
+  links:
+    - url: https://github.com/nick130920/fintech-mobile
+      title: Repository
+      icon: github
+spec:
+  type: website
+  lifecycle: production
+  owner: platform-team
+  system: money-flow
+  dependsOn:
+    - component:default/flutter-auth-widget
+  consumesApis:
+    - money-flow-rest-api

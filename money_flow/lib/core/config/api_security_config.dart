@@ -1,51 +1,39 @@
 /// Configuración de pinning TLS para la API de producción.
 ///
-/// Estrategia de pinning en capas (de más específico a más amplio):
+/// ## Estrategia: pinning de Root + intermedios de Let's Encrypt
 ///
-/// 1. [pinnedLeafCertificatePem] — Cert leaf actual del servidor.
-///    Vence cada ~90 días. Hay que rotarlo aquí cuando Railway lo renueva.
-///    Cuando se actualice, idealmente mantener el leaf anterior unas semanas
-///    para usuarios que aún no actualizaron la app.
+/// En vez de pinear el certificado leaf (que rota cada ~90 días y cada
+/// rotación bloqueaba a los usuarios que no actualizaban la app), pineamos
+/// los anchors estables de la cadena:
 ///
-/// 2. [letsEncryptE7IntermediatePem] / [letsEncryptR12IntermediatePem] —
+/// 1. [letsEncryptE7IntermediatePem] / [letsEncryptR12IntermediatePem] —
 ///    Intermedios actuales de Let's Encrypt (ECDSA y RSA respectivamente).
-///    Railway puede rotar entre ambos sin avisar; pinear los dos garantiza
-///    que la app siga funcionando aunque cambien la criptografía del leaf.
+///    Railway puede emitir leaves firmados por cualquiera de los dos sin
+///    avisar; pinear ambos garantiza que la app siga funcionando aunque
+///    cambien la criptografía del leaf entre rotaciones (vencen 2027-03-12).
 ///
-/// 3. [isrgRootX1Pem] — Root de Let's Encrypt (vence 2035-06-04).
-///    Pin de último recurso: si Let's Encrypt introduce un nuevo intermedio
-///    (R13, R14, E8, E9...) firmado por X1, la conexión sigue siendo válida
-///    sin necesidad de publicar una nueva versión de la app.
+/// 2. [isrgRootX1Pem] — Root de Let's Encrypt (vence 2035-06-04).
+///    Anchor de último recurso: cualquier intermedio futuro de LE
+///    (R13, R14, E8, E9...) seguirá encadenando aquí, así que la app
+///    sobrevive cualquier rotación sin nueva versión hasta 2035.
 ///
-/// Estos certificados se cargan en un [SecurityContext] sin roots del sistema
-/// para forzar pinning estricto contra Let's Encrypt.
+/// ## Por qué no pineamos el leaf
+///
+/// El leaf vence cada ~90 días. Pinearlo obliga a publicar una nueva
+/// versión de la app cada trimestre y deja fuera a usuarios sin la
+/// actualización. Validar contra el root + intermedios de Let's Encrypt
+/// es la práctica recomendada cuando la API usa ACME/LE.
+///
+/// ## Próxima fecha en que hay que tocar este archivo
+///
+/// **Marzo 2027** — vencen los intermedios E7 y R12. Antes de esa fecha:
+/// 1. Descargar los nuevos intermedios desde https://letsencrypt.org/certs/
+/// 2. Reemplazar [letsEncryptE7IntermediatePem] y [letsEncryptR12IntermediatePem].
+/// 3. ISRG Root X1 sigue siendo válido hasta 2035 — no hace falta tocarlo.
+///
+/// Si Railway cambia de proveedor de TLS (deja Let's Encrypt), habrá que
+/// reemplazar todos estos pines por los del nuevo emisor.
 class ApiSecurityConfig {
-  /// Certificado leaf actual de `*.up.railway.app`.
-  /// Emitido: 2026-05-04 | Vence: 2026-08-02 | Emisor: Let's Encrypt E7 (ECDSA).
-  static const String pinnedLeafCertificatePem = '''
------BEGIN CERTIFICATE-----
-MIIDjDCCAxKgAwIBAgISBSQAIS5JmnAiHTvblBzbTcb8MAoGCCqGSM49BAMDMDIx
-CzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQDEwJF
-NzAeFw0yNjA1MDQxNDAxMzRaFw0yNjA4MDIxNDAxMzNaMBsxGTAXBgNVBAMMECou
-dXAucmFpbHdheS5hcHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQCrMwzCTwB
-3TP/hYu4YhXtCQ2y6par8ObmYgYnpCt0CAOiWYMjJBOCMGKIW9JD3ffvL3YKJYey
-b9VjGUwyE4opo4ICHTCCAhkwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsG
-AQUFBwMBMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFNVBe7tqxf4DLf3sYNL8rcCO
-2NZYMB8GA1UdIwQYMBaAFK5IntyHHUSgb9qi5WB0BHjCnACAMDIGCCsGAQUFBwEB
-BCYwJDAiBggrBgEFBQcwAoYWaHR0cDovL2U3LmkubGVuY3Iub3JnLzAbBgNVHREE
-FDASghAqLnVwLnJhaWx3YXkuYXBwMBMGA1UdIAQMMAowCAYGZ4EMAQIBMC4GA1Ud
-HwQnMCUwI6AhoB+GHWh0dHA6Ly9lNy5jLmxlbmNyLm9yZy8xMjUuY3JsMIIBDAYK
-KwYBBAHWeQIEAgSB/QSB+gD4AHYAyKPEf8ezrbk1awE/anoSbeM6TkOlxkb5l605
-dZkdz5oAAAGd84DobAAABAMARzBFAiASQwDzwBWb1oj14pgtSNybb5/EHkMV6sDo
-BnERjMVGgQIhAN82D0p3RIggCrV50Q027c0JbvQxZRH6L43p2IorQxKoAH4AqCbL
-4wrGNRJGUz/gZfFPGdluGQgTxB3ZbXkAsxI8VScAAAGd84Dq+gAIAAAFAAmHN+AE
-AwBHMEUCIQCzKb4DSJtLhBW58/ikXD2FDxsalc0ZKVAeaj8AuehnlAIgO5fcHJyw
-vHnwA4sf9++OaEBkiyg2NjpSzPxtjnqcmMMwCgYIKoZIzj0EAwMDaAAwZQIwAcYR
-RKglNuevYMGM4jVGkMsSJVsbaoBdXSMX6nxo6RWKuLBQs7Cnd6dIAuQdIcBNAjEA
-m9MpBpAStzIFxAVYj1mlxwdOucODrhuZqpNVXR2gqbkKfgUUEqLFNfpALqSjF+YP
------END CERTIFICATE-----
-''';
-
   /// Intermedio Let's Encrypt **E7** (ECDSA), cross-signed por ISRG Root X1.
   /// Vence: 2027-03-12. Activo en la cadena actual del servidor.
   static const String letsEncryptE7IntermediatePem = '''
@@ -78,8 +66,8 @@ YRmT7/OXpmOH/FVLtwS+8ng1cAmpCujPwteJZNcDG0sF2n/sc0+SQf49fdyUK0ty
 ''';
 
   /// Intermedio Let's Encrypt **R12** (RSA), firmado por ISRG Root X1.
-  /// Vence: 2027-03-12. Sigue pineado como respaldo por si Railway vuelve a
-  /// emitir certificados firmados por R12 en una rotación futura.
+  /// Vence: 2027-03-12. Pineado como respaldo por si Railway emite
+  /// certificados firmados por R12 en una rotación futura.
   static const String letsEncryptR12IntermediatePem = '''
 -----BEGIN CERTIFICATE-----
 MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
@@ -113,9 +101,9 @@ iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
 ''';
 
   /// Root de Let's Encrypt **ISRG Root X1** (RSA, vence 2035-06-04).
-  /// Cualquier certificado emitido por Let's Encrypt encadena hasta este root,
-  /// por lo que pinear X1 absorbe rotaciones futuras de intermedios sin
-  /// requerir nueva versión de la app.
+  /// Cualquier certificado emitido por Let's Encrypt encadena hasta este
+  /// root, por lo que pinearlo absorbe rotaciones futuras de intermedios
+  /// sin requerir nueva versión de la app.
   static const String isrgRootX1Pem = '''
 -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
@@ -150,11 +138,10 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 -----END CERTIFICATE-----
 ''';
 
-  /// Lista ordenada de certificados que se cargan en el [SecurityContext].
-  /// El orden no afecta a la validación; cualquier match anclado al chain
-  /// presentado por el servidor habilita la conexión.
+  /// Anchors de confianza cargados en el [SecurityContext]. La validación
+  /// TLS recorre la cadena del servidor hasta encontrar **cualquiera** de
+  /// estos certificados; por eso no necesitamos pinear el leaf.
   static const List<String> trustedCertificates = [
-    pinnedLeafCertificatePem,
     letsEncryptE7IntermediatePem,
     letsEncryptR12IntermediatePem,
     isrgRootX1Pem,
