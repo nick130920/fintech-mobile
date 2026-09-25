@@ -29,22 +29,22 @@ subprojects {
     }
 }
 
-// Workaround for workmanager compilation issue
+// Align Java and Kotlin bytecode on JVM 17 for all Android subprojects.
 subprojects {
     afterEvaluate {
         if (project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
             project.extensions.configure<com.android.build.gradle.BaseExtension> {
                 compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_11
-                    targetCompatibility = JavaVersion.VERSION_11
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
                 }
             }
         }
         
-        // Keep Kotlin bytecode aligned with the Java 11 target.
+        // Keep Kotlin bytecode aligned with the Java 17 target.
         project.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             compilerOptions {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             }
         }
     }
