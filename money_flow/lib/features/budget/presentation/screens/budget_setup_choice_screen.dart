@@ -373,13 +373,12 @@ class _ExtractoOption extends StatelessWidget {
     BuildContext context,
     BudgetSuggestionsProvider suggestionsProvider,
   ) async {
-    final result = await FilePicker.platform.pickFiles(
+    final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: false,
     );
-    if (result == null || result.files.isEmpty || result.files.single.path == null) return;
-    final path = result.files.single.path!;
+    if (files.isEmpty || files.first.path == null) return;
+    final path = files.first.path!;
 
     await suggestionsProvider.analyzeStatement(path);
     if (!context.mounted) return;

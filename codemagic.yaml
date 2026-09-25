@@ -9,20 +9,15 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       android_signing:
-        - keystore_moneyflow
+        - keystore_moneyflow_rotated
       groups:
-        - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS)
-        # Opcional: grupo con SENTRY_DSN (secure) si no lo defines a nivel de app/equipo
+        - google_play # Includes GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
       vars:
         CM_CLONE_DEPTH: 100
-        # GlitchTip/Sentry: crea SENTRY_DSN en Codemagic (App settings → Environment variables,
-        # Secure: sí). No commitees el DSN en este archivo.
+        # GlitchTip/Sentry: create SENTRY_DSN in Codemagic as a secure environment variable.
         SENTRY_ENVIRONMENT: production
-        PACKAGE_NAME: "com.money.flow" # <-- Put your package name here
-        GOOGLE_PLAY_TRACK: internal # <-- Any of the following: internal, alpha, beta, production
-        CM_KEYSTORE_ALIAS: "upload"
-        CM_KEYSTORE_PASSWORD: "nicolas1309"
-        FREECURRENCY_API_KEY: "fca_live_e5ILZOXiYU8BqiF5A6doBO3J1l7Y1uZem8M0hAz2" # FreeCurrency API Key
+        PACKAGE_NAME: "com.money.flow"
+        GOOGLE_PLAY_TRACK: internal
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -104,7 +99,6 @@ workflows:
           flutter build appbundle --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$BUILD_NUMBER \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
             --dart-define=SENTRY_DSN="$SENTRY_DSN" \
             --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
             --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${BUILD_NUMBER}"
@@ -121,7 +115,7 @@ workflows:
           success: true # To not receive a notification when a build succeeds
           failure: true # To not receive a notification when a build fails
       google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
         track: $GOOGLE_PLAY_TRACK
         submit_as_draft: true
 
@@ -135,10 +129,11 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.money.flow
+      groups:
+        - google_play
       vars:
         SENTRY_ENVIRONMENT: production
-        APP_ID: 1555555551 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
-        FREECURRENCY_API_KEY: "fca_live_e5ILZOXiYU8BqiF5A6doBO3J1l7Y1uZem8M0hAz2" # FreeCurrency API Key
+        APP_ID: 1555555551 # App Store Connect > App > General > App Information
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -171,7 +166,6 @@ workflows:
           flutter build ipa --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$IOS_BUILD \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
             --dart-define=SENTRY_DSN="$SENTRY_DSN" \
             --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
             --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${IOS_BUILD}"

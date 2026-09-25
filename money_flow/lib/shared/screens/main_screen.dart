@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
+import 'package:material_ui/material_ui.dart' as material_ui;
 import 'package:money_flow/core/theme/app_colors.dart';
 import 'package:money_flow/core/theme/app_motion.dart';
 import 'package:money_flow/core/theme/app_radius.dart';
@@ -39,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return material_ui.Scaffold(
       body: Stack(
         children: [
           PageView(
