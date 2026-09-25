@@ -202,7 +202,7 @@ class CurrencyService {
         ),
       );
 
-      final placemarks = await placemarkFromCoordinates(
+      final placemarks = await Geocoding().placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );

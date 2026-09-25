@@ -358,13 +358,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (includeNotes) e.notes,
               ]),
         ];
-        final csv = const ListToCsvConverter().convert(rows);
+        final csv = Csv().encode(rows);
         await file.writeAsString(csv, flush: true);
       }
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Exportación de transacciones ($format)',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Exportación de transacciones ($format)',
+        ),
       );
 
       if (!mounted) return;
