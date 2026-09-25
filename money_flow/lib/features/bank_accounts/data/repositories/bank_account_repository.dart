@@ -139,8 +139,7 @@ class BankAccountRepository {
         throw Exception('Token de autenticación no encontrado');
       }
 
-      // Usar PUT ya que no hay método patch
-      final response = await ApiService.put('/bank-accounts/$id/active', {'is_active': isActive}, token: token);
+      final response = await ApiService.patch('/bank-accounts/$id/active', {'is_active': isActive}, token: token);
 
       if (response.statusCode != 204) {
         if (response.statusCode == 404) {
@@ -162,8 +161,7 @@ class BankAccountRepository {
         throw Exception('Token de autenticación no encontrado');
       }
 
-      // Usar PUT ya que no hay método patch
-      final response = await ApiService.put('/bank-accounts/$id/balance', {'balance': balance}, token: token);
+      final response = await ApiService.patch('/bank-accounts/$id/balance', {'balance': balance}, token: token);
 
       if (response.statusCode != 204) {
         if (response.statusCode == 404) {

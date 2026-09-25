@@ -18,9 +18,20 @@ import 'storage_service.dart';
 class ApiService {
   static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
   static const String _apiVersion = '/api/v1';
-  static final http.Client _client = _buildPinnedClient();
+  static final http.Client _defaultClient = _buildPinnedClient();
+  static http.Client _client = _defaultClient;
   
   static GlobalKey<NavigatorState>? _navigatorKey;
+
+  @visibleForTesting
+  static void setClientForTesting(http.Client client) {
+    _client = client;
+  }
+
+  @visibleForTesting
+  static void resetClientForTesting() {
+    _client = _defaultClient;
+  }
 
   /// Una sola renovación en vuelo para no invalidar tokens con carreras.
   static Future<TokenRefreshOutcome>? _refreshInFlight;
@@ -109,6 +120,25 @@ class ApiService {
         final headers = Map<String, String>.from(_defaultHeaders);
         if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
         return _client.put(url, headers: headers, body: jsonEncode(body));
+      },
+      initialToken: token,
+    );
+  }
+
+  // PATCH request
+  static Future<http.Response> patch(
+    String endpoint,
+    Map<String, dynamic> body, {
+    String? token,
+  }) async {
+    final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
+    final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
+
+    return await _handleRequest(
+      (effectiveToken) {
+        final headers = Map<String, String>.from(_defaultHeaders);
+        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
+        return _client.patch(url, headers: headers, body: jsonEncode(body));
       },
       initialToken: token,
     );
