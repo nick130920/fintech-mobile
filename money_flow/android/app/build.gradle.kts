@@ -34,10 +34,19 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = System.getenv("CM_KEYSTORE_ALIAS") ?: "upload"
-            keyPassword = System.getenv("CM_KEYSTORE_PASSWORD") ?: "nicolas1309"
-            storeFile = System.getenv("CM_KEYSTORE_PATH")?.let { file(it) } ?: file("../upload-keystore.jks")
-            storePassword = System.getenv("CM_KEYSTORE_PASSWORD") ?: "nicolas1309"
+            val keystorePath = requireNotNull(System.getenv("CM_KEYSTORE_PATH")) {
+                "CM_KEYSTORE_PATH is required for release signing"
+            }
+            storeFile = file(keystorePath)
+            storePassword = requireNotNull(System.getenv("CM_KEYSTORE_PASSWORD")) {
+                "CM_KEYSTORE_PASSWORD is required for release signing"
+            }
+            keyAlias = requireNotNull(System.getenv("CM_KEY_ALIAS")) {
+                "CM_KEY_ALIAS is required for release signing"
+            }
+            keyPassword = requireNotNull(System.getenv("CM_KEY_PASSWORD")) {
+                "CM_KEY_PASSWORD is required for release signing"
+            }
         }
     }
 
