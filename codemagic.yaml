@@ -99,7 +99,6 @@ workflows:
           flutter build appbundle --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$BUILD_NUMBER \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
             --dart-define=SENTRY_DSN="$SENTRY_DSN" \
             --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
             --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${BUILD_NUMBER}"
@@ -131,7 +130,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.money.flow
       groups:
-        - google_play # Includes FREECURRENCY_API_KEY used by both mobile workflows.
+        - google_play
       vars:
         SENTRY_ENVIRONMENT: production
         APP_ID: 1555555551 # App Store Connect > App > General > App Information
@@ -167,7 +166,6 @@ workflows:
           flutter build ipa --release \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$IOS_BUILD \
-            --dart-define=FREECURRENCY_API_KEY=$FREECURRENCY_API_KEY \
             --dart-define=SENTRY_DSN="$SENTRY_DSN" \
             --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
             --dart-define=SENTRY_RELEASE="money_flow@1.0.${BUILD_NUMBER}+${IOS_BUILD}"
