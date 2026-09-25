@@ -41,10 +41,10 @@ subprojects {
             }
         }
         
-        // Forzar Kotlin JVM target también
+        // Keep Kotlin bytecode aligned with the Java 11 target.
         project.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-            kotlinOptions {
-                jvmTarget = "11"
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
             }
         }
     }
