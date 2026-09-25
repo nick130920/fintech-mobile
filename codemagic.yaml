@@ -11,7 +11,7 @@ workflows:
       android_signing:
         - keystore_moneyflow_rotated
       groups:
-        - google_play # Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
+        - google_play # Includes GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
       vars:
         CM_CLONE_DEPTH: 100
         # GlitchTip/Sentry: create SENTRY_DSN in Codemagic as a secure environment variable.
@@ -116,7 +116,7 @@ workflows:
           success: true # To not receive a notification when a build succeeds
           failure: true # To not receive a notification when a build fails
       google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
         track: $GOOGLE_PLAY_TRACK
         submit_as_draft: true
 
