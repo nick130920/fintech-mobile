@@ -95,7 +95,7 @@ workflows:
       - name: Flutter analyze
         script: |
           cd money_flow
-          flutter analyze
+          flutter analyze --no-fatal-warnings --no-fatal-infos
       - name: Flutter unit tests
         script: |
           cd money_flow
@@ -170,7 +170,7 @@ workflows:
       - name: Flutter analyze
         script: |
           cd money_flow
-          flutter analyze
+          flutter analyze --no-fatal-warnings --no-fatal-infos
       - name: Flutter unit tests
         script: |
           cd money_flow

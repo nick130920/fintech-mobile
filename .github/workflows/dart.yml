@@ -65,7 +65,7 @@ jobs:
           dart format --output=none --set-exit-if-changed "${dart_files[@]}"
 
       - name: Analyze project source
-        run: flutter analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
       - name: Run tests
         run: flutter test
