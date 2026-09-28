@@ -18,7 +18,7 @@ workflows:
         SENTRY_ENVIRONMENT: production
         PACKAGE_NAME: "com.money.flow"
         GOOGLE_PLAY_TRACK: internal
-      flutter: stable
+      flutter: 3.47.5
       xcode: latest
       cocoapods: default
     scripts:
@@ -82,16 +82,24 @@ workflows:
             echo
             echo "$EN_NOTES"
           } > release_notes_en-US.txt
+      - name: Verify formatting of changed Dart files
+        script: |
+          cd money_flow
+          changed_files="$(mktemp)"
+          trap 'rm -f "$changed_files"' EXIT
+          git diff --name-only -z --relative=. --diff-filter=ACMRT \
+            HEAD^ HEAD -- '*.dart' > "$changed_files"
+          if [ -s "$changed_files" ]; then
+            xargs -0 dart format --output=none --set-exit-if-changed < "$changed_files"
+          fi
       - name: Flutter analyze
         script: |
           cd money_flow
-          flutter analyze
-        ignore_failure: true
+          flutter analyze --no-fatal-warnings --no-fatal-infos
       - name: Flutter unit tests
         script: |
           cd money_flow
           flutter test
-        ignore_failure: true
       - name: Build AAB with Flutter
         script: |
           cd money_flow
@@ -134,7 +142,7 @@ workflows:
       vars:
         SENTRY_ENVIRONMENT: production
         APP_ID: 1555555551 # App Store Connect > App > General > App Information
-      flutter: stable
+      flutter: 3.47.5
       xcode: latest
       cocoapods: default
     scripts:
@@ -149,16 +157,24 @@ workflows:
         script: |
           cd money_flow
           find . -name "Podfile" -execdir pod install \;
+      - name: Verify formatting of changed Dart files
+        script: |
+          cd money_flow
+          changed_files="$(mktemp)"
+          trap 'rm -f "$changed_files"' EXIT
+          git diff --name-only -z --relative=. --diff-filter=ACMRT \
+            HEAD^ HEAD -- '*.dart' > "$changed_files"
+          if [ -s "$changed_files" ]; then
+            xargs -0 dart format --output=none --set-exit-if-changed < "$changed_files"
+          fi
       - name: Flutter analyze
         script: |
           cd money_flow
-          flutter analyze
-        ignore_failure: true
+          flutter analyze --no-fatal-warnings --no-fatal-infos
       - name: Flutter unit tests
         script: |
           cd money_flow
           flutter test
-        ignore_failure: true
       - name: Flutter build ipa and automatic versioning
         script: |
           cd money_flow

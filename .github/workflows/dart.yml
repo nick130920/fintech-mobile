@@ -1,0 +1,71 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Flutter quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: money_flow
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: "3.47.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting of changed Dart files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          changed_files="$(mktemp)"
+          trap 'rm -f "$changed_files"' EXIT
+          git -C "$GITHUB_WORKSPACE" diff \
+            --name-only \
+            --diff-filter=ACMRT \
+            "$BASE_SHA" \
+            "$GITHUB_SHA" \
+            -- ':(glob)money_flow/**/*.dart' > "$changed_files"
+
+          mapfile -t dart_files < <(sed -n 's#^money_flow/##p' "$changed_files")
+          if (( ${#dart_files[@]} == 0 )); then
+            echo "No changed Dart files to format-check."
+            exit 0
+          fi
+
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+
+      - name: Analyze project source
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
