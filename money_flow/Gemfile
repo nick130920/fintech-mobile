@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+# Pinned for reproducible, listing-only Google Play automation.
+gem "fastlane", "2.225.0"
