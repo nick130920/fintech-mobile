@@ -117,6 +117,12 @@ Repeatable captures reduce manual store-listing work, keep localized screenshots
 - Parent LSP diagnostics reported zero findings across the four Dart harness files.
 - No private-key markers, credential-value fields, active release options, or signing changes were found.
 
+## Commit Evidence
+
+- `f5b4f1f` — `feat(android): add local Play screenshot capture`
+- `32e6171` — `feat(play): add listing-only screenshot delivery`
+- Branch: `feat/play-store-screenshot-automation`
+
 ## Next Step
 
-On the Windows workstation, install the documented prerequisites and begin with `flutter doctor`; PowerShell parsing, Flutter tests, physical-device capture, visual PNG inspection, and Fastlane runtime validation remain pending there.
+Push the feature branch after explicit authorization, then install the documented prerequisites on Windows and begin with `flutter doctor`.
