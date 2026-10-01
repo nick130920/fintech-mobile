@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Locally generated Play Store screenshot artifacts
+/fastlane/metadata/android/es-419/images/phoneScreenshots/
+
 # Symbolication related
 app.*.symbols
 
