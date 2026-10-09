@@ -16,7 +16,7 @@ import '../exceptions/temporary_auth_failure_exception.dart';
 import 'storage_service.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
+  static const String _baseUrl = 'https://api.moneyflow.tatacode.com';
   static const String _apiVersion = '/api/v1';
   static final http.Client _defaultClient = _buildPinnedClient();
   static http.Client _client = _defaultClient;
