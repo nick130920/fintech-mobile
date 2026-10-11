@@ -7,20 +7,14 @@ void main() {
   configurePlayStoreScreenshotHarness();
 
   test('uses the required ordered scenario names', () {
-    expect(
-      playStoreScreenshotScenarios.map((scenario) => scenario.name),
-      [
-        '01-welcome',
-        '02-onboarding',
-        '03-budget-setup-choice',
-      ],
-    );
+    expect(playStoreScreenshotScenarios.map((scenario) => scenario.name), [
+      '01-welcome',
+      '02-onboarding',
+      '03-budget-setup-choice',
+    ]);
     expect(
       playStoreScreenshotLocale,
-      const Locale.fromSubtags(
-        languageCode: 'es',
-        countryCode: '419',
-      ),
+      const Locale.fromSubtags(languageCode: 'es', countryCode: '419'),
     );
   });
 
