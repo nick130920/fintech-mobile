@@ -1,0 +1,28 @@
+require "pathname"
+
+GIT_REPOSITORY_ROOT = File.realpath(File.expand_path("../..", __dir__))
+
+def money_flow_service_account_json!
+  configured_path = ENV.fetch("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON") do
+    UI.user_error!("Set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON to an absolute path to a service-account JSON key outside this repository.")
+  end
+
+  UI.user_error!("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON must be an absolute path.") unless Pathname.new(configured_path).absolute?
+
+  expanded_path = File.expand_path(configured_path)
+  resolved_path = File.realpath(expanded_path)
+  UI.user_error!("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON must not use a symlink.") unless resolved_path == expanded_path
+  UI.user_error!("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON must resolve to a regular file.") unless File.file?(resolved_path)
+
+  inside_repository = resolved_path == GIT_REPOSITORY_ROOT ||
+    resolved_path.start_with?("#{GIT_REPOSITORY_ROOT}#{File::SEPARATOR}")
+  UI.user_error!("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON must resolve outside the Git repository.") if inside_repository
+
+  resolved_path
+rescue Errno::ENOENT
+  UI.user_error!("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON must reference an existing service-account JSON key.")
+end
+
+# Credentials are external and must resolve outside this repository.
+json_key_file(money_flow_service_account_json!)
+package_name("com.money.flow")

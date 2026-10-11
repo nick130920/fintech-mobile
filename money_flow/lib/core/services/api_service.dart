@@ -16,11 +16,11 @@ import '../exceptions/temporary_auth_failure_exception.dart';
 import 'storage_service.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://fintech-production-5841.up.railway.app';
+  static const String _baseUrl = 'https://api.moneyflow.tatacode.com';
   static const String _apiVersion = '/api/v1';
   static final http.Client _defaultClient = _buildPinnedClient();
   static http.Client _client = _defaultClient;
-  
+
   static GlobalKey<NavigatorState>? _navigatorKey;
 
   @visibleForTesting
@@ -35,11 +35,11 @@ class ApiService {
 
   /// Una sola renovación en vuelo para no invalidar tokens con carreras.
   static Future<TokenRefreshOutcome>? _refreshInFlight;
-  
+
   static void initialize(GlobalKey<NavigatorState> navigatorKey) {
     _navigatorKey = navigatorKey;
   }
-  
+
   static const Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -96,14 +96,14 @@ class ApiService {
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     final effectiveTimeout = timeout ?? defaultPostTimeout;
 
-    return await _handleRequest(
-      (effectiveToken) {
-        final headers = Map<String, String>.from(_defaultHeaders);
-        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
-        return _client.post(url, headers: headers, body: jsonEncode(body)).timeout(effectiveTimeout);
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null)
+        headers['Authorization'] = 'Bearer $effectiveToken';
+      return _client
+          .post(url, headers: headers, body: jsonEncode(body))
+          .timeout(effectiveTimeout);
+    }, initialToken: token);
   }
 
   // PUT request
@@ -115,14 +115,12 @@ class ApiService {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
 
-    return await _handleRequest(
-      (effectiveToken) {
-        final headers = Map<String, String>.from(_defaultHeaders);
-        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
-        return _client.put(url, headers: headers, body: jsonEncode(body));
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null)
+        headers['Authorization'] = 'Bearer $effectiveToken';
+      return _client.put(url, headers: headers, body: jsonEncode(body));
+    }, initialToken: token);
   }
 
   // PATCH request
@@ -134,14 +132,12 @@ class ApiService {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
 
-    return await _handleRequest(
-      (effectiveToken) {
-        final headers = Map<String, String>.from(_defaultHeaders);
-        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
-        return _client.patch(url, headers: headers, body: jsonEncode(body));
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null)
+        headers['Authorization'] = 'Bearer $effectiveToken';
+      return _client.patch(url, headers: headers, body: jsonEncode(body));
+    }, initialToken: token);
   }
 
   // DELETE request
@@ -149,14 +145,12 @@ class ApiService {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
 
-    return await _handleRequest(
-      (effectiveToken) {
-        final headers = Map<String, String>.from(_defaultHeaders);
-        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
-        return _client.delete(url, headers: headers);
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null)
+        headers['Authorization'] = 'Bearer $effectiveToken';
+      return _client.delete(url, headers: headers);
+    }, initialToken: token);
   }
 
   /// POST multipart/form-data with a single file by path (e.g. for analyze-statement). Mobile only.
@@ -171,22 +165,24 @@ class ApiService {
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
     final effectiveTimeout = timeout ?? defaultPostTimeout;
 
-    return await _handleRequest(
-      (effectiveToken) async {
-        final request = http.MultipartRequest('POST', url);
-        request.headers['Accept'] = 'application/json';
-        if (effectiveToken != null) request.headers['Authorization'] = 'Bearer $effectiveToken';
-        final filename = filePath.split(Platform.pathSeparator).last;
-        request.files.add(
-          await http.MultipartFile.fromPath(fieldName, filePath, filename: filename),
-        );
-        final streamed = await _client.send(request);
-        return await http.Response.fromStream(streamed).timeout(effectiveTimeout);
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) async {
+      final request = http.MultipartRequest('POST', url);
+      request.headers['Accept'] = 'application/json';
+      if (effectiveToken != null)
+        request.headers['Authorization'] = 'Bearer $effectiveToken';
+      final filename = filePath.split(Platform.pathSeparator).last;
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fieldName,
+          filePath,
+          filename: filename,
+        ),
+      );
+      final streamed = await _client.send(request);
+      return await http.Response.fromStream(streamed).timeout(effectiveTimeout);
+    }, initialToken: token);
   }
-  
+
   // Wrapper para manejar todas las peticiones y sus errores.
   // [builder] recibe el token efectivo (puede ser null para endpoints públicos).
   // En el retry, se lee el token fresco desde StorageService para evitar
@@ -204,7 +200,11 @@ class ApiService {
         if (outcome.result == TokenRefreshResult.success) {
           debugPrint('✅ Token renovado, reintentando petición...');
           final freshToken = await StorageService.getAccessToken();
-          return await _handleRequest(builder, initialToken: freshToken, isRetry: true);
+          return await _handleRequest(
+            builder,
+            initialToken: freshToken,
+            isRetry: true,
+          );
         }
         if (outcome.result == TokenRefreshResult.invalidRefreshToken) {
           debugPrint('❌ Refresh inválido, cerrando sesión...');
@@ -241,8 +241,7 @@ class ApiService {
   }
 
   static Future<TokenRefreshOutcome> _tryRefreshToken() {
-    _refreshInFlight ??=
-        AuthRepository.attemptTokenRefresh().whenComplete(() {
+    _refreshInFlight ??= AuthRepository.attemptTokenRefresh().whenComplete(() {
       _refreshInFlight = null;
     });
     return _refreshInFlight!;
@@ -258,17 +257,17 @@ class ApiService {
       final context = _navigatorKey?.currentContext;
       if (context != null && context.mounted) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        
-        if (authProvider.status == AuthStatus.loading || 
+
+        if (authProvider.status == AuthStatus.loading ||
             authProvider.status == AuthStatus.initial) {
           await authProvider.logout();
           return;
         }
 
         await authProvider.logout();
-        
+
         if (_navigatorKey?.currentState != null) {
-           _navigatorKey?.currentState?.pushAndRemoveUntil(
+          _navigatorKey?.currentState?.pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AppWrapper()),
             (route) => false,
           );
@@ -286,7 +285,7 @@ class ApiService {
       if (response.body.isEmpty) {
         return null; // O un valor por defecto apropiado
       }
-      
+
       try {
         return jsonDecode(response.body);
       } catch (e) {
@@ -294,7 +293,7 @@ class ApiService {
       }
     } else {
       String errorMessage = 'Error en el servidor (${response.statusCode})';
-      
+
       try {
         if (response.body.isNotEmpty) {
           final errorBody = jsonDecode(response.body);
@@ -304,21 +303,19 @@ class ApiService {
         // Si no se puede parsear el error, usar mensaje genérico
         errorMessage = 'Error de comunicación con el servidor';
       }
-      
+
       throw Exception(errorMessage);
     }
   }
 
   // GET request with URI (for query parameters)
   static Future<http.Response> getUri(Uri uri, {String? token}) async {
-    return await _handleRequest(
-      (effectiveToken) {
-        final headers = Map<String, String>.from(_defaultHeaders);
-        if (effectiveToken != null) headers['Authorization'] = 'Bearer $effectiveToken';
-        return _client.get(uri, headers: headers);
-      },
-      initialToken: token,
-    );
+    return await _handleRequest((effectiveToken) {
+      final headers = Map<String, String>.from(_defaultHeaders);
+      if (effectiveToken != null)
+        headers['Authorization'] = 'Bearer $effectiveToken';
+      return _client.get(uri, headers: headers);
+    }, initialToken: token);
   }
 
   // Base URL getter for external use
@@ -332,18 +329,16 @@ class ApiService {
   }) async {
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final url = Uri.parse('$_baseUrl$_apiVersion$cleanEndpoint');
-    
+
     final headers = Map<String, String>.from(_defaultHeaders);
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
 
     try {
-      return await _client.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      ).timeout(defaultPostTimeout);
+      return await _client
+          .post(url, headers: headers, body: jsonEncode(body))
+          .timeout(defaultPostTimeout);
     } on SocketException {
       throw Exception('No hay conexión a internet');
     } catch (e) {

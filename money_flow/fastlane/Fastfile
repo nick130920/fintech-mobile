@@ -1,0 +1,89 @@
+require "fileutils"
+require "tmpdir"
+
+EXPECTED_PHONE_SCREENSHOTS = [
+  "01-welcome.png",
+  "02-onboarding.png",
+  "03-budget-setup-choice.png"
+].freeze
+PHONE_SCREENSHOTS_DIRECTORY = File.expand_path("metadata/android/es-419/images/phoneScreenshots", __dir__)
+
+def validated_phone_screenshot_paths!
+  actual_filenames = Dir.children(PHONE_SCREENSHOTS_DIRECTORY).sort
+  unless actual_filenames == EXPECTED_PHONE_SCREENSHOTS.sort
+    UI.user_error!("Expected only #{EXPECTED_PHONE_SCREENSHOTS.join(", ")}; found #{actual_filenames.join(", ")}")
+  end
+
+  EXPECTED_PHONE_SCREENSHOTS.map do |filename|
+    path = File.join(PHONE_SCREENSHOTS_DIRECTORY, filename)
+    UI.user_error!("Screenshot must be a regular non-symlink file: #{path}") unless File.lstat(path).file?
+    UI.user_error!("Screenshot must be non-empty: #{path}") unless File.size?(path)
+    path
+  end
+rescue Errno::ENOENT
+  UI.user_error!("Screenshot directory is missing: #{PHONE_SCREENSHOTS_DIRECTORY}")
+end
+
+def isolated_phone_screenshots_metadata_paths!
+  temporary_root = Dir.mktmpdir("money-flow-play-listing-")
+  supply_metadata_path = File.join(temporary_root, "android")
+  screenshots_root = File.join(supply_metadata_path, "es-419/images/phoneScreenshots")
+  FileUtils.mkdir_p(screenshots_root)
+
+  validated_phone_screenshot_paths!.each do |source_path|
+    FileUtils.cp(source_path, File.join(screenshots_root, File.basename(source_path)))
+  end
+
+  [temporary_root, supply_metadata_path]
+rescue StandardError
+  FileUtils.remove_entry_secure(temporary_root) if temporary_root && File.directory?(temporary_root)
+  raise
+end
+
+def screenshot_only_supply_options(metadata_path)
+  {
+    metadata_path: metadata_path,
+    skip_upload_apk: true,
+    skip_upload_aab: true,
+    skip_upload_metadata: true,
+    skip_upload_changelogs: true,
+    skip_upload_images: true
+  }
+end
+
+def validation_only_supply_options
+  {
+    validate_only: true,
+    skip_upload_apk: true,
+    skip_upload_aab: true,
+    skip_upload_metadata: true,
+    skip_upload_changelogs: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true
+  }
+end
+
+default_platform(:android)
+
+platform :android do
+  desc "Validate Google Play credentials and access without uploading anything"
+  lane :validate_play_listing_access do
+    # Appfile validates the external credential path before this lane runs.
+    # Supply validates access only; it must not upload binaries, listings, or images.
+    supply(**validation_only_supply_options)
+  end
+
+  desc "Upload only the three validated es-419 phone screenshots"
+  lane :upload_es_419_phone_screenshots do
+    # Appfile validates the external credential path before this lane runs.
+    temporary_root, supply_metadata_path = isolated_phone_screenshots_metadata_paths!
+
+    begin
+      # Supply receives only temporary_root/android, where es-419 is directly
+      # beneath metadata_path. Binaries, text, changelogs, and other images stay excluded.
+      supply(**screenshot_only_supply_options(supply_metadata_path))
+    ensure
+      FileUtils.remove_entry_secure(temporary_root) if temporary_root && File.directory?(temporary_root)
+    end
+  end
+end
