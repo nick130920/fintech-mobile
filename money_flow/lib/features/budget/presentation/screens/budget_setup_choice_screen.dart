@@ -10,13 +10,46 @@ import '../providers/budget_suggestions_provider.dart';
 import 'budget_setup_wrapper.dart';
 
 /// Pantalla intermedia para usuarios nuevos: elegir configurar manualmente o con sugerencias (SMS/extracto).
-class BudgetSetupChoiceScreen extends StatelessWidget {
+class BudgetSetupChoiceScreen extends StatefulWidget {
   final VoidCallback onSetupComplete;
+  final Future<bool> Function()? onSkip;
 
   const BudgetSetupChoiceScreen({
     super.key,
     required this.onSetupComplete,
+    this.onSkip,
   });
+
+  @override
+  State<BudgetSetupChoiceScreen> createState() => _BudgetSetupChoiceScreenState();
+}
+
+class _BudgetSetupChoiceScreenState extends State<BudgetSetupChoiceScreen> {
+  bool _isSkipping = false;
+  String? _skipError;
+
+  Future<void> _skipBudgetSetup() async {
+    final onSkip = widget.onSkip;
+    if (onSkip == null || _isSkipping) return;
+    setState(() {
+      _isSkipping = true;
+      _skipError = null;
+    });
+    try {
+      final persisted = await onSkip();
+      if (!mounted) return;
+      if (persisted) {
+        widget.onSetupComplete();
+        return;
+      }
+    } catch (_) {
+      if (!mounted) return;
+    }
+    setState(() {
+      _isSkipping = false;
+      _skipError = 'No pudimos guardar tu decisión. Inténtalo de nuevo.';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +95,25 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (widget.onSkip != null) ...[
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _isSkipping ? null : _skipBudgetSetup,
+                  child: _isSkipping
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Skip for now'),
+                ),
+                if (_skipError != null)
+                  Text(
+                    _skipError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+              ],
               const SizedBox(height: 40),
               Text(
                 '¿Quieres que te sugieran montos?',
@@ -72,9 +124,9 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _SmsOption(onSetupComplete: onSetupComplete),
+              _SmsOption(onSetupComplete: widget.onSetupComplete),
               const SizedBox(height: 12),
-              _ExtractoOption(onSetupComplete: onSetupComplete),
+              _ExtractoOption(onSetupComplete: widget.onSetupComplete),
             ],
           ),
         ),
@@ -85,7 +137,7 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
   void _goToSetup(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => BudgetSetupWrapper(onSetupComplete: onSetupComplete),
+        builder: (_) => BudgetSetupWrapper(onSetupComplete: widget.onSetupComplete),
       ),
     );
   }
