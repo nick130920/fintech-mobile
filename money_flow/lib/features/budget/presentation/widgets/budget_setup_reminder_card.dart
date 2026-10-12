@@ -23,7 +23,7 @@ class BudgetSetupReminderCard extends StatelessWidget {
       label: 'Budget setup reminder',
       child: Container(
         width: double.infinity,
-        padding: AppSpacing.cardMd,
+        padding: AppSpacing.card,
         decoration: BoxDecoration(
           color: colorScheme.primaryContainer.withValues(alpha: 0.62),
           borderRadius: AppRadius.allLg,
@@ -34,7 +34,10 @@ class BudgetSetupReminderCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.account_balance_wallet_outlined, color: colorScheme.primary),
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              color: colorScheme.primary,
+            ),
             const SizedBox(width: AppSpacing.step3),
             Expanded(
               child: Column(
@@ -56,7 +59,8 @@ class BudgetSetupReminderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.step2),
                   TextButton(
-                    onPressed: onSetupBudget ??
+                    onPressed:
+                        onSetupBudget ??
                         () => Navigator.of(context).pushNamed('/budget-setup'),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,

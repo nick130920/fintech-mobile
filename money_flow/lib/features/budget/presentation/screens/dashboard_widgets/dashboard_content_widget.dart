@@ -28,7 +28,7 @@ class DashboardContentWidget extends StatelessWidget {
       if (!context.mounted || context.read<AuthProvider>().user?.id != userId) {
         return false;
       }
-      return BudgetOnboardingPreferenceService().shouldShowReminder(
+      return await BudgetOnboardingPreferenceService().shouldShowReminder(
         userId: userId,
         hasCurrentBudget: hasCurrentBudget,
       );
@@ -39,8 +39,12 @@ class DashboardContentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dashboardLoading = context.select<DashboardProvider, bool>((p) => p.isLoading);
-    final expenseLoading = context.select<ExpenseProvider, bool>((p) => p.isLoading);
+    final dashboardLoading = context.select<DashboardProvider, bool>(
+      (p) => p.isLoading,
+    );
+    final expenseLoading = context.select<ExpenseProvider, bool>(
+      (p) => p.isLoading,
+    );
     final activeUserId = context.select<AuthProvider, int?>((p) => p.user?.id);
     if (dashboardLoading || expenseLoading) {
       return const SafeArea(child: DashboardSkeletonWidget());
@@ -92,7 +96,8 @@ class BudgetSetupReminderSlot extends StatefulWidget {
   });
 
   @override
-  State<BudgetSetupReminderSlot> createState() => _BudgetSetupReminderSlotState();
+  State<BudgetSetupReminderSlot> createState() =>
+      _BudgetSetupReminderSlotState();
 }
 
 class _BudgetSetupReminderSlotState extends State<BudgetSetupReminderSlot> {
