@@ -8,6 +8,7 @@ import '../../features/budget/presentation/screens/budget_setup_choice_screen.da
 import '../../main.dart';
 import '../../shared/screens/main_screen.dart';
 import '../providers/currency_provider.dart';
+import '../services/budget_onboarding_preference_service.dart';
 import '../services/notification_listener_service.dart';
 import '../services/platform_capabilities.dart';
 
@@ -62,7 +63,7 @@ class _AppWrapperState extends State<AppWrapper> with WidgetsBindingObserver {
         Widget child;
         switch (authProvider.status) {
           case AuthStatus.authenticated:
-            child = const _AuthenticatedHandler();
+            child = _AuthenticatedHandler(key: ValueKey(authProvider.user?.id));
             break;
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
@@ -92,18 +93,21 @@ class _AppWrapperState extends State<AppWrapper> with WidgetsBindingObserver {
 }
 
 class _AuthenticatedHandler extends StatefulWidget {
-  const _AuthenticatedHandler();
+  const _AuthenticatedHandler({super.key});
 
   @override
   State<_AuthenticatedHandler> createState() => _AuthenticatedHandlerState();
 }
 
 class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
+  final _onboardingPreferences = BudgetOnboardingPreferenceService();
   Future<bool>? _needsBudgetSetupFuture;
+  int? _authenticatedUserId;
 
   @override
   void initState() {
     super.initState();
+    _authenticatedUserId = context.read<AuthProvider>().user?.id;
     _needsBudgetSetupFuture = _checkBudgetSetup();
     _syncCurrencyFromUser();
     _syncSmsInbox();
@@ -117,6 +121,7 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
   }
 
   Future<void> _syncSmsInbox() async {
+    final userId = _authenticatedUserId;
     if (!PlatformCapabilities.supportsSmsInbox) {
       debugPrint('Sincronización SMS omitida: plataforma no soportada.');
       return;
@@ -125,14 +130,54 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
     // No necesitamos el contexto aquí porque el handler lo obtiene del navigatorKey
     await smsService.syncInbox(
       onInboxBatch: (items) async {
+        if (userId == null || !_isCurrentAuthenticatedUser(userId)) return;
         await smsBatchSyncHandler(items, bulkSilent: items.length != 1);
       },
     );
   }
 
+  bool _isCurrentAuthenticatedUser(int userId) {
+    return mounted &&
+        context.read<AuthProvider>().user?.id == userId &&
+        _authenticatedUserId == userId;
+  }
+
   Future<bool> _checkBudgetSetup() async {
-    // Usar el provider para la lógica de negocio
-    return !(await context.read<BudgetSetupProvider>().checkExistingBudget());
+    final user = context.read<AuthProvider>().user;
+    if (user == null) return true;
+    final userId = user.id;
+    final budgetSetupProvider = context.read<BudgetSetupProvider>();
+    try {
+      final needsSetup = await _onboardingPreferences.shouldShowBudgetSetup(
+        userId: userId,
+        loadHasCurrentBudget: budgetSetupProvider.checkExistingBudget,
+      );
+      if (!_isCurrentAuthenticatedUser(userId)) return true;
+      return needsSetup;
+    } catch (_) {
+      if (!_isCurrentAuthenticatedUser(userId)) return true;
+      rethrow;
+    }
+  }
+
+  Future<bool> _skipBudgetSetup() async {
+    final user = context.read<AuthProvider>().user;
+    if (user == null) return false;
+    final userId = user.id;
+    try {
+      final persisted = await _onboardingPreferences.skipBudgetSetup(userId);
+      return persisted && _isCurrentAuthenticatedUser(userId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _refreshBudgetGate() {
+    if (!mounted) return;
+    setState(() {
+      _authenticatedUserId = context.read<AuthProvider>().user?.id;
+      _needsBudgetSetupFuture = _checkBudgetSetup();
+    });
   }
 
   @override
@@ -147,22 +192,15 @@ class _AuthenticatedHandlerState extends State<_AuthenticatedHandler> {
         if (snapshot.hasError || snapshot.data == null) {
           return AppErrorScreen(
             message: 'No pudimos verificar tu presupuesto.',
-            onRetry: () {
-              setState(() {
-                _needsBudgetSetupFuture = _checkBudgetSetup();
-              });
-            },
+            onRetry: _refreshBudgetGate,
           );
         }
 
         final needsSetup = snapshot.data!;
         if (needsSetup) {
           return BudgetSetupChoiceScreen(
-            onSetupComplete: () {
-              setState(() {
-                _needsBudgetSetupFuture = _checkBudgetSetup();
-              });
-            },
+            onSkip: _skipBudgetSetup,
+            onSetupComplete: _refreshBudgetGate,
           );
         } else {
           return const MainScreen();
@@ -206,7 +244,10 @@ class AppErrorScreen extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.6),
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -227,10 +268,6 @@ class AppLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

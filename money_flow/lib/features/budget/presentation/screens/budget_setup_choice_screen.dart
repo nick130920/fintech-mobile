@@ -10,13 +10,47 @@ import '../providers/budget_suggestions_provider.dart';
 import 'budget_setup_wrapper.dart';
 
 /// Pantalla intermedia para usuarios nuevos: elegir configurar manualmente o con sugerencias (SMS/extracto).
-class BudgetSetupChoiceScreen extends StatelessWidget {
+class BudgetSetupChoiceScreen extends StatefulWidget {
   final VoidCallback onSetupComplete;
+  final Future<bool> Function()? onSkip;
 
   const BudgetSetupChoiceScreen({
     super.key,
     required this.onSetupComplete,
+    this.onSkip,
   });
+
+  @override
+  State<BudgetSetupChoiceScreen> createState() =>
+      _BudgetSetupChoiceScreenState();
+}
+
+class _BudgetSetupChoiceScreenState extends State<BudgetSetupChoiceScreen> {
+  bool _isSkipping = false;
+  String? _skipError;
+
+  Future<void> _skipBudgetSetup() async {
+    final onSkip = widget.onSkip;
+    if (onSkip == null || _isSkipping) return;
+    setState(() {
+      _isSkipping = true;
+      _skipError = null;
+    });
+    try {
+      final persisted = await onSkip();
+      if (!mounted) return;
+      if (persisted) {
+        widget.onSetupComplete();
+        return;
+      }
+    } catch (_) {
+      if (!mounted) return;
+    }
+    setState(() {
+      _isSkipping = false;
+      _skipError = 'No pudimos guardar tu decisión. Inténtalo de nuevo.';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +76,8 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
                 'Así podrás llevar el control de tus gastos e ingresos.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 32),
@@ -62,19 +97,41 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (widget.onSkip != null) ...[
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _isSkipping ? null : _skipBudgetSetup,
+                  child: _isSkipping
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Skip for now'),
+                ),
+                if (_skipError != null)
+                  Text(
+                    _skipError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+              ],
               const SizedBox(height: 40),
               Text(
                 '¿Quieres que te sugieran montos?',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 16),
-              _SmsOption(onSetupComplete: onSetupComplete),
+              _SmsOption(onSetupComplete: widget.onSetupComplete),
               const SizedBox(height: 12),
-              _ExtractoOption(onSetupComplete: onSetupComplete),
+              _ExtractoOption(onSetupComplete: widget.onSetupComplete),
             ],
           ),
         ),
@@ -85,7 +142,8 @@ class BudgetSetupChoiceScreen extends StatelessWidget {
   void _goToSetup(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => BudgetSetupWrapper(onSetupComplete: onSetupComplete),
+        builder: (_) =>
+            BudgetSetupWrapper(onSetupComplete: widget.onSetupComplete),
       ),
     );
   }
@@ -114,7 +172,8 @@ class _SmsOption extends StatelessWidget {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.outline
+                    .withValues(alpha: 0.5),
               ),
             ),
             child: Row(
@@ -152,11 +211,12 @@ class _SmsOption extends StatelessWidget {
                         isAnalyzing
                             ? 'Analizando hasta 100 SMS recientes (suele tardar poco)…'
                             : smsSupported
-                                ? 'Usamos hasta 100 SMS más recientes (rápido). Solo sugerencias, no se crean transacciones.'
-                                : 'Usa la opción de extracto o conecta email para sugerencias automáticas.',
+                            ? 'Usamos hasta 100 SMS más recientes (rápido). Solo sugerencias, no se crean transacciones.'
+                            : 'Usa la opción de extracto o conecta email para sugerencias automáticas.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -171,12 +231,14 @@ class _SmsOption extends StatelessWidget {
                 else if (!smsSupported)
                   Icon(
                     Icons.info_outline,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.5),
                   )
                 else
                   Icon(
                     Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.5),
                   ),
               ],
             ),
@@ -201,7 +263,9 @@ class _SmsOption extends StatelessWidget {
         content: Text(
           'Leemos SMS de los últimos 3 meses pero solo enviamos al análisis los 100 más recientes, '
           'para que no tengas que esperar tanto. No guardamos esos mensajes ni creamos transacciones. ¿Activar?',
-          style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.9)),
+          style: TextStyle(
+            color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.9),
+          ),
         ),
         actions: [
           TextButton(
@@ -249,7 +313,9 @@ class _SmsOption extends StatelessWidget {
     if (permissionResult != SmsPermissionResult.granted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Sin problema, puedes configurar todo manualmente'),
+          content: const Text(
+            'Sin problema, puedes configurar todo manualmente',
+          ),
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
           behavior: SnackBarBehavior.floating,
         ),
@@ -270,13 +336,14 @@ class _SmsOption extends StatelessWidget {
       return;
     }
     final suggestion = suggestionsProvider.suggestion;
-    if (suggestion != null && (suggestion.totalSuggested > 0 || suggestion.byCategory.isNotEmpty)) {
+    if (suggestion != null &&
+        (suggestion.totalSuggested > 0 || suggestion.byCategory.isNotEmpty)) {
       await context.read<BudgetSetupProvider>().initialize();
       if (!context.mounted) return;
       context.read<BudgetSetupProvider>().prefillFromSuggestions(
-            suggestion,
-            source: BudgetSuggestionSource.sms,
-          );
+        suggestion,
+        source: BudgetSuggestionSource.sms,
+      );
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
@@ -298,7 +365,9 @@ class _ExtractoOption extends StatelessWidget {
       builder: (context, suggestionsProvider, _) {
         final isAnalyzing = suggestionsProvider.isAnalyzing;
         return InkWell(
-          onTap: isAnalyzing ? null : () => _onTapExtracto(context, suggestionsProvider),
+          onTap: isAnalyzing
+              ? null
+              : () => _onTapExtracto(context, suggestionsProvider),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -306,7 +375,8 @@ class _ExtractoOption extends StatelessWidget {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.outline
+                    .withValues(alpha: 0.5),
               ),
             ),
             child: Row(
@@ -344,7 +414,8 @@ class _ExtractoOption extends StatelessWidget {
                             : 'El archivo se analiza solo para sugerirte montos. No se guarda.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -359,7 +430,8 @@ class _ExtractoOption extends StatelessWidget {
                 else
                   Icon(
                     Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.5),
                   ),
               ],
             ),
@@ -397,9 +469,9 @@ class _ExtractoOption extends StatelessWidget {
       await context.read<BudgetSetupProvider>().initialize();
       if (!context.mounted) return;
       context.read<BudgetSetupProvider>().prefillFromSuggestions(
-            suggestion,
-            source: BudgetSuggestionSource.statement,
-          );
+        suggestion,
+        source: BudgetSuggestionSource.statement,
+      );
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
