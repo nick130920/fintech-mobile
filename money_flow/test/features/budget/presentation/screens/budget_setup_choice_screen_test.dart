@@ -22,7 +22,9 @@ void main() {
     );
   }
 
-  testWidgets('Skip for now completes only after persistence resolves', (tester) async {
+  testWidgets('Skip for now completes only after persistence resolves', (
+    tester,
+  ) async {
     final persistence = Completer<bool>();
     var completionCount = 0;
 
@@ -46,8 +48,9 @@ void main() {
     expect(completionCount, 1);
   });
 
-  testWidgets('Skip for now keeps setup available when persistence fails',
-      (tester) async {
+  testWidgets('Skip for now keeps setup available when persistence fails', (
+    tester,
+  ) async {
     var completionCount = 0;
 
     await tester.pumpWidget(
@@ -62,8 +65,10 @@ void main() {
     await tester.pump();
 
     expect(completionCount, 0);
-    expect(find.text('No pudimos guardar tu decisión. Inténtalo de nuevo.'),
-        findsOneWidget);
+    expect(
+      find.text('No pudimos guardar tu decisión. Inténtalo de nuevo.'),
+      findsOneWidget,
+    );
     expect(find.text('Skip for now'), findsOneWidget);
   });
 }

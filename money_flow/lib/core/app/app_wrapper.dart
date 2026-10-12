@@ -63,9 +63,7 @@ class _AppWrapperState extends State<AppWrapper> with WidgetsBindingObserver {
         Widget child;
         switch (authProvider.status) {
           case AuthStatus.authenticated:
-            child = _AuthenticatedHandler(
-              key: ValueKey(authProvider.user?.id),
-            );
+            child = _AuthenticatedHandler(key: ValueKey(authProvider.user?.id));
             break;
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
@@ -246,7 +244,10 @@ class AppErrorScreen extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.6),
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -267,10 +268,6 @@ class AppLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

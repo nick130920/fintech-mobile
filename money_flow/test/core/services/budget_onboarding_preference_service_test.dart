@@ -30,28 +30,31 @@ void main() {
       expect(lookupCount, 0);
     });
 
-    test('a reconstructed service keeps a skipped user on home without a budget',
-        () async {
-      SharedPreferences.setMockInitialValues({});
-      final originalService = BudgetOnboardingPreferenceService();
-      await originalService.skipBudgetSetup(101);
-      final reconstructedService = BudgetOnboardingPreferenceService();
+    test(
+      'a reconstructed service keeps a skipped user on home without a budget',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final originalService = BudgetOnboardingPreferenceService();
+        await originalService.skipBudgetSetup(101);
+        final reconstructedService = BudgetOnboardingPreferenceService();
 
-      expect(
-        await reconstructedService.shouldShowBudgetSetup(
-          userId: 101,
-          loadHasCurrentBudget: () async => throw StateError('should not run'),
-        ),
-        isFalse,
-      );
-      expect(
-        await reconstructedService.shouldShowReminder(
-          userId: 101,
-          hasCurrentBudget: false,
-        ),
-        isTrue,
-      );
-    });
+        expect(
+          await reconstructedService.shouldShowBudgetSetup(
+            userId: 101,
+            loadHasCurrentBudget: () async =>
+                throw StateError('should not run'),
+          ),
+          isFalse,
+        );
+        expect(
+          await reconstructedService.shouldShowReminder(
+            userId: 101,
+            hasCurrentBudget: false,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('does not share a skipped decision with another user', () async {
       SharedPreferences.setMockInitialValues({});
@@ -85,20 +88,25 @@ void main() {
       expect(lookupCount, 1);
     });
 
-    test('hides the reminder unless the user skipped without a current budget',
-        () async {
-      SharedPreferences.setMockInitialValues({});
-      final service = BudgetOnboardingPreferenceService();
-      await service.skipBudgetSetup(101);
+    test(
+      'hides the reminder unless the user skipped without a current budget',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final service = BudgetOnboardingPreferenceService();
+        await service.skipBudgetSetup(101);
 
-      expect(
-        await service.shouldShowReminder(userId: 202, hasCurrentBudget: false),
-        isFalse,
-      );
-      expect(
-        await service.shouldShowReminder(userId: 101, hasCurrentBudget: true),
-        isFalse,
-      );
-    });
+        expect(
+          await service.shouldShowReminder(
+            userId: 202,
+            hasCurrentBudget: false,
+          ),
+          isFalse,
+        );
+        expect(
+          await service.shouldShowReminder(userId: 101, hasCurrentBudget: true),
+          isFalse,
+        );
+      },
+    );
   });
 }
