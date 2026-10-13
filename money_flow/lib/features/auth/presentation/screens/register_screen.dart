@@ -22,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -30,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -74,6 +76,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'La confirmación de contraseña es requerida';
+    }
+    if (value != _passwordController.text) {
+      return 'Las contraseñas no coinciden';
+    }
+    return null;
+  }
+
   void _handleCreateAccount() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -90,15 +102,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text,
         );
 
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
 
-        if (success && mounted) {
+        if (success) {
           // Si hay un callback, ejecutarlo y navegar de vuelta
           widget.onRegisterSuccess?.call();
           Navigator.of(context).pop(); // Cerrar pantalla de register
-        } else if (mounted) {
+        } else {
           // Mostrar error
           CustomSnackBar.showError(
             context,
@@ -106,16 +119,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
       } catch (e) {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
-        
-        if (mounted) {
-          CustomSnackBar.showError(
-            context,
-            'Error inesperado: $e',
-          );
-        }
+
+        CustomSnackBar.showError(context, 'Error inesperado: $e');
       }
     }
   }
@@ -138,15 +147,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             // Header
             _buildHeader(),
-            
+
             // Main content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 32,
+                ),
                 child: _buildMainContent(),
               ),
             ),
-            
+
             // Footer
             _buildFooter(),
           ],
@@ -165,19 +177,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           IconButton(
             onPressed: _navigateBack,
             icon: const Icon(Icons.arrow_back),
-            style: IconButton.styleFrom(
-              fixedSize: const Size(40, 40),
-            ),
+            style: IconButton.styleFrom(fixedSize: const Size(40, 40)),
           ),
-          
+
           // Login link
           TextButton(
             onPressed: _navigateToLogin,
             child: Text(
               'Iniciar Sesión',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -193,19 +202,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             // Logo/Icon
             _buildLogo(),
-            
+
             const SizedBox(height: 32),
-            
+
             // Title and subtitle
             _buildTitleSection(),
-            
+
             const SizedBox(height: 32),
-            
+
             // Form
             _buildForm(),
-            
+
             const SizedBox(height: 24),
-            
+
             // Legal text
             _buildLegalText(),
           ],
@@ -222,12 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0),
         borderRadius: BorderRadius.circular(48),
       ),
-      child: const Center(
-        child: Text(
-          '💸',
-          style: TextStyle(fontSize: 64),
-        ),
-      ),
+      child: const Center(child: Text('💸', style: TextStyle(fontSize: 64))),
     );
   }
 
@@ -236,10 +240,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Text(
           'Crea tu Cuenta',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 28,
-              ),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w700, fontSize: 28),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -265,9 +267,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _firstNameController,
             validator: _validateFirstName,
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Last Name field
           CustomTextField(
             label: 'Apellido',
@@ -276,9 +278,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _lastNameController,
             validator: _validateLastName,
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Email field
           CustomTextField(
             label: 'Dirección de Email',
@@ -288,9 +290,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _emailController,
             validator: _validateEmail,
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Password field
           CustomTextField(
             label: 'Contraseña',
@@ -301,14 +303,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _passwordController,
             validator: _validatePassword,
           ),
-          
+
+          const SizedBox(height: 16),
+
+          // Confirm Password field
+          CustomTextField(
+            label: 'Confirmar contraseña',
+            placeholder: '••••••••',
+            prefixIcon: Icons.lock_outline,
+            obscureText: true,
+            showToggleVisibility: true,
+            controller: _confirmPasswordController,
+            validator: _validateConfirmPassword,
+          ),
+
           const SizedBox(height: 24),
-          
+
           // Create Account button
           CustomButton(
             text: 'Crear Cuenta',
             onPressed: _handleCreateAccount,
             isLoading: _isLoading,
+            height: 56,
           ),
         ],
       ),
@@ -321,9 +337,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 12,
-              ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
           children: [
             const TextSpan(text: 'Al crear una cuenta, aceptas nuestros '),
             TextSpan(
