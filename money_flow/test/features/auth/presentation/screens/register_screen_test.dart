@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:money_flow/features/auth/presentation/providers/auth_provider.dart';
 import 'package:money_flow/features/auth/presentation/screens/register_screen.dart';
+import 'package:money_flow/features/legal/presentation/screens/contact_screen.dart';
+import 'package:money_flow/features/legal/presentation/screens/privacy_policy_screen.dart';
+import 'package:money_flow/features/legal/presentation/screens/terms_of_service_screen.dart';
 import 'package:provider/provider.dart';
 
 class _RecordingAuthProvider extends AuthProvider {
@@ -115,6 +118,40 @@ void main() {
     await tester.ensureVisible(button);
 
     expect(tester.getSize(button).height, 56);
+  });
+
+  testWidgets('opens terms from the registration action', (tester) async {
+    await tester.pumpWidget(buildSubject(_RecordingAuthProvider()));
+
+    final action = find.bySemanticsLabel('Abrir Términos de Servicio');
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TermsOfServiceScreen), findsOneWidget);
+  });
+
+  testWidgets('opens privacy from the registration action', (tester) async {
+    await tester.pumpWidget(buildSubject(_RecordingAuthProvider()));
+
+    final action = find.bySemanticsLabel('Abrir Política de Privacidad');
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PrivacyPolicyScreen), findsOneWidget);
+  });
+
+  testWidgets('opens contact support from the registration action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject(_RecordingAuthProvider()));
+
+    final action = find.bySemanticsLabel('Abrir contacto de soporte');
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ContactScreen), findsOneWidget);
   });
 
   testWidgets('keeps the complete form reachable on a compact viewport', (
