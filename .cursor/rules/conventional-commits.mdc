@@ -18,9 +18,11 @@ Reglas:
 - Explicar el "por qué" en el cuerpo si hace falta.
 - No usar mensajes genéricos como "update", "changes", "wip".
 
-Para release notes automáticas en Codemagic, agregar trailers cuando aplique:
+Para cada commit incluido en una release Android publicada en Google Play, agregar ambos trailers no vacíos:
 - `RN-es: texto de notas para Play Console en español`
 - `RN-en: text for Play Console release notes in English`
+
+La publicación de un tag Android falla si el rango de la release no contiene al menos un trailer no vacío de cada idioma. No usar el asunto técnico del commit como sustituto: los trailers deben ser texto público para usuarios.
 
 Ejemplo válido:
 
