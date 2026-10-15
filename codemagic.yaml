@@ -1,88 +1,30 @@
 workflows:
   android-workflow:
-    name: Android Workflow
+    name: Android CI
     max_build_duration: 120
     triggering:
-          events:
-              - push
-          cancel_previous_builds: true
+      events:
+        - push
+      cancel_previous_builds: true
     instance_type: mac_mini_m1
     environment:
-      android_signing:
-        - keystore_moneyflow_rotated
-      groups:
-        - google_play # Includes GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
       vars:
         CM_CLONE_DEPTH: 100
-        # GlitchTip/Sentry: create SENTRY_DSN in Codemagic as a secure environment variable.
-        SENTRY_ENVIRONMENT: production
-        PACKAGE_NAME: "com.money.flow"
-        GOOGLE_PLAY_TRACK: internal
       flutter: 3.47.5
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up local.properties
+      - &android_local_properties
+        name: Set up local.properties
         script: |
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/money_flow/android/local.properties"
-      - name: Get Flutter packages
+      - &android_get_packages
+        name: Get Flutter packages
         script: |
           cd money_flow
           flutter packages pub get
-      - name: Generate release notes
-        script: |
-          git fetch --all --tags
-
-          PREV_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | sed -n 2p)
-          if [ -n "$PREV_TAG" ]; then
-            RANGE="$PREV_TAG..HEAD"
-          else
-            RANGE="HEAD~20..HEAD"
-          fi
-
-          ES_TRAILERS=$(git log "$RANGE" --format=%B | sed -n 's/^RN-es:[[:space:]]*//p')
-          EN_TRAILERS=$(git log "$RANGE" --format=%B | sed -n 's/^RN-en:[[:space:]]*//p')
-
-          if [ -n "$ES_TRAILERS" ]; then
-            ES_NOTES=$(echo "$ES_TRAILERS" | sed 's/^/- /')
-          else
-            ES_NOTES=$(git log "$RANGE" --pretty=format:"- %s")
-          fi
-
-          if [ -n "$EN_TRAILERS" ]; then
-            EN_NOTES=$(echo "$EN_TRAILERS" | sed 's/^/- /')
-          else
-            EN_NOTES=$(git log "$RANGE" --pretty=format:"- %s")
-          fi
-
-          if [ -z "$ES_NOTES" ]; then
-            ES_NOTES="- Mejoras internas y correcciones menores."
-          fi
-          if [ -z "$EN_NOTES" ]; then
-            EN_NOTES="- Internal improvements and minor bug fixes."
-          fi
-
-          {
-            echo "Build: $CM_BUILD_ID"
-            echo "Commit: $CM_COMMIT"
-            echo
-            echo "$ES_NOTES"
-          } > release_notes_es-ES.txt
-
-          {
-            echo "Build: $CM_BUILD_ID"
-            echo "Commit: $CM_COMMIT"
-            echo
-            echo "$ES_NOTES"
-          } > release_notes_es-419.txt
-
-          {
-            echo "Build: $CM_BUILD_ID"
-            echo "Commit: $CM_COMMIT"
-            echo
-            echo "$EN_NOTES"
-          } > release_notes_en-US.txt
-      - name: Verify formatting of changed Dart files
+      - &android_verify_formatting
+        name: Verify formatting of changed Dart files
         script: |
           cd money_flow
           changed_files="$(mktemp)"
@@ -92,14 +34,49 @@ workflows:
           if [ -s "$changed_files" ]; then
             xargs -0 dart format --output=none --set-exit-if-changed < "$changed_files"
           fi
-      - name: Flutter analyze
+      - &android_analyze
+        name: Flutter analyze
         script: |
           cd money_flow
           flutter analyze --no-fatal-warnings --no-fatal-infos
-      - name: Flutter unit tests
+      - &android_unit_tests
+        name: Flutter unit tests
         script: |
           cd money_flow
           flutter test
+
+  android-play-release:
+    name: Android Play release
+    max_build_duration: 120
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v+([0-9]).+([0-9]).+([0-9])'
+          include: true
+    instance_type: mac_mini_m1
+    environment:
+      android_signing:
+        - keystore_moneyflow_rotated
+      groups:
+        - google_play # Includes GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
+      vars:
+        CM_CLONE_DEPTH: 0
+        SENTRY_ENVIRONMENT: production
+        PACKAGE_NAME: "com.money.flow"
+        GOOGLE_PLAY_TRACK: internal
+      flutter: 3.47.5
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - *android_local_properties
+      - *android_get_packages
+      - *android_verify_formatting
+      - *android_analyze
+      - *android_unit_tests
+      - name: Generate Google Play release notes
+        script: |
+          scripts/generate_play_release_notes.sh
       - name: Build AAB with Flutter
         script: |
           cd money_flow
@@ -115,13 +92,12 @@ workflows:
       - money_flow/build/**/outputs/**/mapping.txt
       - money_flow/flutter_drive.log
     publishing:
-      # See the following link for details about email publishing - https://docs.codemagic.io/publishing-yaml/distribution/#email
       email:
         recipients:
           - namc1309@gmail.com
         notify:
-          success: true # To not receive a notification when a build succeeds
-          failure: true # To not receive a notification when a build fails
+          success: true
+          failure: true
       google_play:
         credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
         track: $GOOGLE_PLAY_TRACK
