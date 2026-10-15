@@ -61,10 +61,19 @@ while IFS= read -r candidate; do
   fi
 done < <(LC_ALL=C git for-each-ref --format='%(refname:short)' refs/tags | LC_ALL=C sort)
 
+bootstrap_release=false
 if [[ -n "$previous_tag" ]]; then
   revision_range="$previous_tag..$current_tag"
 else
+  bootstrap_release=true
   revision_range="$current_tag"
+
+  current_tag_object_type="$(git cat-file -t "refs/tags/$current_tag" 2>/dev/null || true)"
+  if [[ "$current_tag_object_type" != 'tag' ]]; then
+    printf 'First semantic release tag %s must be an annotated tag object; lightweight tags are not supported.\n' \
+      "$current_tag" >&2
+    exit 1
+  fi
 fi
 
 tempdir="$(mktemp -d "${TMPDIR:-/tmp}/play-release-notes.XXXXXX")"
@@ -73,31 +82,52 @@ cleanup() {
 }
 trap cleanup EXIT
 
-collect_trailers() {
+extract_trailers() {
   local trailer=$1
   local output=$2
 
-  git log --reverse --date-order --format='%B' "$revision_range" |
-    awk -v trailer="$trailer" '
-      index($0, trailer) == 1 {
-        note = substr($0, length(trailer) + 1)
-        sub(/^[[:space:]]+/, "", note)
-        if (note != "") print "- " note
-      }
-    ' > "$output"
+  awk -v trailer="$trailer" '
+    index($0, trailer) == 1 {
+      note = substr($0, length(trailer) + 1)
+      sub(/^[[:space:]]+/, "", note)
+      if (note != "") print "- " note
+    }
+  ' > "$output"
 }
 
 spanish_notes="$tempdir/release_notes_es.txt"
 english_notes="$tempdir/release_notes_en.txt"
-collect_trailers 'RN-es:' "$spanish_notes"
-collect_trailers 'RN-en:' "$english_notes"
+if [[ "$bootstrap_release" == 'true' ]]; then
+  if ! git for-each-ref --format='%(contents)' "refs/tags/$current_tag" |
+      extract_trailers 'RN-es:' "$spanish_notes"; then
+    printf 'Annotated tag message for %s is unavailable; cannot generate bootstrap release notes.\n' \
+      "$current_tag" >&2
+    exit 1
+  fi
+  if ! git for-each-ref --format='%(contents)' "refs/tags/$current_tag" |
+      extract_trailers 'RN-en:' "$english_notes"; then
+    printf 'Annotated tag message for %s is unavailable; cannot generate bootstrap release notes.\n' \
+      "$current_tag" >&2
+    exit 1
+  fi
+else
+  git log --reverse --date-order --format='%B' "$revision_range" |
+    extract_trailers 'RN-es:' "$spanish_notes"
+  git log --reverse --date-order --format='%B' "$revision_range" |
+    extract_trailers 'RN-en:' "$english_notes"
+fi
 
 missing=()
 [[ -s "$spanish_notes" ]] || missing+=('RN-es:')
 [[ -s "$english_notes" ]] || missing+=('RN-en:')
 if ((${#missing[@]} > 0)); then
-  printf 'Missing required release-note trailer(s): %s in range %s.\n' \
-    "${missing[*]}" "$revision_range" >&2
+  if [[ "$bootstrap_release" == 'true' ]]; then
+    printf 'Missing required release-note annotation trailer(s): %s on first semantic tag %s.\n' \
+      "${missing[*]}" "$current_tag" >&2
+  else
+    printf 'Missing required release-note trailer(s): %s in range %s.\n' \
+      "${missing[*]}" "$revision_range" >&2
+  fi
   exit 1
 fi
 
