@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_snackbar.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../legal/presentation/screens/contact_screen.dart';
+import '../../../legal/presentation/screens/privacy_policy_screen.dart';
+import '../../../legal/presentation/screens/terms_of_service_screen.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
@@ -137,6 +140,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _navigateBack() {
     Navigator.of(context).pop();
+  }
+
+  void _openTermsOfService() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()));
+  }
+
+  void _openPrivacyPolicy() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()));
+  }
+
+  void _openContactSupport() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => ContactScreen()));
   }
 
   @override
@@ -332,34 +350,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildLegalText() {
+    final linkStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.primary,
+      fontWeight: FontWeight.w500,
+      decoration: TextDecoration.underline,
+      fontSize: 12,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-          children: [
-            const TextSpan(text: 'Al crear una cuenta, aceptas nuestros '),
-            TextSpan(
-              text: 'Términos de Servicio',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            'Al crear una cuenta, aceptas nuestros ',
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(fontSize: 12),
+          ),
+          Semantics(
+            button: true,
+            label: 'Abrir Términos de Servicio',
+            child: TextButton(
+              onPressed: _openTermsOfService,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              child: Text('Términos de Servicio', style: linkStyle),
             ),
-            const TextSpan(text: ' y '),
-            TextSpan(
-              text: 'Política de Privacidad',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
+          ),
+          Text(
+            ' y ',
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(fontSize: 12),
+          ),
+          Semantics(
+            button: true,
+            label: 'Abrir Política de Privacidad',
+            child: TextButton(
+              onPressed: _openPrivacyPolicy,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              child: Text('Política de Privacidad', style: linkStyle),
             ),
-            const TextSpan(text: '.'),
-          ],
-        ),
+          ),
+          Text(
+            '.',
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(fontSize: 12),
+          ),
+        ],
       ),
     );
   }
@@ -368,22 +413,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: Theme.of(context).textTheme.bodySmall,
-            children: [
-              const TextSpan(text: '¿Necesitas ayuda? '),
-              TextSpan(
-                text: 'Contáctanos',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
-                  decoration: TextDecoration.underline,
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              '¿Necesitas ayuda? ',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Semantics(
+              button: true,
+              label: 'Abrir contacto de soporte',
+              child: TextButton(
+                onPressed: _openContactSupport,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Contáctanos',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
