@@ -61,7 +61,7 @@ workflows:
       groups:
         - google_play # Includes GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS and secure build variables.
       vars:
-        CM_CLONE_DEPTH: 0
+        CM_CLONE_UNSHALLOW: true
         SENTRY_ENVIRONMENT: production
         PACKAGE_NAME: "com.money.flow"
         GOOGLE_PLAY_TRACK: internal
