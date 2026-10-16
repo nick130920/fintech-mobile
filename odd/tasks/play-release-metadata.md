@@ -22,8 +22,8 @@ The `v1.0.1` tag annotation contained `RN-es:` and `RN-en:`, but subsequent rele
 ## Tasks
 
 - [x] PRM-1 — Record the immutable recovery and public bilingual notes.
-- [ ] PRM-2 — Commit the metadata with nonempty `RN-es:` and `RN-en:` trailers.
-- [ ] PRM-3 — Verify generation against a temporary `v1.0.2` fixture without publishing a real tag.
+- [x] PRM-2 — Commit the metadata with nonempty `RN-es:` and `RN-en:` trailers.
+- [x] PRM-3 — Verify generation against a temporary `v1.0.2` fixture without publishing a real tag.
 
 ## Planned public notes
 
@@ -34,7 +34,15 @@ The `v1.0.1` tag annotation contained `RN-es:` and `RN-en:`, but subsequent rele
 
 - Confirmed `v1.0.1` remains immutable and the recovery targets a later semantic release.
 - Confirmed the planned public notes are nonempty in both required languages.
+- Created commit `3e626c8274d80c7d909c9611f83e43141d485775` with exactly one nonempty `RN-es:` and one nonempty `RN-en:` trailer.
+- In a disposable no-hardlink clone with no remote, created fixture-only annotated `v1.0.2` and ran the production generator with `CM_TAG=v1.0.2`.
+- Generator selected `v1.0.1..v1.0.2`; both Spanish locale files and the English locale file matched the intended public notes byte-for-byte.
+- Python temporary-directory cleanup completed; source repository status and tag refs remained unchanged.
+- `git diff --check HEAD^ HEAD`: passed.
+- Independent reassessment: PASS with no HIGH or MEDIUM findings.
+- Operational boundary: the real `v1.0.2` tag remains unpublished and requires separate explicit authorization after delivery.
 
 ## Commit evidence
 
-Pending.
+- `3e626c8274d80c7d909c9611f83e43141d485775` — `chore(release): add Play release metadata`
+- Verification evidence was appended after the metadata commit and must be included in the same reviewable delivery branch before push.
