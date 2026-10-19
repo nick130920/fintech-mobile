@@ -19,7 +19,15 @@ class BudgetOnboardingPreferenceService {
     required int userId,
     required Future<bool> Function() loadHasCurrentBudget,
   }) async {
-    if (await hasSkippedBudgetSetup(userId)) return false;
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      // Legacy setters update the singleton cache before persistence succeeds.
+      // Revalidate on every startup, including remounts and same-user sign-ins.
+      await preferences.reload();
+      if (preferences.getBool(_keyFor(userId)) ?? false) return false;
+    } catch (_) {
+      // Unverified consent must not bypass the normal budget lookup.
+    }
     return !(await loadHasCurrentBudget());
   }
 
