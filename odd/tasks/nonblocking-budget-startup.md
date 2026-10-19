@@ -176,6 +176,6 @@ Physical-device screen-reader and visual testing, the broad suite, release build
 
 ## Commit evidence
 
-- `80e1ed5a69693278ebc98a1a573febf31ebcb497` — `fix(budget): make startup recovery non-blocking`
+- `9cfc1bfe87f71652a922c3748fd8cf58e935d3ce` — `fix(budget): make startup recovery non-blocking`
 - Delivery strategy: user-selected single PR despite the 888-line review workload; the change remains one cohesive production fix with its focused regression tests and ODD evidence.
 - The package configuration remains ignored/local-only.
