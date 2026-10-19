@@ -22,7 +22,7 @@ void main() {
     );
   }
 
-  testWidgets('Skip for now completes only after persistence resolves', (
+  testWidgets('Omitir por ahora completes only after persistence resolves', (
     tester,
   ) async {
     final persistence = Completer<bool>();
@@ -35,7 +35,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Skip for now'));
+    await tester.tap(find.text('Omitir por ahora'));
     await tester.pump();
 
     expect(completionCount, 0);
@@ -48,7 +48,7 @@ void main() {
     expect(completionCount, 1);
   });
 
-  testWidgets('Skip for now keeps setup available when persistence fails', (
+  testWidgets('Omitir por ahora keeps setup available when persistence fails', (
     tester,
   ) async {
     var completionCount = 0;
@@ -60,7 +60,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Skip for now'));
+    await tester.tap(find.text('Omitir por ahora'));
     await tester.pump();
     await tester.pump();
 
@@ -69,6 +69,6 @@ void main() {
       find.text('No pudimos guardar tu decisión. Inténtalo de nuevo.'),
       findsOneWidget,
     );
-    expect(find.text('Skip for now'), findsOneWidget);
+    expect(find.text('Omitir por ahora'), findsOneWidget);
   });
 }

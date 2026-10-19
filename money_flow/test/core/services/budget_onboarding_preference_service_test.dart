@@ -1,8 +1,126 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:money_flow/core/services/budget_onboarding_preference_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// Exercise the real legacy cache separately from the durable platform store.
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
+
+class _PreferenceStore extends SharedPreferencesStorePlatform {
+  final values = <String, Object>{};
+  bool failReads = false;
+  bool throwsOnSave = false;
+
+  @override
+  Future<Map<String, Object>> getAll() async {
+    if (failReads) throw StateError('storage unavailable');
+    return Map.of(values);
+  }
+
+  @override
+  Future<bool> clear() async => throw StateError('must not clear preferences');
+
+  @override
+  Future<bool> remove(String key) async =>
+      throw StateError('must not remove preferences');
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async {
+    if (throwsOnSave) throw StateError('write unavailable');
+    return false;
+  }
+}
 
 void main() {
+  group('durable startup consent', () {
+    late SharedPreferencesStorePlatform originalStore;
+    late _PreferenceStore store;
+
+    setUp(() {
+      originalStore = SharedPreferencesStorePlatform.instance;
+      store = _PreferenceStore();
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance = store;
+    });
+
+    tearDown(() {
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance = originalStore;
+    });
+
+    for (final throwsOnSave in [false, true]) {
+      test(
+        'failed write $throwsOnSave is not consent for a new service',
+        () async {
+          store.throwsOnSave = throwsOnSave;
+          store.values['flutter.unrelated_setting'] = 'preserve';
+          store.values['flutter.budget_onboarding_skipped_user_202'] = true;
+          final service = BudgetOnboardingPreferenceService();
+          if (throwsOnSave) {
+            await expectLater(service.skipBudgetSetup(101), throwsStateError);
+          } else {
+            expect(await service.skipBudgetSetup(101), isFalse);
+          }
+          final singleton = await SharedPreferences.getInstance();
+          expect(
+            singleton.getBool('budget_onboarding_skipped_user_101'),
+            isTrue,
+          );
+          var lookupCount = 0;
+
+          expect(
+            await BudgetOnboardingPreferenceService().shouldShowBudgetSetup(
+              userId: 101,
+              loadHasCurrentBudget: () async {
+                lookupCount++;
+                return false;
+              },
+            ),
+            isTrue,
+          );
+          expect(lookupCount, 1);
+          expect(await SharedPreferences.getInstance(), same(singleton));
+          expect(singleton.getString('unrelated_setting'), 'preserve');
+          expect(
+            singleton.getBool('budget_onboarding_skipped_user_202'),
+            isTrue,
+          );
+          expect(store.values, {
+            'flutter.unrelated_setting': 'preserve',
+            'flutter.budget_onboarding_skipped_user_202': true,
+          });
+        },
+      );
+    }
+
+    for (final hasBudget in [false, true, null]) {
+      test(
+        'reload failure verifies budget result $hasBudget instead of cached consent',
+        () async {
+          store.values['flutter.budget_onboarding_skipped_user_101'] = true;
+          await SharedPreferences.getInstance();
+          store.failReads = true;
+          var lookupCount = 0;
+          final decision = BudgetOnboardingPreferenceService()
+              .shouldShowBudgetSetup(
+                userId: 101,
+                loadHasCurrentBudget: () async {
+                  lookupCount++;
+                  if (hasBudget == null) throw StateError('budget offline');
+                  return hasBudget;
+                },
+              );
+
+          if (hasBudget == null) {
+            await expectLater(decision, throwsStateError);
+          } else {
+            expect(await decision, !hasBudget);
+          }
+          expect(lookupCount, 1);
+        },
+      );
+    }
+  });
+
   group('BudgetOnboardingPreferenceService', () {
     test('persists a skipped decision for the authenticated user', () async {
       SharedPreferences.setMockInitialValues({});

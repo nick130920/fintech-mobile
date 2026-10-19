@@ -107,7 +107,7 @@ class _BudgetSetupChoiceScreenState extends State<BudgetSetupChoiceScreen> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Skip for now'),
+                      : const Text('Omitir por ahora'),
                 ),
                 if (_skipError != null)
                   Text(
